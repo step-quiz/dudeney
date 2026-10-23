@@ -191,8 +191,9 @@ proceeds in batches of 6–8 puzzles; each batch ends with a delivery (see §1) 
 | Sample v1 | cp-26, am-174, cp-1, am-214, am-365, am-373, am-300, am-319, am-242, am-243, am-399, am-304, am-113, cp-75 | delivered |
 | Batch 1 | am-216 `granotes-gots`, am-362 `bol`, am-297 `alfils`, am-298 `alfils-protegits`, am-317 `peons`, am-247 `mina` | delivered (awaiting review) |
 | Batch 2 | am-217 `twickenham`, am-219 `lletres`, am-341 `quatre-granotes`, am-375 `entrenadors` (jealous husbands → football coaches and their stars), am-377 `tresor`, am-249 `mariner`, am-320 `torre` | merged (PR #1) |
-| Batch 3 | am-146 `trapezi`, am-147 `cinc-triangles`, am-151 `fuster`, am-221 `locomotores`, am-245 `octaedre`, am-406 `domino`, am-347 `rectangles`, cp-38 `amulet` | delivered as a PR (awaiting review) |
-| Batch 4 | proposal: am-143 (two crosses from one), am-150 (mitre), am-90 (century, 11 ways), am-83 (digital multiplication), am-133 (five brigands), am-409 (plums, primes), am-411 (composites), cp-102 (reversible magic square) | next — confirm the list with the user first |
+| Batch 3 | am-146 `trapezi`, am-147 `cinc-triangles`, am-151 `fuster`, am-221 `locomotores`, am-245 `octaedre`, am-406 `domino`, am-347 `rectangles`, cp-38 `amulet` | merged (PR #2) |
+| Batch 4 | am-143 `creus`, am-150 `mitra`, am-90 `cent`, am-83 `multiplicacio`, am-133 `bandolers`, am-409 `prunes`, am-411 `compostos`, cp-102 `reversible` (peces board gained `fixes`/`encaix:'solucio'`; new `xifres` and `bandolers` boards; magic board generalised to n = 4, free constant and `condicio`) | delivered as a PR (awaiting review) |
+| Batch 5 | proposal: am-227, am-401, am-316, am-114, am-129, am-136, cp-114 | am-143 (two crosses from one), am-150 (mitre), am-90 (century, 11 ways), am-83 (digital multiplication), am-133 (five brigands), am-409 (plums, primes), am-411 (composites), cp-102 (reversible magic square) | next — confirm the list with the user first |
 | Remaining | see `docs/SELECCIO.md` | pending |
 
 Known open points: `tests/motors.test.js` takes ~15 s (exhaustive bishop searches); the count of 16-move rook tours

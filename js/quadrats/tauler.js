@@ -46,38 +46,43 @@
         return e;
     }
 
+    /** La mida (3 o 4) i les línies del quadrat d'un enigma. */
+    const midaMagic = d => d.n || 3;
+    const liniesMagic = d => (midaMagic(d) === 4 ? Q.LINIES4 : Q.LINIES3);
+
     function dibuixaMagic(valors, opcions = {}) {
+        const n = opcions.n || 3;
         const g = C.el('div', {
-            'class': 'quadrat-magic' + (opcions.estatic ? ' estatic' : ''),
+            'class': 'quadrat-magic' + (opcions.estatic ? ' estatic' : '') + (n === 4 ? ' de4' : ''),
             'role': opcions.estatic ? 'img' : 'grid',
-            'aria-label': opcions.etiqueta || 'Quadrat de 3 × 3',
+            'aria-label': opcions.etiqueta || `Quadrat de ${n} × ${n}`,
         });
         const cel = [];
-        for (let i = 0; i < 9; i++) {
+        for (let i = 0; i < n * n; i++) {
             const fixa = opcions.fixes && opcions.fixes[i] !== undefined;
             const e = C.el(opcions.estatic || fixa ? 'div' : 'button', {
                 'class': 'cel' + (fixa ? ' fixa' : ''),
                 'type': opcions.estatic || fixa ? null : 'button',
                 'data-i': i,
             });
-            e.style.gridRow = String(Math.floor(i / 3) + 1);
-            e.style.gridColumn = String((i % 3) + 2);
+            e.style.gridRow = String(Math.floor(i / n) + 1);
+            e.style.gridColumn = String((i % n) + 2);
             if (valors[i]) e.appendChild(nombreBonic(valors[i]));
             g.appendChild(e);
             cel.push(e);
         }
         const sumes = [];
         if (!opcions.senseSumes)
-            Q.LINIES3.forEach((l, k) => {
+            (n === 4 ? Q.LINIES4 : Q.LINIES3).forEach((l, k) => {
                 const s = C.el('div', { 'class': 'suma', 'data-k': k });
                 let fila, col;
-                if (k < 3) [fila, col] = [k + 1, 5];
-                else if (k < 6) [fila, col] = [4, k - 1];
-                else if (k === 6) [fila, col] = [4, 5];
-                else [fila, col] = [4, 1];
+                if (k < n) [fila, col] = [k + 1, n + 2];
+                else if (k < 2 * n) [fila, col] = [n + 1, k - n + 2];
+                else if (k === 2 * n) [fila, col] = [n + 1, n + 2];
+                else [fila, col] = [n + 1, 1];
                 s.style.gridRow = String(fila);
                 s.style.gridColumn = String(col);
-                s.classList.add(k < 3 ? 'de-fila' : k < 6 ? 'de-columna' : k === 6 ? 'diagonal-1' : 'diagonal-2');
+                s.classList.add(k < n ? 'de-fila' : k < 2 * n ? 'de-columna' : k === 2 * n ? 'diagonal-1' : 'diagonal-2');
                 g.appendChild(s);
                 sumes.push(s);
             });
@@ -85,25 +90,31 @@
     }
 
     function figuraMagic(p, opcions = {}) {
-        const vals = new Array(9).fill(null);
-        if (opcions.solucio) p.dades.solucio.forEach((t, i) => (vals[i] = F.llegeix(t)));
-        else Object.keys(p.dades.fixes).forEach(i => (vals[i] = F.llegeix(p.dades.fixes[i])));
-        const D = dibuixaMagic(vals, {
+        const d = p.dades,
+            n = midaMagic(d);
+        const vals = new Array(n * n).fill(null);
+        if (opcions.solucio) d.solucio.forEach((t, i) => (vals[i] = F.llegeix(t)));
+        else Object.keys(d.fixes || {}).forEach(i => (vals[i] = F.llegeix(d.fixes[i])));
+        const D = dibuixaMagic(opcions.girat ? Q.giraQuadrat(d.solucio.map(Number)).map(x => F.fr(x)) : vals, {
+            n,
             estatic: true,
             senseSumes: true,
-            etiqueta: opcions.solucio ? 'La solució de Dudeney: 4½, 8, 2½; 3, 5, 7; 7½, 2, 5½' : 'Un quadrat de 3 × 3 amb un 8 a la casella del mig de dalt',
+            etiqueta: opcions.solucio ? d.etiquetaSolucio : opcions.girat ? d.etiquetaGirat : d.etiqueta,
         });
         return D.el;
     }
 
     function creaMagic(lloc, p, ctx) {
         const d = p.dades;
-        const total = F.fr(d.total);
+        const n = midaMagic(d),
+            N = n * n,
+            linies = liniesMagic(d);
+        const total = d.total ? F.fr(d.total) : null;
         const fixes = {};
-        Object.keys(d.fixes).forEach(i => (fixes[i] = F.llegeix(d.fixes[i])));
-        let valors, textos, actual, error;
+        Object.keys(d.fixes || {}).forEach(i => (fixes[i] = F.llegeix(d.fixes[i])));
+        let valors, textos, actual, error, girat = false;
         const caixa = C.el('div', { class: 'tauler magic' });
-        const D = dibuixaMagic(new Array(9).fill(null), { fixes });
+        const D = dibuixaMagic(new Array(N).fill(null), { fixes, n });
         const teclat = C.el('div', { 'class': 'teclat-numeric', 'role': 'group', 'aria-label': 'Teclat per escriure nombres' });
         const TECLES = ['7', '8', '9', '⌫', '4', '5', '6', '½', '1', '2', '3', '/', '−', '0', ',', '✓'];
         TECLES.forEach(t => {
@@ -117,6 +128,17 @@
             teclat.appendChild(b);
         });
         caixa.append(D.el, teclat);
+        // CP 102: es pot girar el full per veure el quadrat cap per avall
+        const botoGira = d.condicio === 'reversible' ? C.el('button', { type: 'button', class: 'btn-sec', text: '↻ Gira el full cap per avall' }) : null;
+        if (botoGira) {
+            caixa.appendChild(C.el('div', { class: 'eines-tauler' }, botoGira));
+            botoGira.addEventListener('click', () => {
+                girat = !girat;
+                botoGira.textContent = girat ? '↻ Torna’l a girar' : '↻ Gira el full cap per avall';
+                actual = null;
+                canvi();
+            });
+        }
         lloc.appendChild(caixa);
         D.cel.forEach((e, i) => {
             if (fixes[i]) {
@@ -129,8 +151,10 @@
         });
 
         function inicia() {
-            valors = new Array(9).fill(null);
-            textos = new Array(9).fill('');
+            valors = new Array(N).fill(null);
+            textos = new Array(N).fill('');
+            girat = false;
+            if (botoGira) botoGira.textContent = '↻ Gira el full cap per avall';
             Object.keys(fixes).forEach(i => (valors[i] = fixes[i]));
             actual = null;
             error = null;
@@ -138,6 +162,7 @@
             ctx.estat('');
         }
         function tria(i) {
+            if (girat) return;
             if (actual !== null && actual !== i) confirma(false);
             actual = i;
             pinta();
@@ -179,7 +204,7 @@
             }
             error = null;
             if (avanca) {
-                const seguent = [...Array(9).keys()].map(k => (i + 1 + k) % 9).find(k => !fixes[k] && !valors[k]);
+                const seguent = [...Array(N).keys()].map(k => (i + 1 + k) % N).find(k => !fixes[k] && !valors[k]);
                 actual = seguent === undefined ? null : seguent;
             }
             canvi();
@@ -187,12 +212,12 @@
         }
         function tecla(ev, i) {
             const k = ev.key;
-            const mou = { ArrowUp: -3, ArrowDown: 3, ArrowLeft: -1, ArrowRight: 1 }[k];
+            const mou = { ArrowUp: -n, ArrowDown: n, ArrowLeft: -1, ArrowRight: 1 }[k];
             if (mou !== undefined) {
                 let j = i + mou;
-                if (j >= 0 && j < 9 && !(Math.abs(mou) === 1 && Math.floor(j / 3) !== Math.floor(i / 3))) {
+                if (j >= 0 && j < N && !(Math.abs(mou) === 1 && Math.floor(j / n) !== Math.floor(i / n))) {
                     if (fixes[j]) j += mou;
-                    if (j >= 0 && j < 9 && !fixes[j]) tria(j);
+                    if (j >= 0 && j < N && !fixes[j]) tria(j);
                 }
                 ev.preventDefault();
                 return;
@@ -217,9 +242,27 @@
             } else return;
             ev.preventDefault();
         }
+        /** Els valors que es veuen: els escrits o, amb el full girat, els girats (null si no es poden girar). */
+        function veients() {
+            if (!girat) return valors;
+            const nums = valors.map(v => (v && F.esEnter(v) ? v[0] / v[1] : null));
+            return nums
+                .slice()
+                .reverse()
+                .map(x => (x === null ? null : Q.giraNombre(x)))
+                .map(x => (x === null ? null : F.fr(x)));
+        }
         function pinta() {
+            const vs = veients();
+            D.el.classList.toggle('girat', girat);
             D.cel.forEach((e, i) => {
                 if (fixes[i]) return;
+                if (girat) {
+                    e.classList.remove('actual', 'error');
+                    e.replaceChildren(vs[i] ? nombreBonic(vs[i]) : valors[N - 1 - i] ? C.el('span', { class: 'no-gira', text: '?' }) : '');
+                    e.setAttribute('aria-label', `Casella ${i + 1}, cap per avall: ${vs[i] ? F.text(vs[i]) : 'no es pot llegir'}`);
+                    return;
+                }
                 e.classList.toggle('actual', actual === i);
                 e.classList.toggle('error', error === i);
                 if (actual === i && (textos[i] || !valors[i])) {
@@ -227,26 +270,31 @@
                 } else e.replaceChildren(valors[i] ? nombreBonic(valors[i]) : '');
                 e.setAttribute('aria-label', `Casella ${i + 1}: ${valors[i] ? F.text(valors[i]) : textos[i] || 'buida'}`);
             });
-            const s = Q.sumes(valors);
+            const s = Q.sumes(vs, linies);
+            const ref = total || Q.comprovaMagic(vs, null, linies).constant;
             D.sumes.forEach((e, k) => {
                 const v = s[k];
                 e.replaceChildren();
                 e.classList.remove('be', 'malament');
                 if (!v) return;
                 e.appendChild(nombreBonic(v));
-                const be = F.igual(v, total);
+                const be = ref && F.igual(v, ref) && (total || s.filter(Boolean).length > 1);
                 e.classList.add(be ? 'be' : 'malament');
                 if (be) e.appendChild(C.el('span', { class: 'marca-be', text: '✓' }));
-                e.setAttribute('aria-label', `${Q.LINIES3[k].nom}: suma ${F.text(v)}`);
+                e.setAttribute('aria-label', `${linies[k].nom}: suma ${F.text(v)}`);
             });
         }
         function canvi() {
             ctx.amaga();
             pinta();
-            const r = Q.comprovaMagic(valors, total);
+            const r = Q.comprovaMagic(valors, total, linies);
             const plenes = valors.filter(Boolean).length;
-            ctx.estat([C.el('span', null, 'Caselles plenes: ', C.el('b', { text: `${plenes} de 9` }))]);
+            ctx.estat([C.el('span', null, 'Caselles plenes: ', C.el('b', { text: `${plenes} de ${N}` }))]);
             if (!r.complet) return;
+            if (r.resolt && d.condicio) {
+                revisaCondicio(r);
+                return;
+            }
             if (r.resolt) {
                 const frases = ['Totes les línies sumen 15 i els nou nombres són diferents.'];
                 if (r.enters)
@@ -263,17 +311,52 @@
                 frases.push(`Hi ha nombres repetits: el ${F.text(v)} hi surt més d’una vegada.`);
             }
             r.dolentes.slice(0, 3).forEach(k => {
-                const l = Q.LINIES3[k];
-                frases.push(`${l.nom[0].toUpperCase() + l.nom.slice(1)}: ${l.c.map(i => F.text(valors[i])).join(' + ')} = ${F.text(r.sumes[k])}, i no 15.`);
+                const l = linies[k];
+                frases.push(`${l.nom[0].toUpperCase() + l.nom.slice(1)}: ${l.c.map(i => F.text(valors[i])).join(' + ')} = ${F.text(r.sumes[k])}, i no ${F.text(r.constant)}.`);
             });
             if (r.dolentes.length > 3) frases.push(`… i ${r.dolentes.length - 3} línies més.`);
             ctx.missatge('error', 'Encara no és màgic', frases);
+        }
+        /** AM 409, AM 411, CP 102: el quadrat és màgic; falta la condició dels nombres. */
+        function revisaCondicio(r) {
+            const nums = Q.enters(valors);
+            const k = F.text(r.constant);
+            if (!nums) return ctx.missatge('error', 'Màgic, però…', ['Aquí només valen nombres enters.']);
+            if (d.condicio === 'primers') {
+                const u = nums.find(x => x === 1);
+                if (u) return ctx.missatge('error', 'Màgic, però amb un 1', ['L’1 no és primer. I a més, «una pruna» no són «prunes»: una cistella amb una sola pruna no compleix l’enunciat.']);
+                const nop = nums.find(x => !Q.esPrimer(x));
+                if (nop !== undefined) return ctx.missatge('error', 'Màgic, però…', [`El ${nop} no és primer: el ${nop} es pot repartir a parts iguals entre ${Math.min(...[2, 3, 5, 7, 11, 13].filter(q => nop % q === 0)) || 'uns quants'} nens.`]);
+                const pocs = nums.filter(x => x <= 7);
+                ctx.resolt(`Nou primers, i tot suma ${k}!`, [
+                    'Cap cistella no es pot repartir a parts iguals entre uns quants nens.',
+                    pocs.length ? `Però mira el dibuix: a cada cistella hi ha més de 7 prunes, i tu n’has posat ${C.llista(pocs.map(String))}. Dudeney ho donaria per dolent: llegeix la seva solució.` : 'I totes amb més de 7 prunes, com es veu al dibuix.',
+                ]);
+                return;
+            }
+            if (d.condicio === 'compostos') {
+                const ord = nums.slice().sort((a, b) => a - b);
+                const nop = ord.find(x => x < 4 || Q.esPrimer(x));
+                if (nop !== undefined) return ctx.missatge('error', 'Màgic, però…', [`El ${nop} no és compost.`]);
+                if (ord.some((x, i) => i && x !== ord[i - 1] + 1)) return ctx.missatge('error', 'Màgic, però…', ['Els nou nombres han de ser consecutius: n, n + 1, …, n + 8.']);
+                if (ord[0] === d.minim) return ctx.resolt(`Del ${ord[0]} al ${ord[8]}: el més petit possible!`, [`Nou compostos seguits, i totes les línies sumen ${k}.`]);
+                return ctx.missatge('info', `Compostos seguits, del ${ord[0]} al ${ord[8]}`, ['Correcte, però n’hi ha de més petits. Busca el primer «forat» de 9 entre dos primers.']);
+            }
+            if (d.condicio === 'reversible') {
+                const g = Q.giraQuadrat(nums);
+                const nop = nums.find((x, i) => g[N - 1 - i] === null);
+                if (nop !== undefined) return ctx.missatge('error', 'Màgic, però no es pot girar', [`El ${nop} té alguna xifra que cap per avall no es llegeix (el 3, el 4 o el 5).`]);
+                const rg = Q.comprovaMagic(g.map(x => F.fr(x)), r.constant, linies);
+                if (!rg.resolt) return ctx.missatge('error', 'Màgic, però cap per avall no', [rg.repetits.length ? 'Cap per avall hi ha nombres repetits.' : `Gira el full: hi ha línies que ja no sumen ${k}.`]);
+                return ctx.resolt(`Màgic de cap i de peus: ${k}!`, ['Setze nombres diferents, i totes les línies sumen el mateix tant si gires el full com si no.']);
+            }
         }
         inicia();
         return {
             reinicia: inicia,
             textSolucio: '▶ Posa-la al tauler',
             solucio() {
+                girat = false;
                 d.solucio.forEach((t, i) => {
                     if (!fixes[i]) valors[i] = F.llegeix(t);
                     textos[i] = '';
@@ -282,7 +365,7 @@
                 error = null;
                 ctx.amaga();
                 pinta();
-                ctx.missatge('info', 'La solució de Dudeney', ['Amb mitjos: 4½, 2½, 7½ i 5½.']);
+                ctx.missatge('info', 'La solució de Dudeney', [d.resumSolucio || 'Amb mitjos: 4½, 2½, 7½ i 5½.']);
             },
         };
     }
@@ -839,7 +922,17 @@
     window.Taulers.magic = {
         crea: creaMagic,
         figura: figuraMagic,
-        figuraSolucio: p => C.el('figure', { class: 'figura-solucio' }, figuraMagic(p, { solucio: true })),
+        figuraSolucio: p => {
+            const d = p.dades;
+            // diversos quadrats (AM 409), o el quadrat i el mateix girat (CP 102)
+            const llista = d.diagrames
+                ? d.diagrames.map(g => [figuraMagic({ dades: { ...d, solucio: g.valors, etiquetaSolucio: g.etiqueta } }, { solucio: true }), g.nom])
+                : d.condicio === 'reversible'
+                  ? [[figuraMagic(p, { solucio: true }), 'De cap'], [figuraMagic(p, { girat: true }), 'Cap per avall']]
+                  : null;
+            if (!llista) return C.el('figure', { class: 'figura-solucio' }, figuraMagic(p, { solucio: true }));
+            return C.el('figure', { class: 'figura-solucio' }, C.el('div', { class: 'fila-diagrames' }, llista.map(([f, nom]) => C.el('div', { class: 'diagrama' }, C.el('p', { class: 'num-diagrama', text: nom }), f))));
+        },
     };
     window.Taulers.cartes = {
         crea: creaCartes,

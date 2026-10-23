@@ -14,6 +14,9 @@
  *     tauler de n × n, comptant-los un per un i amb les fórmules de Dudeney.
  *   - l'amulet (CP 38): les maneres de llegir ABRACADABRA baixant per un
  *     triangle de lletres (el triangle de Pascal).
+ *   - les nou xifres (AM 90, AM 83): 100 com a nombre mixt i dos productes
+ *     iguals, fent servir les xifres de l'1 al 9 una sola vegada.
+ *   - els cinc bandolers (AM 133): els repartiments de 200 doblons.
  * ARQUITECTURA: Pur, sense DOM (també el fan servir els tests de Node).
  *   Sala: x al llarg (0…llarg), y d'una paret llarga a l'altra (0…ample),
  *   z cap amunt (0…alt). Cares: 'A' (x = 0, la de l'aranya), 'B' (x = llarg,
@@ -288,7 +291,97 @@
         return j === i || j === i + 1;
     };
 
+    // ── Les nou xifres (AM 90, AM 83) ──────────────────────────────────────
+    var sumaXifres = function (n) {
+        return String(n)
+            .split('')
+            .reduce(function (s, x) {
+                return s + +x;
+            }, 0);
+    };
+    /** Els nombres que formen les xifres (llista de 9) partides en grups de les mides donades. */
+    function parteix(xifres, grups) {
+        var out = [],
+            k = 0;
+        grups.forEach(function (g) {
+            out.push(+xifres.slice(k, k + g).join(''));
+            k += g;
+        });
+        return out;
+    }
+    /** a + b/c = 100? (b/c ha de ser un nombre enter perquè la suma ho sigui.) */
+    var esCent = function (a, b, c) {
+        return b % c === 0 && a + b / c === 100;
+    };
+    /** Totes les maneres d'escriure 100 = a + b/c amb les nou xifres, i tots els parells a × b = c × d. */
+    function totesXifres() {
+        var cent = [],
+            productes = [],
+            p = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+        var permuta = function (k) {
+            if (k === 9) {
+                var s = p.join('');
+                for (var i = 1; i <= 2; i++)
+                    for (var j = i + 1; j < 9; j++) {
+                        var a = +s.slice(0, i),
+                            b = +s.slice(i, j),
+                            c = +s.slice(j);
+                        if (esCent(a, b, c)) cent.push([a, b, c]);
+                    }
+                for (var x = 1; x < 9; x++)
+                    for (var y = x + 1; y < 9; y++)
+                        for (var z = y + 1; z < 9; z++) {
+                            var n = [+s.slice(0, x), +s.slice(x, y), +s.slice(y, z), +s.slice(z)];
+                            if (n[0] * n[1] === n[2] * n[3] && n[0] <= n[1] && n[2] <= n[3] && (n[0] < n[2] || (n[0] === n[2] && n[1] < n[3]))) productes.push(n);
+                        }
+                return;
+            }
+            for (var t = k; t < 9; t++) {
+                var q = p[k];
+                p[k] = p[t];
+                p[t] = q;
+                permuta(k + 1);
+                p[t] = p[k];
+                p[k] = q;
+            }
+        };
+        permuta(0);
+        return { cent: cent, productes: productes };
+    }
+
+    // ── Els cinc bandolers (AM 133) ────────────────────────────────────────
+    /** null si [A, B, C, D, E] és un repartiment vàlid; si no, el motiu. */
+    function motiuBandolers(q, total) {
+        if (q.some(function (x) { return !Number.isInteger(x) || x < 1; })) return 'positius';
+        if (q[0] + q[1] + q[2] + q[3] + q[4] !== total) return 'total';
+        if (q[3] % 2 || q[4] % 3) return 'fraccions';
+        if (12 * q[0] + 3 * q[1] + q[2] + q[3] / 2 + q[4] / 3 !== total) return 'canvi';
+        return null;
+    }
+    /** Quants repartiments hi ha, en total i per a cada quantitat de l'Alfonso. */
+    function compteBandolers(total) {
+        var n = 0,
+            perA = {};
+        for (var A = 1; A <= total; A++)
+            for (var B = 1; A + B < total; B++)
+                for (var D = 2; A + B + D < total; D += 2)
+                    for (var E = 3; A + B + D + E < total; E += 3) {
+                        var C = total - A - B - D - E;
+                        if (12 * A + 3 * B + C + D / 2 + E / 3 === total) {
+                            n++;
+                            perA[A] = (perA[A] || 0) + 1;
+                        }
+                    }
+        return { total: n, perA: perA };
+    }
+
     return {
+        sumaXifres: sumaXifres,
+        parteix: parteix,
+        esCent: esCent,
+        totesXifres: totesXifres,
+        motiuBandolers: motiuBandolers,
+        compteBandolers: compteBandolers,
         rectangles: rectangles,
         formulesRectangles: formulesRectangles,
         maneresAmulet: maneresAmulet,

@@ -1126,9 +1126,14 @@ DEPENDÈNCIES: css/tokens.css
 @media (min-width: 1180px) {
     .tauler.magic {
         flex-direction: row;
+        flex-wrap: wrap;
         justify-content: center;
         align-items: flex-start;
         gap: 28px;
+    }
+    .tauler.magic > .eines-tauler {
+        flex-basis: 100%;
+        justify-content: center;
     }
 }
 @media (max-width: 420px) {
@@ -2464,4 +2469,217 @@ DEPENDÈNCIES: css/tokens.css
     font: 600 10px var(--sans);
     fill: var(--tema-fort);
     text-anchor: middle;
+}
+.peca-fixa .cos-peca-xarxa {
+    fill: color-mix(in srgb, var(--tema) 70%, var(--tinta));
+    stroke: var(--tinta);
+    stroke-width: 0.04;
+}
+.peca-fixa .num-peca-xarxa {
+    fill: #fff;
+}
+.peces-svg .construccio {
+    fill: none;
+    stroke: var(--tinta-suau);
+    stroke-width: 0.03;
+    stroke-dasharray: 0.07 0.06;
+}
+
+/* Les nou xifres (AM 90, AM 83) i els bandolers (AM 133) */
+.expressio {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px 8px;
+    margin: 8px 0;
+}
+.grup-xifres {
+    display: inline-flex;
+    gap: 3px;
+}
+.frac-xifres {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 0 4px;
+}
+.frac-xifres > .grup-xifres:first-child {
+    padding-bottom: 6px;
+    border-bottom: 3px solid var(--tinta);
+}
+.casella-xifra {
+    width: 38px;
+    height: 44px;
+    border: 2px solid var(--linia-forta);
+    border-radius: 7px;
+    background: var(--panell);
+    font: 700 1.4rem var(--serif);
+    color: var(--tinta);
+    cursor: pointer;
+}
+.casella-xifra.triada {
+    border-color: var(--tema);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--tema) 30%, transparent);
+}
+.expressio .op {
+    font: 700 1.3rem var(--serif);
+    color: var(--tinta);
+}
+.paleta-xifres {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+}
+.xifra-paleta {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 2px solid var(--tema);
+    background: var(--tema-clar);
+    font: 700 1.2rem var(--serif);
+    color: var(--tinta);
+    cursor: pointer;
+}
+.xifra-paleta.usada {
+    opacity: 0.35;
+}
+.compte-xifres {
+    font: 1rem var(--serif);
+    text-align: center;
+    margin: 4px 0;
+    white-space: pre-wrap;
+}
+.trobades {
+    list-style: none;
+    padding: 0;
+    margin: 4px 0 0;
+    font: 0.95rem var(--serif);
+    text-align: center;
+    color: var(--tinta-suau);
+}
+.xifres-svg {
+    max-width: 420px;
+}
+.xifres-svg .casella-fig {
+    fill: var(--panell);
+    stroke: var(--tinta);
+    stroke-width: 1.6;
+}
+.xifres-svg .xifra-fig,
+.xifres-svg .op-fig {
+    font: 700 18px var(--serif);
+    fill: var(--tinta);
+    text-anchor: middle;
+    dominant-baseline: central;
+}
+.ratlla-fig {
+    stroke: var(--tinta);
+    stroke-width: 2.5;
+}
+.llista-cent {
+    font-family: var(--serif);
+    line-height: 1.8;
+}
+.taula-bandolers {
+    border-collapse: collapse;
+    font: 1rem var(--sans);
+}
+.taula-bandolers th,
+.taula-bandolers td {
+    padding: 4px 6px;
+    text-align: center;
+}
+.taula-bandolers th {
+    text-align: left;
+    font-weight: 600;
+}
+.taula-bandolers .quantitat {
+    width: 4em;
+    font: 1.05rem var(--sans);
+    text-align: center;
+    padding: 4px;
+    border: 1.5px solid var(--linia-forta);
+    border-radius: 6px;
+    background: var(--panell);
+    color: var(--tinta);
+}
+.btn-pas {
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    border: 1.5px solid var(--linia-forta);
+    background: var(--panell-2);
+    color: var(--tinta);
+    font: 700 1rem var(--sans);
+    cursor: pointer;
+    margin: 0 3px;
+}
+.taula-bandolers .factor {
+    color: var(--tinta-suau);
+}
+.taula-bandolers .resultat {
+    font-weight: 700;
+    min-width: 3em;
+}
+.sumes-bandolers td,
+.sumes-bandolers th {
+    border-top: 2px solid var(--tinta);
+    font-weight: 700;
+}
+.sumes-bandolers .ok {
+    color: var(--ok);
+}
+.bandolers-svg {
+    max-width: 260px;
+}
+.bandolers-svg .dobla {
+    fill: var(--llimonada);
+    stroke: var(--formatge-vora);
+    stroke-width: 2;
+}
+.bandolers-svg .inicial-bandoler {
+    font: 700 14px var(--serif);
+    fill: var(--llimonada-text);
+    text-anchor: middle;
+}
+.bandolers-svg .fila-bandoler {
+    font: 16px var(--serif);
+    fill: var(--tinta);
+    text-anchor: end;
+}
+.bandolers-svg .fila-bandoler.total {
+    font-weight: 700;
+}
+
+/* Quadrats màgics de 4 × 4 (CP 102) i el full girat */
+.quadrat-magic.de4 {
+    grid-template-columns: 44px repeat(4, minmax(56px, 74px)) 44px;
+    grid-template-rows: repeat(4, 70px) 46px;
+}
+.quadrat-magic.de4 .cel {
+    font-size: 1.9rem;
+}
+.quadrat-magic.girat .cel {
+    background: var(--panell-2);
+    cursor: default;
+}
+.quadrat-magic .no-gira {
+    color: var(--error);
+}
+.quadrat-magic.estatic.de4 {
+    grid-template-columns: repeat(4, 64px);
+    grid-template-rows: repeat(4, 64px);
+}
+.quadrat-magic.estatic.de4 .cel {
+    font-size: 1.5rem;
+}
+.fila-diagrames .quadrat-magic.estatic:not(.de4) {
+    grid-template-columns: repeat(3, 62px);
+    grid-template-rows: repeat(3, 62px);
+}
+.fila-diagrames .quadrat-magic.estatic:not(.de4) .cel {
+    font-size: 1.25rem;
 }

@@ -21,7 +21,7 @@ const dades = {};
 );
 
 suite('Dades');
-eq('35 enigmes', Object.keys(dades).length, 35);
+eq('43 enigmes', Object.keys(dades).length, 43);
 Object.values(dades).forEach(p =>
     ok(`${p.id}: camps complets`, p.titol && p.enunciat.length && p.pistes.length === 4 && p.solucioDudeney.length && p.notaMatematic.length)
 );
@@ -405,4 +405,71 @@ ok('brocat: omple el 10 × 10 amb el dibuix casat', rb.complet && rb.patro);
     ok(`${id}: a la posició inicial, no`, !Di.omple(bases, dp.peces.map(() => ({ r: 0, x: 0, y: 0 })), dp.objectiu));
     ok(`${id}: les peces de paper fan la mateixa àrea`, Math.abs(dp.paper.reduce((x, pg) => x + Di.area(pg), 0) - 5) < 1e-9);
 });
+suite('Tanda 4');
+const eqJ = (et, rebut, esperat) => eq(et, JSON.stringify(rebut), JSON.stringify(esperat));
+// AM 90 i AM 83: les nou xifres
+{
+    const tx = Ar.totesXifres();
+    eq('cent: onze maneres d’escriure 100 com a nombre mixt', tx.cent.length, 11);
+    const una = tx.cent.filter(([a]) => a < 10);
+    eqJ('cent: només una amb una xifra a la part entera', una.map(x => x.join(' ')), [dades.cent.dades.buscada.join(' ')]);
+    ok('cent: l’exemple de Dudeney hi és', tx.cent.some(x => x.join(' ') === '91 5742 638'));
+    const solC = dades.cent.dades.solucioTauler;
+    ok('cent: la solució del tauler és la buscada', Ar.esCent(...Ar.parteix(solC[1], dades.cent.dades.plantilles[solC[0]])));
+    const mx = dades.multiplicacio.dades;
+    eq('multiplicació: 59 parells de productes', tx.productes.length, 59);
+    const sumes = tx.productes.map(n => Ar.sumaXifres(n[0] * n[1]));
+    const mn = Math.min(...sumes), mxs = Math.max(...sumes);
+    eqJ('multiplicació: suma mínima 6, només amb 4002', [mn, [...new Set(tx.productes.filter((n, i) => sumes[i] === mn).map(n => n[0] * n[1]))]], [6, [mx.minim]]);
+    eqJ('multiplicació: suma màxima 30, només amb 6888 (no 27, com diu Dudeney)', [mxs, [...new Set(tx.productes.filter((n, i) => sumes[i] === mxs).map(n => n[0] * n[1]))]], [30, [mx.maxim]]);
+    const segona = Math.max(...sumes.filter(x => x < mxs));
+    ok('multiplicació: la de Dudeney (5886, suma 27) és la segona', segona === 27 && Ar.sumaXifres(mx.dudeney) === 27 && tx.productes.some(n => n[0] * n[1] === mx.dudeney));
+    const pt = Ar.parteix(mx.solucioTauler[1], mx.plantilles[mx.solucioTauler[0]]);
+    ok('multiplicació: la solució del tauler fa 4002', pt[0] * pt[1] === pt[2] * pt[3] && pt[0] * pt[1] === mx.minim);
+}
+// AM 133: els cinc bandolers
+{
+    const bd = dades.bandolers.dades;
+    const cb = Ar.compteBandolers(bd.total);
+    eq('bandolers: 6627 repartiments (no 6639, com deia Labosne)', cb.total, bd.solucions);
+    eq('bandolers: l’exemple és vàlid', Ar.motiuBandolers(bd.exemple, bd.total), null);
+    eqJ('bandolers: l’Alfonso en té d’1 a 11', Object.keys(cb.perA).map(Number), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+    eq('bandolers: un repartiment que no fa 200 amb el canvi', Ar.motiuBandolers([1, 1, 1, 2, 195], 200), 'canvi');
+}
+// AM 409, AM 411 i CP 102: quadrats màgics amb condicions
+{
+    const g = v => v.map(x => F.llegeix(String(x)));
+    const pr = dades.prunes.dades;
+    const consts = pr.diagrames.map(dg => { const r = Q.comprovaMagic(g(dg.valors), null); return r.resolt ? F.text(r.constant) : null; });
+    eqJ('prunes: els quatre diagrames són màgics (111, 213, 219, 3117)', consts, ['111', '213', '219', '3117']);
+    eqJ('prunes: només l’1 del diagrama A no és primer', pr.diagrames.map(dg => dg.valors.filter(x => !Q.esPrimer(+x))), [['1'], [], [], []]);
+    ok('prunes: la solució és el diagrama B', pr.solucio.join() === pr.diagrames[1].valors.join() && pr.solucio.every(x => Q.esPrimer(+x)));
+    const cp = dades.compostos.dades;
+    const vc = cp.solucio.map(Number);
+    ok('compostos: el quadrat és màgic i fa servir del 114 al 122', Q.comprovaMagic(g(cp.solucio), null).resolt && vc.slice().sort((a, b) => a - b).join() === '114,115,116,117,118,119,120,121,122');
+    let primer = 0;
+    for (let n = 2; !primer; n++) { let k = 0; while (k < 9 && !Q.esPrimer(n + k) && n + k > 1) k++; if (k === 9) primer = n; }
+    eq('compostos: el primer bloc de nou compostos seguits comença al 114', primer, cp.minim);
+    const rv = dades.reversible.dades;
+    const L4 = Q.LINIES4;
+    const r1 = Q.comprovaMagic(g(rv.solucio), null, L4);
+    const gir = Q.giraQuadrat(rv.solucio);
+    const r2 = gir.every(x => x !== null) && Q.comprovaMagic(g(gir), null, L4);
+    ok('reversible: màgic de 179 del dret i del revés, setze nombres diferents', r1.resolt && r2 && r2.resolt && F.text(r1.constant) === '179' && F.text(r2.constant) === '179' && new Set(rv.solucio).size === 16);
+}
+// AM 143 i AM 150: les creus i la mitra
+['creus', 'mitra'].forEach(id => {
+    const dp = dades[id].dades;
+    const bases = dp.peces.map(pc => pc.pts);
+    const areaPeces = bases.reduce((x, pc) => x + Di.area(pc), 0);
+    ok(`${id}: les peces omplen la figura de la dreta`, Di.omple(bases, dp.solucio, dp.objectiu) && Math.abs(areaPeces - Di.area(dp.objectiu)) < 1e-4);
+    ok(`${id}: a la posició inicial, no`, !Di.omple(bases, dp.peces.map(() => ({ r: 0, x: 0, y: 0 })), dp.objectiu));
+});
+{
+    const cr = dades.creus.dades;
+    ok('creus: la creu A fa la meitat de la creu gran (2,5 de 5)', Math.abs(Di.area(cr.fixes[0]) - 2.5) < 1e-9 && Math.abs(Di.area(cr.paper[0]) - 5) < 1e-9);
+    ok('creus: les peces B–E fan 0,625 cadascuna', cr.peces.every(pc => Math.abs(Di.area(pc.pts) - 0.625) < 1e-9));
+    const mt = dades.mitra.dades;
+    ok('mitra: la mitra i el quadrat fan 3', Math.abs(Di.area(mt.paper[0]) - 3) < 1e-9 && Math.abs(Di.area(mt.objectiu) - 3) < 1e-5);
+}
 finish('Motors');
