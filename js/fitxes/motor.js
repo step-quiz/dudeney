@@ -8,11 +8,18 @@
  *     Hanoi amb quatre tamborets).
  *   - salts: fitxes en una filera amb un sol forat; una fitxa passa al forat si
  *     és al costat o si només n'hi ha una entre mig (AM 214, les sis granotes).
+ *   - cercle: fitxes de dos colors en un cercle amb un forat; cada color va en
+ *     un sol sentit i només pot saltar una fitxa de l'altre color (AM 217).
+ *   - blocs: blocs que llisquen dins una capsa cap al forat (AM 219, el «15»).
+ *   - xarxa: fitxes sobre punts units per línies; una fitxa va per una línia a
+ *     un punt buit (AM 341, les quatre granotes de Guarini).
  *   Per a cada model: moviments legals, aplicar-los, saber si està resolt, i els
  *   veïns per a la cerca en amplada (el mínim de moviments es comprova als tests).
  * ARQUITECTURA: Pur, sense DOM (també el fan servir els tests de Node).
  *   piles: estat = [[mides de baix a dalt], …] (una llista per tamboret)
  *   salts: estat = [fitxa | 0, …] (0 = el forat)
+ *   cercle, blocs: estat = [lletra | '', …] ('' = el forat)
+ *   xarxa: estat = [fitxa | '', …] per a cada punt; arestes [[i, j], …] (punts 0…)
  *   frameStewart(n, k): el nombre mínim de moviments (fórmula de Frame–Stewart,
  *   demostrada òptima per a quatre tamborets per T. Bousch el 2014).
  *   granotesDudeney(n): la fórmula de Dudeney per a n granotes (AM 214).
@@ -174,6 +181,152 @@
         },
     };
 
+    // ── Cercle (AM 217: les lletres de Twickenham) ─────────────────────────
+    // sentit[fitxa] = +1 (cap als índexs més grans, el sentit de les agulles del rellotge) o −1
+    var cercle = {
+        /** On aniria la fitxa de la casella i (el forat), o −1. També diu si és un salt. */
+        desti: function (estat, i, sentit) {
+            var x = estat[i],
+                n = estat.length;
+            if (!x) return -1;
+            var s = sentit[x],
+                a = (i + s + n) % n,
+                b = (i + 2 * s + n) % n;
+            if (!estat[a]) return a;
+            if (!estat[b] && sentit[estat[a]] !== s) return b;
+            return -1;
+        },
+        /** null si la fitxa de la casella i es pot moure; si no, el motiu. */
+        motiu: function (estat, i, sentit) {
+            if (cercle.desti(estat, i, sentit) >= 0) return null;
+            var n = estat.length,
+                s = sentit[estat[i]],
+                a = (i + s + n) % n,
+                b = (i + 2 * s + n) % n;
+            if (!estat[b] && sentit[estat[a]] === s) return 'mateix';
+            return 'lluny';
+        },
+        esSalt: function (estat, i, sentit) {
+            var d = cercle.desti(estat, i, sentit);
+            return d >= 0 && d !== (i + sentit[estat[i]] + estat.length) % estat.length;
+        },
+        mou: function (estat, i, sentit) {
+            var f = cercle.desti(estat, i, sentit);
+            var e = estat.slice();
+            e[f] = e[i];
+            e[i] = '';
+            return e;
+        },
+        clau: function (estat) {
+            return estat.join(',');
+        },
+        veins: function (sentit) {
+            return function (estat) {
+                var out = [];
+                for (var i = 0; i < estat.length; i++)
+                    if (cercle.desti(estat, i, sentit) >= 0) out.push({ estat: cercle.mou(estat, i, sentit), mov: estat[i] });
+                return out;
+            };
+        },
+    };
+
+    // ── Blocs (AM 219: les lletres a la capsa) ─────────────────────────────
+    var blocs = {
+        /** El forat, si el bloc de la casella i hi és tocant (en una quadrícula de «cols» columnes); si no, −1. */
+        desti: function (estat, i, cols) {
+            var f = estat.indexOf('');
+            if (i === f || !estat[i]) return -1;
+            var fi = Math.floor(i / cols),
+                ci = i % cols,
+                ff = Math.floor(f / cols),
+                cf = f % cols;
+            return Math.abs(fi - ff) + Math.abs(ci - cf) === 1 ? f : -1;
+        },
+        mou: function (estat, i, cols) {
+            var f = blocs.desti(estat, i, cols);
+            var e = estat.slice();
+            e[f] = e[i];
+            e[i] = '';
+            return e;
+        },
+        clau: function (estat) {
+            return estat.join(',');
+        },
+        veins: function (cols) {
+            return function (estat) {
+                var out = [];
+                for (var i = 0; i < estat.length; i++)
+                    if (blocs.desti(estat, i, cols) >= 0) out.push({ estat: blocs.mou(estat, i, cols), mov: estat[i] });
+                return out;
+            };
+        },
+    };
+
+    // ── Xarxa (AM 341: les quatre granotes) ────────────────────────────────
+    var xarxa = {
+        uneix: function (arestes, i, j) {
+            return arestes.some(function (a) {
+                return (a[0] === i && a[1] === j) || (a[0] === j && a[1] === i);
+            });
+        },
+        /** null si la fitxa del punt i pot anar al punt j; si no, el motiu. */
+        motiu: function (estat, arestes, i, j) {
+            if (i === j) return 'mateix';
+            if (!estat[i]) return 'buit';
+            if (estat[j]) return 'ple';
+            if (!xarxa.uneix(arestes, i, j)) return 'linia';
+            return null;
+        },
+        mou: function (estat, i, j) {
+            var e = estat.slice();
+            e[j] = e[i];
+            e[i] = '';
+            return e;
+        },
+        /** Les jugades d'una llista de moviments [de, a]: els moviments seguits d'una mateixa fitxa en fan una. */
+        jugades: function (moviments) {
+            var n = 0;
+            for (var k = 0; k < moviments.length; k++) if (!k || moviments[k][0] !== moviments[k - 1][1]) n++;
+            return n;
+        },
+        clau: function (estat) {
+            return estat.join(',');
+        },
+        veins: function (arestes) {
+            return function (estat) {
+                var out = [];
+                arestes.forEach(function (a) {
+                    [a, [a[1], a[0]]].forEach(function (m) {
+                        if (!xarxa.motiu(estat, arestes, m[0], m[1])) out.push({ estat: xarxa.mou(estat, m[0], m[1]), mov: m });
+                    });
+                });
+                return out;
+            };
+        },
+        /** Veïns per jugades: una fitxa fa tants moviments seguits com vulgui (per punts buits). */
+        veinsJugada: function (arestes) {
+            return function (estat) {
+                var out = [];
+                for (var i = 0; i < estat.length; i++) {
+                    if (!estat[i]) continue;
+                    var vist = {},
+                        cua = [i];
+                    vist[i] = true;
+                    while (cua.length) {
+                        var x = cua.shift();
+                        for (var j = 0; j < estat.length; j++)
+                            if (!vist[j] && !estat[j] && xarxa.uneix(arestes, x, j)) {
+                                vist[j] = true;
+                                cua.push(j);
+                                out.push({ estat: xarxa.mou(estat, i, j), mov: [i, j] });
+                            }
+                    }
+                }
+                return out;
+            };
+        },
+    };
+
     /** La fórmula de Dudeney (solució de l'AM 214) per a n granotes amb el forat a l'extrem. */
     function granotesDudeney(n) {
         return n % 2 === 0 ? (n * n + n) / 2 : (n * n + 3 * n) / 2 - 4;
@@ -207,6 +360,9 @@
     return {
         piles: piles,
         salts: salts,
+        cercle: cercle,
+        blocs: blocs,
+        xarxa: xarxa,
         frameStewart: frameStewart,
         particio: particio,
         solucioPiles: solucioPiles,

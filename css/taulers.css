@@ -269,6 +269,180 @@ DEPENDÈNCIES: css/tokens.css
     }
 }
 
+/* Twickenham (AM 217): fitxes en cercle */
+.cercle-svg {
+    max-width: 440px;
+    touch-action: none;
+}
+.cercle-svg .anella {
+    fill: none;
+    stroke: var(--tinta);
+    stroke-width: 5;
+}
+.cercle-svg .disc {
+    fill: var(--panell);
+    stroke: var(--tinta);
+    stroke-width: 2.5;
+}
+.cercle-svg .fletxa .arc {
+    fill: none;
+    stroke: var(--tinta-suau);
+    stroke-width: 2.5;
+}
+.cercle-svg .fletxa .punta {
+    fill: var(--tinta-suau);
+}
+.cercle-svg .fletxa .mostra-color {
+    stroke: var(--tinta);
+    stroke-width: 2;
+}
+.cercle-svg .fletxa.negra .mostra-color,
+.fitxa-cercle.negra .cos {
+    fill: #2c3138;
+    stroke: #000;
+}
+.cercle-svg .fletxa.blanca .mostra-color,
+.fitxa-cercle.blanca .cos {
+    fill: #f4f1e6;
+    stroke: var(--tinta);
+}
+.fitxa-cercle {
+    cursor: pointer;
+    transition: transform 0.4s cubic-bezier(0.3, 0.7, 0.3, 1);
+}
+.fitxa-cercle:not(.pot) {
+    cursor: default;
+}
+.fitxa-cercle.arrossegada {
+    transition: none;
+    filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.25));
+}
+.fitxa-cercle .cos {
+    stroke-width: 2.5;
+}
+.fitxa-cercle:focus-visible .cos {
+    stroke: var(--tema);
+    stroke-width: 5;
+}
+.lletra-fitxa {
+    font: 700 24px var(--serif);
+    text-anchor: middle;
+    dominant-baseline: central;
+}
+.fitxa-cercle.negra .lletra-fitxa {
+    fill: #fff;
+}
+.fitxa-cercle.blanca .lletra-fitxa {
+    fill: #1d232c;
+}
+.paraula-cercle {
+    font-family: var(--serif);
+    letter-spacing: 0.12em;
+}
+
+/* Les lletres a la capsa (AM 219) */
+.blocs-svg {
+    max-width: 340px;
+    touch-action: none;
+}
+.blocs-svg .capsa-blocs {
+    fill: var(--fusta-vora);
+}
+.blocs-svg .fons-capsa {
+    fill: color-mix(in srgb, var(--tinta) 14%, var(--panell));
+}
+.bloc {
+    cursor: pointer;
+    transition: transform 0.25s ease;
+}
+.bloc:not(.pot) {
+    cursor: default;
+}
+.bloc.arrossegat {
+    transition: none;
+    filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.25));
+}
+.bloc .cara-bloc {
+    fill: var(--fusta);
+    stroke: var(--fusta-vora);
+    stroke-width: 2;
+}
+.bloc.pot .cara-bloc {
+    stroke: var(--tema);
+    stroke-width: 3;
+}
+.bloc:focus-visible .cara-bloc {
+    stroke: var(--tema);
+    stroke-width: 5;
+}
+.lletra-bloc {
+    font: 600 54px var(--serif);
+    fill: var(--tinta);
+    text-anchor: middle;
+    dominant-baseline: central;
+}
+.taula-blocs td {
+    width: 2.2em;
+    height: 2.2em;
+    font: 600 1.2em var(--serif);
+}
+
+/* Les quatre granotes (AM 341): bolets i fils */
+.bolets-svg {
+    max-width: 440px;
+    touch-action: none;
+}
+.fil-bolet {
+    stroke: var(--tinta);
+    stroke-width: 2.5;
+}
+.punt-bolet {
+    cursor: pointer;
+}
+.punt-bolet .zona {
+    fill: transparent;
+}
+.bolet .barret {
+    fill: var(--panell);
+    stroke: var(--tinta);
+    stroke-width: 2.5;
+}
+.bolet .peu {
+    fill: var(--fusta);
+    stroke: var(--tinta);
+    stroke-width: 2;
+}
+.num-bolet {
+    font: 700 20px var(--serif);
+    fill: var(--tinta);
+    text-anchor: middle;
+    dominant-baseline: central;
+}
+.punt-bolet.triat .barret,
+.punt-bolet:focus-visible .barret {
+    stroke: var(--tema);
+    stroke-width: 5;
+}
+.amb-seleccio .punt-bolet.desti-possible .barret {
+    fill: var(--tema-clar);
+    stroke: var(--tema);
+    stroke-width: 4;
+}
+.granota-xarxa {
+    pointer-events: auto;
+}
+.granota-xarxa.triada .cos {
+    stroke: var(--tema);
+    stroke-width: 4;
+}
+.bolets-svg.movent .granota,
+.bolets-svg.movent .punt-bolet {
+    transition: none;
+}
+.punt-bolet {
+    transition: transform 0.4s ease;
+}
+
 /* ══════════════════════════════════════════════
    MESURES: gerres i mesures
 ══════════════════════════════════════════════ */
@@ -510,6 +684,26 @@ DEPENDÈNCIES: css/tokens.css
 .passatger .figura.nen .cos,
 .passatger .figura.nen .cap {
     fill: color-mix(in srgb, var(--tema) 55%, var(--panell));
+}
+.passatger .figura.jugador .cos,
+.passatger .figura.jugador .cap {
+    fill: color-mix(in srgb, var(--tema) 55%, var(--panell));
+}
+.passatger .figura .gorra {
+    fill: var(--tinta);
+}
+.passatger .figura .pilota {
+    fill: var(--panell);
+    stroke: var(--tinta);
+    stroke-width: 1.5;
+}
+.passatger .lletra-passatger {
+    font: 700 23px var(--serif);
+}
+.taula-travesses td {
+    font-family: var(--serif);
+    white-space: pre;
+    text-align: left;
 }
 .passatger .figura.gos .cos {
     fill: var(--fusta);
@@ -1700,4 +1894,186 @@ DEPENDÈNCIES: css/tokens.css
 }
 .granota.negra .potes {
     stroke: #000;
+}
+
+/* El tresor del castell (AM 377): la politja i les cistelles */
+.politja-svg {
+    max-width: 560px;
+    touch-action: none;
+}
+.politja-svg .mur {
+    fill: color-mix(in srgb, var(--fusta-vora) 35%, var(--panell));
+    stroke: var(--tinta-suau);
+    stroke-width: 2;
+}
+.politja-svg .junta {
+    stroke: var(--tinta-suau);
+    stroke-width: 1;
+    opacity: 0.35;
+}
+.politja-svg .finestra {
+    fill: var(--panell-2);
+    stroke: var(--tinta);
+    stroke-width: 2.5;
+}
+.politja-svg .ampit,
+.politja-svg .biga {
+    fill: var(--fusta);
+    stroke: var(--fusta-vora);
+    stroke-width: 2;
+}
+.politja-svg .biga {
+    fill: none;
+    stroke-width: 7;
+    stroke-linejoin: round;
+}
+.politja-svg .terra {
+    fill: color-mix(in srgb, var(--tema) 16%, var(--panell));
+}
+.politja-svg .nom-lloc {
+    font: 600 13px var(--sans);
+    fill: var(--tinta-suau);
+}
+.politja-svg .roda {
+    fill: var(--panell);
+    stroke: var(--tinta);
+    stroke-width: 4;
+}
+.politja-svg .eix {
+    fill: var(--tinta);
+}
+.politja-svg .corda {
+    stroke: var(--fusta-vora);
+    stroke-width: 3;
+    transition: all 0.8s ease-in-out;
+}
+.politja-svg .cistella {
+    transition: transform 0.8s ease-in-out;
+}
+.politja-svg .cove {
+    fill: var(--fusta);
+    stroke: var(--fusta-vora);
+    stroke-width: 2.5;
+}
+.politja-svg .nanses,
+.politja-svg .trena {
+    fill: none;
+    stroke: var(--fusta-vora);
+    stroke-width: 2.5;
+}
+.politja-svg .pes-cistella {
+    font: 700 14px var(--sans);
+    fill: var(--tinta);
+    text-anchor: middle;
+}
+.objecte {
+    cursor: pointer;
+    transition: transform 0.8s ease-in-out;
+}
+.objecte.arrossegat {
+    transition: none;
+}
+.objecte .zona {
+    fill: transparent;
+}
+.objecte .figura .cap,
+.objecte .figura .cos {
+    fill: var(--tema);
+    stroke: var(--tema-fort);
+    stroke-width: 1.5;
+}
+.objecte .figura.jove .cos,
+.objecte .figura.jove .cap,
+.objecte .figura.nen .cos,
+.objecte .figura.nen .cap {
+    fill: color-mix(in srgb, var(--tema) 55%, var(--panell));
+}
+.objecte .pes {
+    font: 700 12px var(--sans);
+    fill: #fff;
+    text-anchor: middle;
+}
+.objecte .cofre .caixa-cofre,
+.objecte .cofre .tapa-cofre {
+    fill: var(--llimonada);
+    stroke: var(--formatge-vora);
+    stroke-width: 2;
+}
+.objecte .cofre .pany {
+    fill: var(--tinta);
+}
+.objecte .cofre ~ .pes {
+    fill: var(--tinta);
+}
+.objecte.a-bord .nom-passatger {
+    display: none;
+}
+.objecte:focus-visible .figura {
+    filter: drop-shadow(0 0 3px var(--tema));
+}
+.passos-dudeney li {
+    margin: 0.15em 0;
+}
+
+/* El trencaclosques del mariner (AM 249): illes i rutes corbes */
+.mapa-svg.illes {
+    max-width: 520px;
+}
+.mapa-svg .mar {
+    fill: color-mix(in srgb, var(--aigua) 30%, var(--panell));
+    stroke: var(--tinta);
+    stroke-width: 2.5;
+}
+.illes .carretera,
+.illes .tram {
+    fill: none;
+}
+.illes .carretera {
+    stroke: var(--tinta-suau);
+    stroke-width: 3.5;
+}
+.illes .punt .marca {
+    transform: scale(1.5);
+}
+.illes .nom-punt {
+    font-size: 24px;
+}
+.illes .tram {
+    stroke-width: 7;
+}
+.illes .punt .marca {
+    stroke-linejoin: round;
+}
+.rutes-mariner li {
+    font-family: var(--serif);
+    letter-spacing: 0.06em;
+}
+
+/* La volta de la torre (AM 320) */
+.escacs-svg .visitada {
+    fill: var(--tema-clar);
+    stroke: var(--tema);
+    stroke-width: 1.5;
+    opacity: 0.85;
+    pointer-events: none;
+}
+.escacs-svg .cami-torre {
+    fill: none;
+    stroke: var(--tema);
+    stroke-width: 4;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    pointer-events: none;
+}
+.escacs-svg .parada {
+    fill: var(--tema);
+    pointer-events: none;
+}
+.peca.torre .silueta {
+    fill: var(--panell);
+}
+.peu-diagrama {
+    font: 0.85rem var(--sans);
+    color: var(--tinta-suau);
+    margin-top: 4px;
 }

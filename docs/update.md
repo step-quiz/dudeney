@@ -57,3 +57,18 @@ bombolla), **modernitzar** (canviar-ho al text), **treure**.
 | Peons sense tres en línia | Dudeney escriu Q 4 i K 5 (notació descriptiva anglesa) | Avui es fa servir la notació algebraica | **Ja adaptat:** d4 i e5 |
 | Inspeccionant una mina | Furlongs (≈ 201 m) | Unitat desconeguda | Explicar (bombolla) o passar a «galeries de 200 metres» (la matemàtica no canvia) |
 | Inspeccionant una mina | Un inspector que baixa a una mina | Ofici poc conegut avui, però s'entén | Mantenir |
+
+## Tanda 2
+
+| Enigma | Què | Per què pot estranyar | Proposta |
+|---|---|---|---|
+| Cinc entrenadors i una barca | L'original són cinc matrimonis i uns «marits gelosos» que no deixen la dona sola amb un altre home | Gelosia i control de la parella: avui no és un bon model | **Ja modernitzat:** cinc entrenadors que no deixen la seva estrella amb un altre entrenador, per por que la fitxi (decidit a la selecció; la regla i la matemàtica són les mateixes). A l'enunciat s'avisa del canvi |
+| Cinc entrenadors i una barca | «Estrella» d'un equip; entrenadors que es «roben» jugadors | Pot semblar estrany que una persona adulta no pugui estar amb qui vulgui | Mantenir (és clarament un joc); alternativa: cinc pastors i cinc gossos d'atura |
+| El tresor del castell | Uns lladres (un home, un jove i un noi petit) es fan famosos per robar un tresor | Presenta un robatori com una gesta enginyosa, amb un nen entre els lladres | Mantenir (és una història d'aventures de castell) o canviar-ho per una família que fuig d'un incendi amb el seu cofre |
+| El tresor del castell | Lliures (≈ 0,45 kg); baixar «de cop» en una cistella | Unitat desconeguda; els pesos de les persones | Explicar (bombolla); en kg els nombres no quedarien rodons |
+| El trencaclosques de Twickenham | Twickenham, una població del costat de Londres | El nom no diu res | **Ja explicat** a la nota de pantalla |
+| Les lletres a la capsa | «El nostre vell amic, el trencaclosques del 15» | Avui el «15» és poc conegut (tot i que surt en molts mòbils) | Explicar: una frase sobre el joc de les quinze fitxes que llisquen |
+| Les quatre granotes | Granotes sobre bolets; «cavalls d'escacs» a la solució | S'entén | Mantenir |
+| El trencaclosques del mariner | Un mariner que comercia per les illes del Pacífic, «per raons comercials» | Context colonial de l'època, però sense cap estereotip | Mantenir |
+| La volta de la torre | La casella d5 | Dudeney no l'anomena: només la dibuixa | **Ja adaptat:** l'anomenem d5 (notació algebraica) |
+

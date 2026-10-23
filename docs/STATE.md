@@ -3,14 +3,14 @@
 Static vanilla-JS site with Henry E. Dudeney's puzzles translated into Catalan, playable on screen and printable
 in B/W. Target: 50 puzzles (`docs/SELECCIO.md`); the user approved the selection on 2026-10-23. Delivered so far:
 sample v1 with 14 puzzles (2 per type), shipped as `dudeney-mostra-v1.zip`; batch 1 (6 puzzles, 20 in total),
-shipped as `dudeney-tanda1.zip`. Work now proceeds in batches of 6–8
-puzzles; each batch ends with a ZIP and waits for the user's review.
+shipped as `dudeney-tanda1.zip`; batch 2 (7 puzzles, 27 in total), shipped as a pull request to `main`. Work now
+proceeds in batches of 6–8 puzzles; each batch ends with a delivery (see §1) and waits for the user's review.
 
 ## 0. Cold start (do this first)
 
-1. Clone `step-quiz/dudeney` and check that this file lists batch 1 as delivered and that
-   `node tests/motors.test.js` reports 75 checks, 0 errors (~15 s). If not, the user has not uploaded
-   `dudeney-tanda1.zip` yet: ask them to (see §1 for the upload flow).
+1. Clone `step-quiz/dudeney` and check that this file lists batch 2 as delivered and that
+   `node tests/motors.test.js` reports 106 checks, 0 errors (~15 s). If not, the batch 2 pull request has not been
+   merged yet: ask the user to merge it (or to upload the ZIP, see §1).
 2. Get the source books (public domain; never commit them, `src/` is git-ignored). Download the **EPUB with
    images** of each book from Project Gutenberg and save it with exactly this name:
    - `src/amusements-in-mathematics-1917.epub` ← <https://www.gutenberg.org/ebooks/16713>
@@ -30,11 +30,12 @@ puzzles; each batch ends with a ZIP and waits for the user's review.
 
 - Talk to the user (David, maths teacher, Catalonia) **in Catalan**. All student-facing text is Catalan.
   Markdown documents addressed to an AI (this file): English, technical.
-- Delivery = a ZIP whose root is the repo root (no wrapping folder). The user uploads it to `_uploads/`;
-  `.github/workflows/unzip-upload.yml` extracts it and commits. Exclude `src/`, `.git/`, `.github/`, `_uploads/`.
-  Give numbered, copy-paste steps for anything the user must do on GitHub.
-- The session has **no push access** to `step-quiz/dudeney` (proxy 403); commit locally only (branch
-  `mostra-14`), never claim a push happened. Never use `[skip ci]`, `[ci skip]`, `[cf-pages-skip]`.
+- Delivery (decided 2026-10-23, batch 2): commit on the session's designated `claude/…` branch, push it and open a
+  **pull request to `main`**; give the user the link (they merge it themselves). Batch 2 sessions could push; if a
+  push fails (proxy 403), fall back to a ZIP whose root is the repo root (no wrapping folder): the user uploads it to
+  `_uploads/` and `.github/workflows/unzip-upload.yml` extracts it and commits. Exclude `src/`, `.git/`, `.github/`,
+  `_uploads/`. Give numbered, copy-paste steps for anything the user must do on GitHub. Never claim a push that did
+  not happen. Never use `[skip ci]`, `[ci skip]`, `[cf-pages-skip]` (Cloudflare Pages would not publish).
 - Legal: only Dudeney's public-domain books (*The Canterbury Puzzles* 1907 = `cp`, *Amusements in
   Mathematics* 1917 = `am`). EPUBs live in `src/` (git-ignored, never shipped). Do not redistribute Project
   Gutenberg files or use the PG trademark; «text original consultat a Project Gutenberg» in credits is fine.
@@ -93,6 +94,26 @@ puzzles; each batch ends with a ZIP and waits for the user's review.
     comenca, noVei, resolt, visitat}; figure option `inici:true` highlights the start.
   - Plates on `index.html` call `figura(p, { cavalls: 'exemple', vinyeta: true })` for every puzzle: a new board
     must not show the solution there.
+- Boards and options added in batch 2:
+  - `cercle` (fitxes, AM 217): counters on a ring, `inicial` (index 0 = bottom, clockwise), `negres` (letters that
+    go clockwise; the rest go anticlockwise), `paraula`, `minim`, `solucio` (letters). Engine `MotorFitxes.cercle`.
+  - `blocs` (fitxes, AM 219): sliding blocks, `cols`, `inicial`/`objectiu` as strings with `_` = hole. The minimum is
+    not shown until reached (Dudeney withholds it). Engine `MotorFitxes.blocs`.
+  - `xarxa` (fitxes, AM 341): counters on a graph (`posicions` grid, `arestes`, 1-based), counts moves and *plays*
+    (`MotorFitxes.xarxa.jugades`); «Desembolica els fils» animates to the `cercle` layout (Dudeney's buttons and
+    strings). Its SVG class is `bolets-svg` (`xarxa-svg` was already taken by the aritmètica net).
+  - `barca`: `places` (max people, no weights) + rule of pairs: passengers with `cap: true` and `parella: <index of
+    their cap>`; a `parella` may not be with another `cap` unless its own is present (boat and both banks). Texts in
+    `dades.textos.barca/riba` with `{qui} {amb} {seu} {riba}`; `textResolt`, `textFinal`, `etiqueta`. More than 5
+    passengers → two rows per bank. Figures `entrenador`, `jugador`, `jove`.
+  - `politja` (mesures, AM 377): pulley with two baskets; `objectes` [{pes, persona, figura ('cofre' for the
+    treasure)}], `diferencia`, `maxim`. Engine `MotorMesurar.politja`.
+  - `hamilton`: `estil: 'illes'`, `vista` (explicit viewBox), `corbes` {'A-B': [[x, y]] (quadratic) or two points
+    (cubic)}, keyed by `MotorCamins.claAresta` with the control points in that order; `tard` + `llocTard`: the cycle
+    only counts as solved if that vertex is at that position (AM 249); all hamilton texts via `dades.textos`.
+  - `torre` (camins data, drawn in `js/escacs/tauler.js`, AM 320): rook tour, squares in algebraic notation; engine
+    `MotorCamins.passosTorre/motiuTorre/voltesTorre`.
+  - `Comu.llista(['a','b','c'])` → «a, b i c».
 - Interaction triad everywhere: drag (`Comu.arrossega`, Pointer Events, 6 px threshold), tap-tap, keyboard.
   `Comu.historial` for undo, `Comu.reprodueix` for solution replay.
 - Print: `imprimir/enigmes.html` (cover + one fixed A4 `.full` per puzzle: statement, figure, paper rule from
@@ -136,6 +157,13 @@ puzzles; each batch ends with a ZIP and waits for the user's review.
 - `imprimir.js` has per-board special cases (e.g. `salts` final figure via `dades.final`); check the solutions
   PDF page of every new puzzle.
 - Catalan typography: apostrophe `’`, quotes «», thin space only for numbers > 4 digits (`Comu.nombre`).
+- Check new CSS class names against all of `css/` and `js/` first (`fil`, `cara`, `capsa`, `mostra`, `xarxa-svg`
+  were already used elsewhere).
+- Never animate (`C.anima(…, 'sacseja')`) an SVG group that is positioned with `style.transform`: the animation
+  overrides the position. Animate an inner group instead.
+- Print: any fixed colour (not a token), even a near-black like `#1d232c`, fails `comprova-pdf.py`; add a print
+  override in `css/imprimir.css`. `genera-pdf.js` does not catch every overflow: look at the new pages.
+- Do not repeat the board as a `figuraEnunciat` (it is shown right above the board); print uses `figura()` anyway.
 
 ## 4. Status
 
@@ -143,9 +171,12 @@ puzzles; each batch ends with a ZIP and waits for the user's review.
 |---|---|---|
 | Sample v1 | cp-26, am-174, cp-1, am-214, am-365, am-373, am-300, am-319, am-242, am-243, am-399, am-304, am-113, cp-75 | delivered |
 | Batch 1 | am-216 `granotes-gots`, am-362 `bol`, am-297 `alfils`, am-298 `alfils-protegits`, am-317 `peons`, am-247 `mina` | delivered (awaiting review) |
-| Batch 2 | proposal: am-217, am-219, am-341, am-375 (neutralise «jealous husbands»), am-377, am-249 (sailor), am-320 | next — confirm the list with the user first |
+| Batch 2 | am-217 `twickenham`, am-219 `lletres`, am-341 `quatre-granotes`, am-375 `entrenadors` (jealous husbands → football coaches and their stars), am-377 `tresor`, am-249 `mariner`, am-320 `torre` | delivered as a PR (awaiting review) |
+| Batch 3 | proposal: am-146, am-147, am-151 (easy dissections), am-221 (eight engines), am-245 (fly on the octahedron, 1488), am-406 (dominoes), am-347 (rectangles), cp-38 (amulet) | next — confirm the list with the user first |
 | Remaining | see `docs/SELECCIO.md` | pending |
 
-Known open points: `tests/motors.test.js` takes ~15 s (exhaustive bishop searches); 249 (sailor) postponed (curved
-routes need careful transcription); `imprimir/solucions.pdf` is publicly reachable if its URL is known; the boat board has a
+Known open points: `tests/motors.test.js` takes ~15 s (exhaustive bishop searches); the count of 16-move rook tours
+(16) takes ~14 s in JS, so the test only checks that there are none of 10–14 moves (the 16 was counted with a C
+search, ~4 s); the print cover (index table) holds ~30 rows: with 50 puzzles it will need two columns or a smaller
+font; `imprimir/solucions.pdf` is publicly reachable if its URL is known; the boat board has a
 compact two-row layout under 520 px; `docs/update.md` proposals await the user's decisions.

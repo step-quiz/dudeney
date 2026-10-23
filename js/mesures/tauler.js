@@ -12,8 +12,13 @@
  *   - Taulers.barca: dues ribes, un rierol i una barca amb un pes màxim
  *     (AM 373). Es pugen i es baixen els passatgers tocant-los (o
  *     arrossegant-los) i «Travessa» porta la barca a l'altra riba.
- *   Tots dos compten els passos, tenen «Desfés» i la solució pas a pas.
- * ARQUITECTURA: window.Taulers.gerres / .barca = { crea(lloc, p, ctx), figura(p) }.
+ *     Amb dades.places (AM 375) la barca porta persones en lloc de pes, i la
+ *     regla de parelles s'explica amb dades.textos.
+ *   - Taulers.politja: la finestra del castell, una politja i dues cistelles
+ *     (AM 377). Es carreguen les cistelles tocant les figures i «Deixa anar»
+ *     fa baixar la que pesa més, si no va massa de pressa.
+ *   Tots compten els passos, tenen «Desfés» i la solució pas a pas.
+ * ARQUITECTURA: window.Taulers.gerres / .barca / .politja = { crea(lloc, p, ctx), figura(p) }.
  *   Les regles són al motor (js/mesures/motor.js).
  * DEPENDÈNCIES: js/comu/comu.js, js/mesures/motor.js
  * ============================================================================
@@ -399,7 +404,25 @@
      * La geometria de l'escena. Ampla: tothom en una filera a cada riba. Estreta (mòbils): dues fileres
      * a cada riba i una barca més petita, perquè les figures no quedin diminutes.
      */
-    function geometriaBarca(estreta) {
+    function geometriaBarca(estreta, n) {
+        if (n > 5) {
+            // Molts passatgers (AM 375): dues fileres a cada riba (els caps al fons, les parelles davant)
+            const BW = estreta ? 600 : 920,
+                RIBA = estreta ? 196 : 296,
+                LB = estreta ? 130 : 170,
+                PAS = estreta ? 37 : 56,
+                X0 = estreta ? 22 : 34;
+            return {
+                BW, BH: 350, RIBA, TERRA: 176, LB, escala: estreta ? 1.05 : 1.18,
+                MOLL: [RIBA + 4, BW - RIBA - 4 - LB],
+                lloc: (i, costat) => {
+                    const col = i % 5,
+                        fila = Math.floor(i / 5);
+                    const x = X0 + col * PAS + (fila ? PAS / 2 : 0);
+                    return [costat ? BW - RIBA + x - 12 : x, fila ? 292 : 176];
+                },
+            };
+        }
         if (!estreta) {
             const BW = 920,
                 RIBA = 296,
@@ -425,9 +448,9 @@
         };
     }
 
-    function figuraPassatger(tipus, pare) {
+    function figuraPassatger(tipus, pare, escala = 1.28) {
         const g = C.svg('g', { class: 'figura ' + tipus }, pare);
-        g.style.transform = 'scale(1.28)';
+        g.style.transform = `scale(${escala})`;
         if (tipus === 'gos') {
             C.svg(
                 'path',
@@ -440,10 +463,13 @@
             C.svg('circle', { class: 'ull', cx: 23, cy: -21, r: 1.8 }, g);
             return g;
         }
-        const k = tipus === 'nen' ? 0.78 : 1;
+        const k = tipus === 'nen' ? 0.78 : tipus === 'jugador' || tipus === 'jove' ? 0.9 : 1;
         const cap = C.svg('g', null, g);
         cap.style.transform = `scale(${k})`;
         C.svg('circle', { class: 'cap', cx: 0, cy: -54, r: 10 }, cap);
+        // l'entrenador porta gorra; el jugador, una pilota als peus
+        if (tipus === 'entrenador') C.svg('path', { class: 'gorra', d: 'M-10 -57 Q-10 -66 0 -66 Q10 -66 10 -57 L17 -56 L-10 -56 Z' }, cap);
+        if (tipus === 'jugador') C.svg('circle', { class: 'pilota', cx: 17, cy: -6, r: 6 }, cap);
         C.svg(
             'path',
             {
@@ -459,7 +485,7 @@
     }
 
     function dibuixaBarca(d, opcions = {}) {
-        const G = geometriaBarca(!!opcions.estreta);
+        const G = geometriaBarca(!!opcions.estreta, d.passatgers.length);
         const { BW, BH, RIBA, TERRA, MOLL, LB } = G;
         const TOP = opcions.estreta ? 140 : TERRA;
         const s = C.svg('svg', {
@@ -495,7 +521,12 @@
         const figures = d.passatgers.map((q, i) => {
             const g = C.svg('g', { 'class': 'passatger', 'data-i': i }, capa);
             C.svg('rect', { class: 'zona', x: -28, y: -88, width: 56, height: 104 }, g);
-            figuraPassatger(q.figura, g);
+            figuraPassatger(q.figura, g, G.escala);
+            if (q.pes === undefined) {
+                // sense pesos (AM 375): la lletra al pit
+                C.svg('text', { 'class': 'pes lletra-passatger', 'x': 0, 'y': -20 * (G.escala || 1.28) / 1.28, 'text': q.curt }, g);
+                return g;
+            }
             const yPes = q.figura === 'gos' ? 16 : q.figura === 'nen' ? -16 : -22;
             C.svg('text', { 'class': 'pes', 'x': 0, 'y': yPes, 'text': q.pes }, g);
             C.svg('text', { 'class': 'nom-passatger', 'x': 0, 'y': q.figura === 'gos' ? 31 : 17, 'text': q.curt }, g);
@@ -507,14 +538,17 @@
             const xb = MOLL[estat.barca];
             barca.style.transform = `translate(${xb}px, ${TERRA - 4}px)`;
             const dinsBarca = aBord.slice();
-            const pes = dinsBarca.reduce((t, i) => t + d.passatgers[i].pes, 0);
-            carrega.textContent = dinsBarca.length ? `${pes} / ${d.capacitat}` : '';
-            carrega.classList.toggle('massa', pes > d.capacitat);
+            if (d.places) carrega.textContent = dinsBarca.length ? `${dinsBarca.length} / ${d.places}` : '';
+            else {
+                const pes = dinsBarca.reduce((t, i) => t + d.passatgers[i].pes, 0);
+                carrega.textContent = dinsBarca.length ? `${pes} / ${d.capacitat}` : '';
+                carrega.classList.toggle('massa', pes > d.capacitat);
+            }
             d.passatgers.forEach((q, i) => {
                 const k = dinsBarca.indexOf(i);
                 let x, y;
                 if (k >= 0) {
-                    x = xb + LB * 0.3 + k * LB * 0.39;
+                    x = d.places ? xb + LB * (0.5 + (k - (d.places - 1) / 2) * 0.3) : xb + LB * 0.3 + k * LB * 0.39;
                     y = TERRA + 6;
                 } else [x, y] = lloc(i, estat.costat[i]);
                 figures[i].style.transform = `translate(${x}px, ${y}px)`;
@@ -525,9 +559,9 @@
     }
 
     function figuraBarca(p, opcions = {}) {
-        const D = dibuixaBarca(p.dades, { estatic: true, etiqueta: 'Tota la família i el gos, a la riba de l’esquerra' });
+        const D = dibuixaBarca(p.dades, { estatic: true, etiqueta: p.dades.etiqueta || 'Tota la família i el gos, a la riba de l’esquerra' });
         D.posa(M.barca.inicial(p.dades.passatgers), []);
-        if (opcions.vinyeta) D.svg.setAttribute('viewBox', `0 66 770 204`);
+        if (opcions.vinyeta) D.svg.setAttribute('viewBox', p.dades.passatgers.length > 5 ? `0 60 640 290` : `0 66 770 204`);
         return D.svg;
     }
 
@@ -537,6 +571,7 @@
         const hist = C.historial(x => ({ estat: { costat: x.estat.costat.slice(), barca: x.estat.barca }, travessies: x.travessies }));
         const caixa = C.el('div', { class: 'tauler barca-joc' });
         const D = dibuixaBarca(d, { estreta: lloc.clientWidth < 520 });
+        const unitat = d.places ? null : d.unitat;
         const boto = C.el('button', { type: 'button', class: 'btn-principal boto-travessa' });
         const pesText = C.el('p', { 'class': 'pes-barca', 'aria-live': 'polite' });
         caixa.append(D.svg, C.el('div', { class: 'eines-tauler' }, pesText, boto));
@@ -590,12 +625,21 @@
         function pes() {
             return aBord.reduce((t, i) => t + d.passatgers[i].pes, 0);
         }
+        /** Els textos de la regla de parelles: {qui}, {amb}, {seu} i {riba} es canvien pels noms. */
+        function omple(t, qui, amb, riba) {
+            const P = d.passatgers;
+            return t
+                .replace('{qui}', P[qui].nom)
+                .replace('{amb}', P[amb].nom)
+                .replace('{seu}', P[P[qui].parella].nom)
+                .replace('{riba}', riba === 0 ? 'a aquesta riba' : 'a l’altra riba');
+        }
         function pinta() {
             D.posa(estat, aBord);
             D.figures.forEach((g, i) => {
                 const q = d.passatgers[i];
                 const on = aBord.includes(i) ? 'a la barca' : estat.costat[i] ? 'a l’altra riba' : 'a aquesta riba';
-                g.setAttribute('aria-label', `${q.nom}, ${q.pes} ${d.unitat}, ${on}`);
+                g.setAttribute('aria-label', unitat ? `${q.nom}, ${q.pes} ${unitat}, ${on}` : `${q.nom}, ${on}`);
                 g.classList.toggle('lluny', !aBord.includes(i) && estat.costat[i] !== estat.barca);
             });
             const p0 = pes();
@@ -605,8 +649,8 @@
                           'span',
                           null,
                           'A la barca: ',
-                          C.el('b', { text: aBord.map(i => d.passatgers[i].curt).join(' i ') }),
-                          ` (${p0} de ${d.capacitat} ${d.unitat})`
+                          C.el('b', { text: C.llista(aBord.map(i => d.passatgers[i].curt)) }),
+                          unitat ? ` (${p0} de ${d.capacitat} ${unitat})` : ` (${aBord.length} de ${d.places} places)`
                       )
                     : C.el('span', { text: 'La barca és buida.' })
             );
@@ -631,7 +675,12 @@
                 C.anima(D.figures[i], 'sacseja');
                 return;
             }
-            if (pes() + q.pes > d.capacitat) {
+            if (d.places && aBord.length >= d.places) {
+                ctx.missatge('error', 'No hi cap', [`La barca només porta ${d.places} persones.`]);
+                C.anima(D.figures[i], 'sacseja');
+                return;
+            }
+            if (d.capacitat && pes() + q.pes > d.capacitat) {
                 ctx.missatge('error', 'No hi cap', [
                     `${aBord.map(j => d.passatgers[j].pes).join(' + ')} + ${q.pes} = ${pes() + q.pes} ${d.unitat}: la barca només n’aguanta ${d.capacitat}.`,
                 ]);
@@ -653,6 +702,18 @@
             }
             if (motiu === 'rem') {
                 ctx.missatge('error', 'Ningú no rema', ['El gos no sap remar: hi ha d’anar algú amb ell.']);
+                C.anima(D.barca, 'sacseja');
+                return;
+            }
+            if (motiu === 'parella-barca') {
+                const [qui, amb] = M.barca.conflicte(d, aBord);
+                ctx.missatge('error', 'Així no!', [omple(d.textos.barca, qui, amb)]);
+                C.anima(D.barca, 'sacseja');
+                return;
+            }
+            if (motiu === 'parella-riba') {
+                const x = M.barca.conflicteRibes(estat, d, aBord);
+                ctx.missatge('error', 'Així no!', [omple(d.textos.riba, x.qui, x.amb, x.riba)]);
                 C.anima(D.barca, 'sacseja');
                 return;
             }
@@ -682,14 +743,18 @@
         function revisa() {
             if (!M.barca.resolt(estat)) return;
             if (travessies === d.solucio.length)
-                ctx.resolt(`${travessies} travessies: el mínim!`, ['Tota la família i el gos, a l’altra riba.']);
+                ctx.resolt(`${travessies} travessies: el mínim!`, [d.textResolt || 'Tota la família i el gos, a l’altra riba.']);
             else
                 ctx.missatge('info', `Ho has fet en ${travessies} travessies`, [
                     `Es pot fer en ${d.solucio.length}. Ho tornes a provar?`,
                 ]);
         }
         function tecla(e) {
-            if (e.key >= '1' && e.key <= String(d.passatgers.length)) {
+            const perLletra = d.passatgers.findIndex(q => d.places && q.curt === e.key);
+            if (perLletra >= 0) {
+                e.preventDefault();
+                toca(perLletra);
+            } else if (!d.places && e.key >= '1' && e.key <= String(d.passatgers.length)) {
                 e.preventDefault();
                 toca(+e.key - 1);
             } else if (e.key === 'Enter' || e.key === ' ') {
@@ -720,7 +785,7 @@
         return {
             reinicia: inicia,
             desfes,
-            textSolucio: '▶ Mira-la al tauler (11 travessies)',
+            textSolucio: `▶ Mira-la al tauler (${d.solucio.length} travessies)`,
             solucio() {
                 inicia();
                 reproduccio = C.reprodueix(
@@ -735,7 +800,7 @@
                         setTimeout(
                             () =>
                                 ctx.missatge('info', 'Així ho fa Dudeney', [
-                                    'Onze travessies: els fills fan anar i venir la barca.',
+                                    d.textFinal || 'Onze travessies: els fills fan anar i venir la barca.',
                                 ]),
                             1000
                         )
@@ -745,6 +810,294 @@
         };
     }
 
+    // ════════════════════════════════════════════════════════════
+    // POLITJA: les dues cistelles del castell (AM 377)
+    // dades: objectes [{ id, nom, curt, pes, persona, figura }], diferencia, maxim, unitat,
+    // solucio [[dalt], [baix]] (índexs dels objectes que van a cada cistella).
+    // ════════════════════════════════════════════════════════════
+    const POL = { W: 560, H: 540, FINESTRA: 196, TERRA: 500, CX: 380, R: 62, CY: 52, LC: 104 };
+    const xCistella = k => POL.CX + (k ? POL.R : -POL.R);
+
+    function figuraCofre(pare) {
+        const g = C.svg('g', { class: 'figura cofre' }, pare);
+        C.svg('rect', { class: 'caixa-cofre', x: -20, y: -24, width: 40, height: 24, rx: 3 }, g);
+        C.svg('path', { class: 'tapa-cofre', d: 'M-20 -24 Q-20 -36 0 -36 Q20 -36 20 -24 Z' }, g);
+        C.svg('rect', { class: 'pany', x: -4, y: -27, width: 8, height: 9, rx: 1.5 }, g);
+        return g;
+    }
+
+    function dibuixaPolitja(d, opcions = {}) {
+        const { W, H, FINESTRA, TERRA, CX, R, CY, LC } = POL;
+        const s = C.svg('svg', {
+            'class': 'tauler-svg politja-svg',
+            'viewBox': `0 0 ${W} ${H}`,
+            'role': opcions.estatic ? 'img' : 'group',
+            'aria-label': opcions.etiqueta || d.etiqueta,
+        });
+        // La paret del castell, amb la finestra oberta (es veu qui hi ha dins) i el terra
+        C.svg('path', { class: 'mur', d: `M0 0 H${CX - R - LC / 2 - 14} V${TERRA} H0 Z` }, s);
+        for (let y = 30; y < TERRA; y += 34)
+            C.svg('path', { class: 'junta', d: `M0 ${y} H${CX - R - LC / 2 - 14}` }, s);
+        C.svg('rect', { class: 'finestra', x: 12, y: FINESTRA - 150, width: CX - R - LC / 2 - 40, height: 150, rx: 8 }, s);
+        C.svg('rect', { class: 'ampit', x: 4, y: FINESTRA, width: CX - R - LC / 2 - 14, height: 10 }, s);
+        C.svg('rect', { class: 'terra', x: 0, y: TERRA, width: W, height: H - TERRA }, s);
+        C.svg('text', { 'class': 'nom-lloc', 'x': 20, 'y': FINESTRA - 132, 'text': 'la finestra' }, s);
+        C.svg('text', { 'class': 'nom-lloc', 'x': W - 70, 'y': H - 14, 'text': 'a terra' }, s);
+        // La politja i les dues cistelles
+        C.svg('path', { class: 'biga', d: `M${CX - R - LC / 2 - 14} ${CY - 34} H${CX + 20} V${CY}` }, s);
+        C.svg('circle', { class: 'roda', cx: CX, cy: CY, r: R }, s);
+        C.svg('circle', { class: 'eix', cx: CX, cy: CY, r: 6 }, s);
+        const cordes = [0, 1].map(() => C.svg('line', { class: 'corda' }, s));
+        const cistelles = [0, 1].map(k => {
+            const g = C.svg('g', { 'class': 'cistella', 'data-k': k }, s);
+            C.svg('path', { class: 'nanses', d: `M${-LC / 2} -70 L0 -112 L${LC / 2} -70` }, g);
+            C.svg('path', { class: 'cove', d: `M${-LC / 2} -70 H${LC / 2} L${LC / 2 - 10} 0 H${-LC / 2 + 10} Z` }, g);
+            C.svg('path', { class: 'trena', d: `M${-LC / 2 + 4} -48 H${LC / 2 - 4} M${-LC / 2 + 7} -24 H${LC / 2 - 7}` }, g);
+            return g;
+        });
+        const pesos = [0, 1].map(() => C.svg('text', { class: 'pes-cistella' }, s));
+        // Els objectes (persones i el tresor)
+        const capa = C.svg('g', { class: 'objectes' }, s);
+        const figures = d.objectes.map((q, i) => {
+            const g = C.svg('g', { 'class': 'objecte', 'data-i': i }, capa);
+            C.svg('rect', { class: 'zona', x: -28, y: -92, width: 56, height: 100 }, g);
+            if (q.figura === 'cofre') figuraCofre(g);
+            else figuraPassatger(q.figura, g, 1.2);
+            C.svg('text', { 'class': 'pes', 'x': 0, 'y': q.figura === 'cofre' ? -8 : q.figura === 'nen' ? -16 : -21, 'text': q.pes }, g);
+            C.svg('text', { 'class': 'nom-passatger', 'x': 0, 'y': 26, 'text': q.curt }, g);
+            return g;
+        });
+        /** Col·loca-ho tot: carregat = [[a la cistella de dalt], [a la de baix]]. */
+        function posa(estat, carregat = [[], []]) {
+            // la cistella que és a dalt penja a l'alçada de la finestra
+            const yCist = k => (k === estat.dalt ? FINESTRA + 4 : TERRA - 4);
+            [0, 1].forEach(k => {
+                const y = yCist(k);
+                cistelles[k].style.transform = `translate(${xCistella(k)}px, ${y}px)`;
+                cordes[k].setAttribute('x1', xCistella(k));
+                cordes[k].setAttribute('y1', CY);
+                cordes[k].setAttribute('x2', xCistella(k));
+                cordes[k].setAttribute('y2', y - 112);
+                const grup = carregat[k === estat.dalt ? 0 : 1];
+                const pes = grup.reduce((t, i) => t + d.objectes[i].pes, 0);
+                pesos[k].textContent = grup.length ? `${pes} ${d.unitat}` : '';
+                pesos[k].setAttribute('x', xCistella(k));
+                pesos[k].setAttribute('y', y + 22);
+            });
+            const fora = [0, 0];
+            d.objectes.forEach((q, i) => {
+                const l = estat.lloc[i];
+                const grup = carregat[l];
+                const k = grup.indexOf(i);
+                let x, y;
+                if (k >= 0) {
+                    const c = l === 0 ? estat.dalt : 1 - estat.dalt;
+                    x = xCistella(c) + (grup.length === 1 ? 0 : k ? 22 : -22);
+                    y = (l === 0 ? FINESTRA : TERRA) - 26;
+                } else {
+                    x = 42 + fora[l] * 56;
+                    y = l === 0 ? FINESTRA : TERRA;
+                    fora[l]++;
+                }
+                figures[i].style.transform = `translate(${x}px, ${y}px)`;
+                figures[i].classList.toggle('a-bord', k >= 0);
+            });
+        }
+        return { svg: s, figures, cistelles, posa };
+    }
+
+    function figuraPolitja(p) {
+        const D = dibuixaPolitja(p.dades, { estatic: true });
+        D.posa(M.politja.inicial(p.dades));
+        return D.svg;
+    }
+
+    function creaPolitja(lloc, p, ctx) {
+        const d = p.dades;
+        let estat, carregat, passos, reproduccio, ocupat = false;
+        const hist = C.historial(x => ({ estat: { lloc: x.estat.lloc.slice(), dalt: x.estat.dalt }, passos: x.passos }));
+        const caixa = C.el('div', { class: 'tauler politja' });
+        const D = dibuixaPolitja(d);
+        const boto = C.el('button', { type: 'button', class: 'btn-principal boto-travessa', text: 'Deixa anar les cistelles' });
+        const text = C.el('p', { 'class': 'pes-barca', 'aria-live': 'polite' });
+        caixa.append(D.svg, C.el('div', { class: 'eines-tauler' }, text, boto));
+        lloc.appendChild(caixa);
+        const nom = i => d.objectes[i].nom;
+
+        D.figures.forEach((g, i) => {
+            g.setAttribute('tabindex', '0');
+            g.setAttribute('role', 'button');
+            g.addEventListener('click', () => {
+                if (!C.acabaDeArrossegar()) toca(i);
+            });
+        });
+        boto.addEventListener('click', deixa);
+        C.arrossega(D.svg, {
+            inici: e => {
+                const g = e.target.closest('.objecte');
+                if (!g || ocupat) return null;
+                atura();
+                return { i: +g.dataset.i };
+            },
+            comenca: c => D.figures[c.i].classList.add('arrossegat'),
+            mou: (c, e) => {
+                const q = C.coords(D.svg, e.clientX, e.clientY - (c.tactil ? 30 : 0));
+                D.figures[c.i].style.transform = `translate(${q.x}px, ${q.y + 30}px)`;
+            },
+            deixa: (c, e) => {
+                D.figures[c.i].classList.remove('arrossegat');
+                const q = C.coords(D.svg, e.clientX, e.clientY - (c.tactil ? 30 : 0));
+                const l = estat.lloc[c.i];
+                const xc = xCistella(l === 0 ? estat.dalt : 1 - estat.dalt);
+                const sobre = Math.abs(q.x - xc) < POL.LC / 2 + 20;
+                if (sobre !== carregat[l].includes(c.i)) toca(c.i);
+                else pinta();
+            },
+            cancela: c => {
+                D.figures[c.i].classList.remove('arrossegat');
+                pinta();
+            },
+        });
+        caixa.addEventListener('keydown', e => {
+            if (e.key >= '1' && e.key <= String(d.objectes.length)) {
+                e.preventDefault();
+                toca(+e.key - 1);
+            } else if (e.key === 'Enter' || e.key === ' ') {
+                const g = e.target.closest && e.target.closest('.objecte');
+                e.preventDefault();
+                if (g && e.key === ' ') toca(+g.dataset.i);
+                else deixa();
+            } else if (e.key === 'Backspace') {
+                e.preventDefault();
+                desfes();
+            }
+        });
+
+        function inicia() {
+            atura();
+            estat = M.politja.inicial(d);
+            carregat = [[], []];
+            passos = 0;
+            ocupat = false;
+            hist.buida();
+            pinta();
+        }
+        function pinta() {
+            D.posa(estat, carregat);
+            D.figures.forEach((g, i) => {
+                const on = carregat[estat.lloc[i]].includes(i) ? 'a la cistella' : estat.lloc[i] ? 'a terra' : 'a la finestra';
+                g.setAttribute('aria-label', `${nom(i)}, ${d.objectes[i].pes} ${d.unitat}, ${on}`);
+            });
+            const desc = l => (carregat[l].length ? C.llista(carregat[l].map(i => d.objectes[i].curt)) + ` (${M.politja.pes(d, carregat[l])})` : 'res');
+            text.replaceChildren(C.el('span', null, 'Cistella de dalt: ', C.el('b', { text: desc(0) }), ' · de baix: ', C.el('b', { text: desc(1) })));
+            boto.disabled = ocupat;
+            ctx.estat([C.el('span', null, `${d.nomPassos}: `, C.el('b', { text: passos }))]);
+            ctx.desfes(hist.mida > 0 && !ocupat);
+        }
+        function toca(i) {
+            if (ocupat) return;
+            atura();
+            const l = estat.lloc[i];
+            const k = carregat[l].indexOf(i);
+            if (k >= 0) carregat[l].splice(k, 1);
+            else if (carregat[l].length >= d.maxim) {
+                ctx.missatge('error', 'No hi cap', [`A cada cistella només hi caben dues persones, o una persona i el tresor.`]);
+                C.anima(D.figures[i], 'sacseja');
+                return;
+            } else carregat[l].push(i);
+            ctx.amaga();
+            pinta();
+        }
+        function deixa() {
+            if (ocupat) return;
+            atura();
+            const [dalt, baix] = carregat;
+            const motiu = M.politja.motiu(estat, d, dalt, baix);
+            const pd = M.politja.pes(d, dalt),
+                pb = M.politja.pes(d, baix);
+            if (motiu === 'buides') {
+                ctx.missatge('error', 'Les cistelles són buides', ['Posa-hi algú (o el tresor) abans de deixar-les anar.']);
+                return;
+            }
+            if (motiu === 'lleugera') {
+                ctx.missatge('error', 'No es mou res', [`La cistella de dalt (${pd} ${d.unitat}) no pesa més que la de baix (${pb} ${d.unitat}): no baixa.`]);
+                C.anima(D.cistelles[estat.dalt], 'sacseja');
+                return;
+            }
+            if (motiu === 'rapid') {
+                ctx.missatge('error', 'Massa perillós!', [
+                    `${pd} − ${pb} = ${pd - pb} ${d.unitat}: amb una persona a dins, la cistella que baixa no pot pesar més de ${d.diferencia} ${d.unitat} més que l’altra.`,
+                ]);
+                C.anima(D.cistelles[estat.dalt], 'sacseja');
+                return;
+            }
+            if (motiu) return;
+            fes(dalt.slice(), baix.slice());
+        }
+        function fes(dalt, baix, despres) {
+            hist.desa({ estat, passos });
+            ocupat = true;
+            carregat = [dalt, baix];
+            // les cistelles es creuen: el que hi ha a dins viatja amb elles
+            const nou = M.politja.baixa(estat, dalt, baix);
+            estat = { lloc: nou.lloc, dalt: nou.dalt };
+            passos++;
+            carregat = [baix.slice(), dalt.slice()];
+            ctx.amaga();
+            pinta();
+            setTimeout(
+                () => {
+                    carregat = [[], []];
+                    ocupat = false;
+                    pinta(); // tothom surt de les cistelles
+                    if (despres) despres();
+                    else revisa();
+                },
+                C.movimentReduit() ? 60 : 900
+            );
+        }
+        function revisa() {
+            if (!M.politja.resolt(estat)) return;
+            if (passos === d.solucio.length) ctx.resolt(`${passos} manipulacions: el mínim!`, [d.textResolt]);
+            else ctx.missatge('info', `Fet en ${passos} manipulacions`, [`Es pot fer en ${d.solucio.length}. Ho tornes a provar?`]);
+        }
+        function desfes() {
+            if (ocupat) return;
+            atura();
+            const ant = hist.desfes();
+            if (!ant) return;
+            ({ estat, passos } = ant);
+            carregat = [[], []];
+            ctx.amaga();
+            pinta();
+        }
+        function atura() {
+            if (reproduccio) reproduccio.atura();
+            reproduccio = null;
+        }
+        inicia();
+        return {
+            reinicia: inicia,
+            desfes,
+            textSolucio: `▶ Mira-la al tauler (${d.solucio.length} manipulacions)`,
+            solucio() {
+                inicia();
+                reproduccio = C.reprodueix(
+                    d.solucio,
+                    ([dalt, baix]) => {
+                        carregat = [dalt.slice(), baix.slice()];
+                        pinta();
+                        setTimeout(() => fes(dalt, baix, () => {}), 500);
+                    },
+                    C.movimentReduit() ? 700 : 1900,
+                    () => setTimeout(() => ctx.missatge('info', 'Així ho fa Dudeney', [d.textFinal]), 1100)
+                );
+                return reproduccio;
+            },
+        };
+    }
+
     window.Taulers.gerres = { crea: creaGerres, figura: figuraGerres };
     window.Taulers.barca = { crea: creaBarca, figura: figuraBarca };
+    window.Taulers.politja = { crea: creaPolitja, figura: figuraPolitja };
 })();

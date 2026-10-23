@@ -50,7 +50,7 @@ matemàtic» (marcat amb ⚠).
 | `am-362` | AM 362 | The Wassail Bowl | El bol de la festa | 2 | Repartir amb gerres de 5 i 3 pintes. **Es neutralitza:** cervesa → llimonada | BFS: 11 manipulacions |
 | `am-365` | AM 365 | New Measuring Puzzle | Un nou problema de mesures | 2 | Dues gerres de 10, mesures de 5 i 4 | BFS: 11 manipulacions |
 | `am-373` | AM 373 | Crossing the Stream | Travessant el rierol | 1 | Pesos a la barca (i un gos) | BFS: 11 travesses |
-| `am-375` | AM 375 | Five Jealous Husbands | Cinc parelles i una barca | 3 | El problema d’Alcuí (s. VIII), barca de 3. **Es neutralitza:** «marits gelosos» → una regla de grup equivalent, amb la mateixa matemàtica | BFS: 11 travesses |
+| `am-375` | AM 375 | Five Jealous Husbands | Cinc entrenadors i una barca | 3 | El problema d’Alcuí (s. VIII), barca de 3. **Es neutralitza:** «marits gelosos» → cinc entrenadors que no deixen la seva estrella amb un altre entrenador (la mateixa regla i la mateixa matemàtica) | BFS: 11 travesses |
 | `am-377` | AM 377 | Stealing the Castle Treasure | El tresor del castell | 2 | Politja amb dues cistelles i una diferència de pes màxima | BFS: 11 manipulacions |
 
 ## 4. Escacs (6) — posar peces al tauler
@@ -129,4 +129,5 @@ Knights’ Tours), CP 3 (The Miller’s Puzzle), CP 13 (The Man of Law’s Puzzl
 | Aprovada per l’usuari | 2026-10-23 |
 | Mostra (14, dos per tipus) | feta: cp-26, am-174, cp-1, am-214, am-365, am-373, am-300, am-319, am-242, am-243, am-399, am-304, am-113, cp-75 |
 | Tanda 1 (6) | feta: am-216, am-362, am-297, am-298, am-317, am-247 |
-| La resta (30) | pendent, per tandes de 6–8 |
+| Tanda 2 (7) | feta: am-217, am-219, am-341, am-375, am-377, am-249, am-320 |
+| La resta (23) | pendent, per tandes de 6–8 |
