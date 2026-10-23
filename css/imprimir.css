@@ -535,3 +535,14 @@ body {
     fill: none;
     stroke: #000;
 }
+.peca-fixa .cos-peca-xarxa {
+    fill: #666;
+}
+.bandolers-svg .dobla,
+.xifres-svg .casella-fig {
+    fill: #fff;
+    stroke: #000;
+}
+.bandolers-svg .inicial-bandoler {
+    fill: #000;
+}

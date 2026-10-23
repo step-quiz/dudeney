@@ -58,6 +58,14 @@
         amulet: { regla: 'Compta de quantes maneres es pot llegir ABRACADABRA, sortint de la A de dalt i baixant cada vegada a una de les dues lletres que hi ha a sota.', linia: 'Resposta:' },
         rectangles: { regla: 'Compta quants rectangles (quadrats inclosos) té el tauler d’escacs, i quants d’aquests rectangles són quadrats.', linia: 'Respostes:' },
         aranya: { regla: 'Dibuixa la sala desplegada com una capsa de cartró i traça-hi el camí recte de l’aranya. Quin és el camí més curt?' },
+        creus: { regla: 'Retalla la creu en cinc peces: una ha de ser una creu sencera més petita, i amb les altres quatre (sense girar-les del revés) n’has de fer una altra d’igual. Pista: la creu petita va una mica girada.', figura: { paper: true } },
+        mitra: { regla: 'Retalla la mitra (un quadrat sense una quarta part) en cinc peces i fes-ne un quadrat perfecte. Compte: el «principi de l’escala» no hi funciona.', figura: { paper: true } },
+        cent: { regla: 'Escriu 100 com a nombre mixt (un enter més una fracció) amb les nou xifres de l’1 al 9, una vegada cadascuna, amb una sola xifra a la part entera. Exemple, amb dues: 91 + 5742/638.', linia: 'Les teves maneres:' },
+        multiplicacio: { regla: 'Escriu dues multiplicacions amb el mateix producte fent servir les nou xifres una vegada cadascuna, com 7 × 658 = 14 × 329 = 4606. Busca el producte amb la suma de xifres més petita i el de la suma més gran.', linia: 'Producte més petit i més gran:' },
+        bandolers: { regla: 'Busca quants repartiments de 200 doblons entre els cinc bandolers (tots en tenen almenys un) fan encara 200 amb A × 12, B × 3, C × 1, D × ½ i E × ⅓, sense mitjos doblons. Fes-ho per casos.', linia: 'Resposta:' },
+        prunes: { regla: 'Escriu nou nombres diferents al quadrat perquè totes les files, columnes i diagonals sumin el mateix, i cap no es pugui repartir a parts iguals entre uns quants nens (cap divisor que no sigui 1 o ell mateix). Compte amb el parany!' },
+        compostos: { regla: 'Escriu nou nombres compostos consecutius (sense cap primer al mig), els més petits possible, en un quadrat màgic de 3 × 3.' },
+        reversible: { regla: 'Escriu setze nombres diferents (sense les xifres 3, 4 i 5) en un quadrat màgic de 4 × 4 que continuï sent màgic quan gires el full cap per avall. El 6 i el 9 s’intercanvien, i el 7 i el 2 també.' },
     };
 
     function textNet(html) {

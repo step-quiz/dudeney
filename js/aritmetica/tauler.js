@@ -14,7 +14,12 @@
  *     arrossegant, amb taulers de 1 × 1 a 8 × 8, i les respostes a escriure.
  *   - Taulers.amulet (CP 38): el triangle d'ABRACADABRA; es baixa de lletra en
  *     lletra, es compten els camins diferents i s'escriu la resposta.
- * ARQUITECTURA: window.Taulers.estripat / .caixa / .rectangles / .amulet = { crea(lloc, p, ctx), figura(p, o),
+ *   - Taulers.xifres (AM 90, AM 83): les nou xifres en una plantilla (un nombre
+ *     mixt que faci 100, o dos productes iguals), amb el compte al moment.
+ *   - Taulers.bandolers (AM 133): els doblons de cada bandoler, amb les dues
+ *     sumes; es compten els repartiments trobats i s'escriu quants n'hi ha.
+ * ARQUITECTURA: window.Taulers.estripat / .caixa / .rectangles / .amulet / .xifres / .bandolers =
+ *   { crea(lloc, p, ctx), figura(p, o),
  *   figuraSolucio(p) }. La geometria (desplegar, la recta, tornar a plegar)
  *   és a js/aritmetica/motor.js.
  * DEPENDÈNCIES: js/comu/comu.js, js/aritmetica/motor.js
@@ -803,6 +808,306 @@
         };
     }
 
+    // ════════════════════════════════════════════════════════════
+    // XIFRES: les nou xifres de l'1 al 9, una sola vegada, en una plantilla (AM 90, AM 83)
+    // dades: tipus 'cent' (a + b/c = 100) o 'producte' (a × b = c × d); plantilles [[mides dels grups]];
+    // cent: buscada [a, b, c] (la que s'ha de trobar); producte: minim i maxim (els productes de suma
+    // de xifres més petita i més gran) i dudeney (el màxim que dona Dudeney).
+    // ════════════════════════════════════════════════════════════
+    /** Una expressió de xifres en caselles (SVG): parts = [{ xifres: '91' } | { op: '+' } | { frac: ['5742', '638'] }]. */
+    function dibuixaExpressio(parts, etiqueta) {
+        const QX = 30;
+        const s = C.svg('svg', { 'class': 'tauler-svg xifres-svg', 'role': 'img', 'aria-label': etiqueta });
+        let x = 0;
+        const caselles = (t, x0, y0) =>
+            t.split('').forEach((c, i) => {
+                C.svg('rect', { class: 'casella-fig', x: x0 + i * QX, y: y0, width: QX - 4, height: QX - 4, rx: 4 }, s);
+                C.svg('text', { 'class': 'xifra-fig', 'x': x0 + i * QX + (QX - 4) / 2, 'y': y0 + (QX - 4) / 2 + 1, 'text': c }, s);
+            });
+        parts.forEach(pt => {
+            if (pt.xifres) {
+                caselles(pt.xifres, x, QX / 2 + 4);
+                x += pt.xifres.length * QX + 6;
+            } else if (pt.op) {
+                C.svg('text', { 'class': 'op-fig', 'x': x + 12, 'y': QX + 3, 'text': pt.op }, s);
+                x += 30;
+            } else {
+                const w = Math.max(pt.frac[0].length, pt.frac[1].length) * QX;
+                caselles(pt.frac[0], x + (w - pt.frac[0].length * QX) / 2, 0);
+                C.svg('line', { class: 'ratlla-fig', x1: x, y1: QX + 1, x2: x + w - 4, y2: QX + 1 }, s);
+                caselles(pt.frac[1], x + (w - pt.frac[1].length * QX) / 2, QX + 6);
+                x += w + 6;
+            }
+        });
+        s.setAttribute('viewBox', `-6 -6 ${x + 12} ${2 * QX + 18}`);
+        return s;
+    }
+    function figuraXifres(p, opcions = {}) {
+        const d = p.dades;
+        const e = opcions.solucio ? d.figuraSolucio : d.figuraExemple;
+        return dibuixaExpressio(e.parts, e.etiqueta);
+    }
+    function figuraBandolers(p) {
+        const d = p.dades;
+        const s = C.svg('svg', { 'class': 'tauler-svg bandolers-svg', 'viewBox': '0 0 240 196', 'role': 'img', 'aria-label': d.etiquetaExemple });
+        const fila = (y, cols, classe) => cols.forEach(([x, t]) => C.svg('text', { 'class': 'fila-bandoler' + (classe ? ' ' + classe : ''), 'x': x, 'y': y, 'text': t }, s));
+        d.noms.forEach((nom, i) => {
+            const y = 26 + i * 30;
+            C.svg('circle', { class: 'dobla', cx: 22, cy: y - 6, r: 13 }, s);
+            C.svg('text', { 'class': 'inicial-bandoler', 'x': 22, 'y': y - 1, 'text': nom[0] }, s);
+            fila(y, [[90, String(d.exemple[i])], [140, '× ' + d.factors[i][0]], [215, String(d.exemple[i] * d.factors[i][1])]]);
+        });
+        C.svg('line', { class: 'ratlla-fig', x1: 60, y1: 165, x2: 225, y2: 165 }, s);
+        fila(186, [[90, String(d.total)], [215, String(d.total)]], 'total');
+        return s;
+    }
+    function creaXifres(lloc, p, ctx) {
+        const d = p.dades;
+        let plantilla = 0, xifres, triat, trobades, fets;
+        const caixa = C.el('div', { class: 'tauler xifres' });
+        const triaPl = C.el('div', { 'class': 'mides-tauler', 'role': 'group', 'aria-label': 'Forma' }, C.el('span', { text: 'Forma: ' }));
+        const botonsPl = d.plantilles.map((g, k) => {
+            const b = C.el('button', { type: 'button', class: 'btn-mida', text: nomPlantilla(g) });
+            b.addEventListener('click', () => {
+                plantilla = k;
+                nou();
+            });
+            triaPl.appendChild(b);
+            return b;
+        });
+        const expressio = C.el('div', { 'class': 'expressio', 'role': 'group', 'aria-label': 'L’expressió' });
+        const compte = C.el('p', { 'class': 'compte-xifres', 'aria-live': 'polite' });
+        const paleta = C.el('div', { 'class': 'paleta-xifres', 'role': 'group', 'aria-label': 'Xifres' });
+        const botonsX = [];
+        for (let x = 1; x <= 9; x++) {
+            const b = C.el('button', { type: 'button', class: 'xifra-paleta', text: String(x) });
+            b.addEventListener('click', () => posa(x));
+            botonsX.push(b);
+            paleta.appendChild(b);
+        }
+        const llista = C.el('ul', { class: 'trobades' });
+        caixa.append(triaPl, expressio, compte, paleta, llista);
+        lloc.appendChild(caixa);
+        caixa.addEventListener('keydown', e => {
+            if (/^[1-9]$/.test(e.key)) {
+                e.preventDefault();
+                posa(+e.key);
+            } else if (e.key === 'Backspace' || e.key === 'Delete') {
+                e.preventDefault();
+                if (xifres[triat]) xifres[triat] = 0;
+                else if (triat > 0) {
+                    triat--;
+                    xifres[triat] = 0;
+                }
+                pinta();
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                e.preventDefault();
+                triat = Math.max(0, Math.min(8, triat + (e.key === 'ArrowLeft' ? -1 : 1)));
+                pinta();
+                caselles[triat].focus();
+            }
+        });
+        let caselles = [];
+
+        function nomPlantilla(g) {
+            const q = n => '▢'.repeat(n);
+            return d.tipus === 'cent' ? `${q(g[0])} + ${q(g[1])}/${q(g[2])}` : `${q(g[0])} × ${q(g[1])} = ${q(g[2])} × ${q(g[3])}`;
+        }
+        function nou() {
+            xifres = new Array(9).fill(0);
+            triat = 0;
+            munta();
+            pinta();
+        }
+        function munta() {
+            const g = d.plantilles[plantilla];
+            botonsPl.forEach((b, k) => b.classList.toggle('actiu', k === plantilla));
+            caselles = [];
+            let k = 0;
+            const grup = n => {
+                const e = C.el('span', { class: 'grup-xifres' });
+                for (let j = 0; j < n; j++) {
+                    const i = k++;
+                    const b = C.el('button', { 'type': 'button', 'class': 'casella-xifra', 'data-i': i });
+                    b.addEventListener('click', () => {
+                        if (triat === i && xifres[i]) xifres[i] = 0;
+                        triat = i;
+                        pinta();
+                    });
+                    caselles.push(b);
+                    e.appendChild(b);
+                }
+                return e;
+            };
+            if (d.tipus === 'cent') {
+                const a = grup(g[0]);
+                const frac = C.el('span', { class: 'frac-xifres' }, grup(g[1]), grup(g[2]));
+                expressio.replaceChildren(a, C.el('span', { class: 'op', text: '+' }), frac, C.el('span', { class: 'op', text: '= 100 ?' }));
+            } else {
+                const ns = g.map(grup);
+                expressio.replaceChildren(ns[0], C.el('span', { class: 'op', text: '×' }), ns[1], C.el('span', { class: 'op', text: '=' }), ns[2], C.el('span', { class: 'op', text: '×' }), ns[3]);
+            }
+        }
+        function posa(x) {
+            ctx.amaga();
+            // si la xifra ja és en una altra casella, s'intercanvien
+            const ja = xifres.indexOf(x);
+            if (ja >= 0) xifres[ja] = xifres[triat];
+            xifres[triat] = x;
+            const seguent = [...Array(9).keys()].map(j => (triat + 1 + j) % 9).find(j => !xifres[j]);
+            triat = seguent !== undefined ? seguent : Math.min(8, triat + 1);
+            pinta();
+            if (xifres.every(Boolean)) revisa();
+        }
+        function pinta() {
+            caselles.forEach((b, i) => {
+                b.textContent = xifres[i] || '';
+                b.classList.toggle('triada', i === triat);
+                b.setAttribute('aria-label', `Casella ${i + 1}: ${xifres[i] || 'buida'}`);
+            });
+            botonsX.forEach((b, k) => b.classList.toggle('usada', xifres.includes(k + 1)));
+            const g = d.plantilles[plantilla];
+            compte.textContent = '';
+            if (xifres.every(Boolean)) {
+                const n = A.parteix(xifres, g);
+                if (d.tipus === 'cent') {
+                    const q = n[1] / n[2];
+                    compte.textContent = `${n[0]} + ${n[1]}/${n[2]} = ${n[0]} + ${Number.isInteger(q) ? q : C.decimal(q, 3)} = ${Number.isInteger(q) ? n[0] + q : C.decimal(n[0] + q, 3)}`;
+                } else compte.textContent = `${n[0]} × ${n[1]} = ${C.nombre(n[0] * n[1])}   ·   ${n[2]} × ${n[3]} = ${C.nombre(n[2] * n[3])}`;
+            } else compte.textContent = 'Toca una casella i tria una xifra (o escriu-la amb el teclat).';
+            llista.replaceChildren(...[...trobades].map(t => C.el('li', { text: t })));
+            if (d.tipus === 'cent') ctx.estat([C.el('span', null, 'Maneres trobades: ', C.el('b', { text: `${trobades.size} de ${d.totes}` }))]);
+            else
+                ctx.estat([
+                    C.el('span', null, 'Suma més petita: ', C.el('b', { text: fets.minim ? '✓' : '—' })),
+                    C.el('span', null, 'Suma més gran: ', C.el('b', { text: fets.maxim ? '✓' : '—' })),
+                ]);
+        }
+        function revisa() {
+            const n = A.parteix(xifres, d.plantilles[plantilla]);
+            if (d.tipus === 'cent') {
+                if (!A.esCent(...n)) return ctx.missatge('error', 'No fa 100', ['Prova de canviar alguna xifra.']);
+                const t = `${n[0]} + ${n[1]}/${n[2]}`;
+                trobades.add(t);
+                pinta();
+                if (n[0] === d.buscada[0] && n[1] === d.buscada[1] && n[2] === d.buscada[2])
+                    return ctx.resolt('La que només té una xifra!', [`${t} = ${n[0]} + ${n[1] / n[2]} = 100.`]);
+                return ctx.missatge('info', `${t} = 100: una de les ${d.totes}!`, [`Ja en tens ${trobades.size}. Però Dudeney demana la que té una sola xifra a la part entera.`]);
+            }
+            const [a, b, c, e] = n;
+            if (a * b !== c * e) return ctx.missatge('error', 'Els productes no són iguals', [`${a} × ${b} = ${C.nombre(a * b)}, però ${c} × ${e} = ${C.nombre(c * e)}.`]);
+            const s = A.sumaXifres(a * b);
+            trobades.add(`${a} × ${b} = ${c} × ${e} = ${C.nombre(a * b)} (suma ${s})`);
+            if (a * b === d.minim) fets.minim = true;
+            if (a * b === d.maxim) fets.maxim = true;
+            pinta();
+            if (fets.minim && fets.maxim) return ctx.resolt('Les dues!', [`La suma més petita, ${A.sumaXifres(d.minim)}, i la més gran, ${A.sumaXifres(d.maxim)}.`]);
+            if (a * b === d.minim) return ctx.missatge('info', `Suma ${s}: la més petita!`, ['Ara busca la de suma més gran.']);
+            if (a * b === d.maxim) return ctx.missatge('info', `Suma ${s}: la més gran de totes!`, ['I Dudeney no la va trobar: llegeix la nota del matemàtic quan tinguis les dues.']);
+            if (a * b === d.dudeney) return ctx.missatge('info', `Suma ${s}: la «més gran» de Dudeney`, ['Però n’hi ha una amb una suma encara més gran. La trobaràs?']);
+            ctx.missatge('info', `Correcte: suma ${s}`, [`Busca la suma més petita i la més gran.`]);
+        }
+        function inicia() {
+            trobades = new Set();
+            fets = { minim: false, maxim: false };
+            plantilla = 0;
+            nou();
+        }
+        inicia();
+        return {
+            reinicia: inicia,
+            textSolucio: '▶ Posa-la al tauler',
+            solucio() {
+                const [g, xs] = d.solucioTauler;
+                plantilla = g;
+                nou();
+                xs.forEach((x, i) => (xifres[i] = x));
+                pinta();
+                ctx.missatge('info', 'La solució de Dudeney', [compte.textContent]);
+            },
+        };
+    }
+
+    // ════════════════════════════════════════════════════════════
+    // BANDOLERS: cinc quantitats que sumen 200 de dues maneres (AM 133)
+    // dades: total (200), factors (text i valor), exemple, solucions (6627).
+    // ════════════════════════════════════════════════════════════
+    function creaBandolers(lloc, p, ctx) {
+        const d = p.dades;
+        let q, trobades;
+        const caixa = C.el('div', { class: 'tauler bandolers' });
+        const taula = C.el('table', { class: 'taula-bandolers' });
+        taula.appendChild(C.el('tr', null, ['', 'doblons', '', 'si tingués'].map(t => C.el('th', { text: t }))));
+        const inputs = [], resultats = [];
+        d.noms.forEach((nom, i) => {
+            const input = C.el('input', { 'type': 'text', 'inputmode': 'numeric', 'aria-label': `Doblons de ${nom}`, 'class': 'quantitat' });
+            const menys = C.el('button', { 'type': 'button', 'class': 'btn-pas', 'text': '−', 'aria-label': `Un menys a ${nom}` });
+            const mes = C.el('button', { 'type': 'button', 'class': 'btn-pas', 'text': '+', 'aria-label': `Un més a ${nom}` });
+            menys.addEventListener('click', () => canvia(i, -1));
+            mes.addEventListener('click', () => canvia(i, 1));
+            input.addEventListener('input', () => {
+                q[i] = parseInt(input.value, 10) || 0;
+                pinta(false);
+            });
+            const res = C.el('td', { class: 'resultat' });
+            resultats.push(res);
+            inputs.push(input);
+            taula.appendChild(C.el('tr', null, C.el('th', { text: nom }), C.el('td', null, menys, input, mes), C.el('td', { class: 'factor', text: '× ' + d.factors[i][0] }), res));
+        });
+        const sumes = C.el('tr', { class: 'sumes-bandolers' });
+        taula.appendChild(sumes);
+        const R = formulariResposta('Quants repartiments diferents hi ha?', [{ etiqueta: 'repartiments' }], comprova);
+        caixa.append(taula, R.form);
+        lloc.appendChild(caixa);
+
+        function canvia(i, k) {
+            q[i] = Math.max(0, (q[i] || 0) + k);
+            pinta(true);
+        }
+        function pinta(escriu) {
+            q.forEach((x, i) => {
+                if (escriu) inputs[i].value = x || '';
+                const v = x * d.factors[i][1];
+                resultats[i].textContent = x ? (Number.isInteger(v) ? v : C.decimal(v, 2)) : '';
+            });
+            const s1 = q.reduce((a, b) => a + (b || 0), 0);
+            const s2 = q.reduce((a, b, i) => a + (b || 0) * d.factors[i][1], 0);
+            sumes.replaceChildren(C.el('th', { text: 'Total' }), C.el('td', { class: s1 === d.total ? 'ok' : '', text: String(s1) }), C.el('td'), C.el('td', { class: Math.abs(s2 - d.total) < 1e-9 ? 'ok' : '', text: Number.isInteger(s2) ? String(s2) : C.decimal(s2, 2) }));
+            ctx.estat([C.el('span', null, 'Repartiments trobats: ', C.el('b', { text: trobades.size }))]);
+            const motiu = A.motiuBandolers(q, d.total);
+            ctx.amaga();
+            if (!motiu) {
+                const k = q.join(', ');
+                const nou = !trobades.has(k);
+                trobades.add(k);
+                ctx.estat([C.el('span', null, 'Repartiments trobats: ', C.el('b', { text: trobades.size }))]);
+                ctx.missatge('info', nou ? 'Un repartiment correcte!' : 'Aquest ja el tenies', ['Tots dos totals fan 200. Quants n’hi deu haver, en total?']);
+            } else if (motiu === 'fraccions' && s1 === d.total)
+                ctx.missatge('error', 'No hi pot haver mitjos doblons', ['La meitat del Diego i el terç de l’Esteban han de ser nombres enters.']);
+        }
+        function comprova([x]) {
+            if (Number.isNaN(x)) return ctx.missatge('error', 'Escriu un nombre', []);
+            if (x === d.solucions) ctx.resolt(`${C.nombre(x)} repartiments!`, ['Ni un més ni un menys: ho ha comprovat un ordinador.']);
+            else if (x === d.labosne) ctx.missatge('error', `${C.nombre(x)}: això deia Labosne`, ['I s’equivocava, segons Dudeney. N’hi ha uns quants menys.']);
+            else ctx.missatge('error', `${C.nombre(x)} no`, [x < d.solucions ? 'N’hi ha més.' : 'N’hi ha menys.', 'Pista: compta-les per separat per a cada quantitat de l’Alfonso.']);
+        }
+        function inicia() {
+            q = d.exemple.slice();
+            trobades = new Set();
+            R.inputs[0].value = '';
+            pinta(true);
+        }
+        inicia();
+        return {
+            reinicia: inicia,
+            textSolucio: '▶ Escriu-la',
+            solucio() {
+                R.inputs[0].value = d.solucions;
+                ctx.missatge('info', 'La solució de Dudeney', [`${C.nombre(d.solucions)} repartiments.`]);
+            },
+        };
+    }
+
     window.Taulers.estripat = {
         crea: creaEstripat,
         figura: figuraEtiqueta,
@@ -814,6 +1119,8 @@
         dibuixaXarxa,
     };
     window.Taulers.rectangles = { crea: creaRectangles, figura: figuraRectangles };
+    window.Taulers.xifres = { crea: creaXifres, figura: figuraXifres };
+    window.Taulers.bandolers = { crea: creaBandolers, figura: figuraBandolers };
     window.Taulers.amulet = {
         crea: creaAmulet,
         figura: figuraAmulet,

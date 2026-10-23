@@ -1493,6 +1493,9 @@ main + .peu-llicencia,
     font-size: 26px;
     fill: var(--tinta-suau);
 }
+.gravat .gr-xifra.mini {
+    font-size: 15px;
+}
 .gravat .gr-carta {
     fill: #fff;
     stroke: var(--tinta);

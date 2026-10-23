@@ -886,13 +886,33 @@
     }
 
     // ════════════════════════════════════════════════════════════
-    // PECES: polígons que es mouen per una xarxa de mig quadret i giren de 90° en 90° (AM 147, AM 151)
+    // PECES: polígons que es mouen per una xarxa de mig quadret i giren de 90° en 90° (AM 147, AM 151,
+    // AM 143), o lliures i que s'enganxen a les posicions de la solució (encaix: 'solucio', AM 150)
     // dades: peces [{ nom, pts }] (a la seva posició inicial; unitats, y cap avall), objectiu (el
     // quadrat que han d'omplir), vista [x, y, amplada, alçada], solucio [{ r, x, y }], contorn
-    // paper (opcional: els polígons de l'enunciat sense els talls, per a la fitxa en paper).
+    // paper (opcional: els polígons de l'enunciat sense els talls, per a la fitxa en paper),
+    // fixes (opcional: polígons que no es mouen, amb el nom a nomsFixes).
     // ════════════════════════════════════════════════════════════
     const PAS_PECA = 0.5;
     const arrodoneix = v => Math.round(v / PAS_PECA) * PAS_PECA;
+    const iguals = (a, b) => a.length === b.length && a.every(p => b.some(q => Math.abs(p[0] - q[0]) < 1e-6 && Math.abs(p[1] - q[1]) < 1e-6));
+    /**
+     * La posició ajustada d'una peça: a la xarxa de mig quadret o, amb encaix 'solucio', enganxada a la
+     * posició d'una peça de la solució amb la mateixa forma i el mateix gir, si hi és a prop (si no, lliure).
+     */
+    function ajusta(d, i, q) {
+        if (d.encaix !== 'solucio') return { r: q.r, x: arrodoneix(q.x), y: arrodoneix(q.y) };
+        const pg = M.aXarxa(d.peces[i].pts, q),
+            c = M.centre(pg);
+        for (let j = 0; j < d.peces.length; j++) {
+            const T = M.aXarxa(d.peces[j].pts, d.solucio[j]),
+                cT = M.centre(T);
+            if (Math.hypot(cT[0] - c[0], cT[1] - c[1]) > 0.35) continue;
+            const mogut = { r: q.r, x: q.x + cT[0] - c[0], y: q.y + cT[1] - c[1] };
+            if (iguals(M.aXarxa(d.peces[i].pts, mogut), T)) return mogut;
+        }
+        return q;
+    }
 
     function dibuixaPeces(d, opcions = {}) {
         const [x0, y0, w, h] = d.vista;
@@ -907,6 +927,12 @@
         if (!opcions.estatic)
             for (let x = Math.ceil(x0); x <= x0 + w; x++) for (let y = Math.ceil(y0); y <= y0 + h; y++) C.svg('circle', { class: 'punt-xarxa', cx: x, cy: y, r: 0.035 }, xarxa);
         if (!opcions.senseObjectiu) C.svg('polygon', { class: 'lloc-objectiu', points: ptsXY(d.objectiu) }, s);
+        (d.fixes || []).forEach((pg, i) => {
+            const g = C.svg('g', { class: 'peca-fixa' }, s);
+            C.svg('polygon', { class: 'cos-peca-xarxa', points: ptsXY(pg) }, g);
+            const c = M.centre(pg);
+            C.svg('text', { 'class': 'num-peca-xarxa', 'x': c[0], 'y': c[1], 'text': (d.nomsFixes || [])[i] || '' }, g);
+        });
         const capa = C.svg('g', { class: 'peces' }, s);
         const peces = d.peces.map((pc, i) => {
             const g = C.svg('g', { 'class': 'peca-xarxa p' + (i % 4), 'data-i': i }, capa);
@@ -930,7 +956,7 @@
         const d = p.dades;
         if (opcions.paper && d.paper) {
             // les peces de l'enunciat, sense els talls de la solució (la fitxa en paper)
-            const D = dibuixaPeces({ ...d, peces: [] }, { estatic: true, senseObjectiu: true, etiqueta: d.etiquetaPaper });
+            const D = dibuixaPeces({ ...d, peces: [], fixes: [] }, { estatic: true, senseObjectiu: true, etiqueta: d.etiquetaPaper });
             d.paper.forEach(pg => C.svg('polygon', { class: 'contorn-sencer', points: ptsXY(pg) }, D.svg));
             const xs = d.paper.flat().map(q => q[0]),
                 ys = d.paper.flat().map(q => q[1]);
@@ -939,10 +965,11 @@
         }
         const D = dibuixaPeces(d, { estatic: true, senseObjectiu: !!(opcions.solucio || opcions.lletres), etiqueta: opcions.solucio ? d.etiquetaSolucio : d.etiqueta });
         D.posa(opcions.solucio ? d.solucio : d.peces.map(() => ({ r: 0, x: 0, y: 0 })));
-        if (opcions.lletres && d.lletres) {
-            // la figura original amb les lletres de Dudeney, retallada a la seva mida
-            Object.keys(d.lletres).forEach(k => C.svg('text', { 'class': 'lletra-punt', 'x': d.lletres[k][0], 'y': d.lletres[k][1], 'text': k }, D.svg));
-            const tots = d.peces.flatMap(pc => pc.pts);
+        if (opcions.lletres) {
+            // la figura original (amb les lletres de Dudeney, si n'hi ha), retallada a la seva mida
+            if (d.construccio) C.svg('path', { class: 'construccio', d: d.construccio }, D.svg);
+            Object.keys(d.lletres || {}).forEach(k => C.svg('text', { 'class': 'lletra-punt', 'x': d.lletres[k][0], 'y': d.lletres[k][1], 'text': k }, D.svg));
+            const tots = d.peces.flatMap(pc => pc.pts).concat((d.fixes || []).flat(), Object.values(d.lletres || {}));
             const xs = tots.map(q => q[0]),
                 ys = tots.map(q => q[1]);
             D.svg.setAttribute('viewBox', `${Math.min(...xs) - 0.45} ${Math.min(...ys) - 0.45} ${Math.max(...xs) - Math.min(...xs) + 0.9} ${Math.max(...ys) - Math.min(...ys) + 0.9}`);
@@ -994,7 +1021,7 @@
             },
             deixa: c => {
                 D.peces[c.i].classList.remove('arrossegada');
-                poses[c.i] = { r: poses[c.i].r, x: arrodoneix(poses[c.i].x), y: arrodoneix(poses[c.i].y) };
+                poses[c.i] = ajusta(d, c.i, poses[c.i]);
                 canvi();
             },
             toc: c => tria(c.i),
@@ -1010,8 +1037,9 @@
             if (dir) {
                 e.preventDefault();
                 hist.desa(poses);
-                const q = poses[triada];
-                poses[triada] = { r: q.r, x: q.x + dir[0] * PAS_PECA, y: q.y + dir[1] * PAS_PECA };
+                const q = poses[triada],
+                    pas = d.encaix === 'solucio' ? 0.1 : PAS_PECA;
+                poses[triada] = ajusta(d, triada, { r: q.r, x: q.x + dir[0] * pas, y: q.y + dir[1] * pas });
                 canvi();
             } else if (e.key === 'r' || e.key === 'R') {
                 e.preventDefault();
@@ -1035,7 +1063,7 @@
             const c = centreDe(i);
             const r = (poses[i].r + 1) % 4;
             const c2 = M.centre(M.aXarxa(d.peces[i].pts, { r, x: 0, y: 0 }));
-            poses[i] = { r, x: arrodoneix(c[0] - c2[0]), y: arrodoneix(c[1] - c2[1]) };
+            poses[i] = ajusta(d, i, { r, x: c[0] - c2[0], y: c[1] - c2[1] });
             canvi();
         }
         function inicia() {
@@ -1056,7 +1084,7 @@
             ctx.amaga();
             if (fet && !resolt) {
                 resolt = true;
-                ctx.resolt('Un quadrat perfecte!', [d.textResolt]);
+                ctx.resolt(d.titolResolt || 'Un quadrat perfecte!', [d.textResolt]);
             } else if (!fet) resolt = false;
         }
         function desfes() {

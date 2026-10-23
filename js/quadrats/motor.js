@@ -43,11 +43,11 @@
         { nom: 'diagonal', c: [2, 4, 6] },
     ];
 
-    /** La suma de cada línia (null si hi falta algun nombre). */
-    function sumes(graella) {
-        return LINIES3.map(function (l) {
+    /** La suma de cada línia (null si hi falta algun nombre). Les línies són les del 3 × 3 si no se'n donen. */
+    function sumes(graella, linies) {
+        return (linies || LINIES3).map(function (l) {
             var s = F.fr(0);
-            for (var i = 0; i < 3; i++) {
+            for (var i = 0; i < l.c.length; i++) {
                 var v = graella[l.c[i]];
                 if (!v) return null;
                 s = F.suma(s, v);
@@ -58,8 +58,8 @@
     /** Les caselles que tenen un nombre repetit. */
     function repetits(graella) {
         var out = [];
-        for (var i = 0; i < 9; i++)
-            for (var j = 0; j < 9; j++)
+        for (var i = 0; i < graella.length; i++)
+            for (var j = 0; j < graella.length; j++)
                 if (i !== j && graella[i] && graella[j] && F.igual(graella[i], graella[j])) {
                     out.push(i);
                     break;
@@ -70,17 +70,29 @@
      * Comprova el quadrat màgic. Retorna { complet, resolt, sumes, dolentes: [índexs de línia],
      * repetits: [caselles], enters: tots els nombres enters, negatius }.
      */
-    function comprovaMagic(graella, total) {
+    function comprovaMagic(graella, total, linies) {
         var complet = graella.every(Boolean);
-        var s = sumes(graella);
+        var s = sumes(graella, linies);
+        // sense total fix, la constant és la suma que surt més vegades
+        if (!total) {
+            var vots = {};
+            s.forEach(function (x) {
+                if (x) vots[F.text(x)] = (vots[F.text(x)] || 0) + 1;
+            });
+            var millor = Object.keys(vots).sort(function (a, b) {
+                return vots[b] - vots[a];
+            })[0];
+            total = millor ? F.llegeix(millor) : null;
+        }
         var dolentes = [];
         s.forEach(function (x, i) {
-            if (x && !F.igual(x, total)) dolentes.push(i);
+            if (x && total && !F.igual(x, total)) dolentes.push(i);
         });
         var rep = repetits(graella);
         return {
             complet: complet,
             resolt: complet && !dolentes.length && !rep.length,
+            constant: total,
             sumes: s,
             dolentes: dolentes,
             repetits: rep,
@@ -112,6 +124,43 @@
             f(2),
             F.resta(f(10), A),
         ];
+    }
+
+    // ── Primers, compostos i quadrats reversibles (AM 409, AM 411, CP 102) ─
+    function esPrimer(n) {
+        if (!Number.isInteger(n) || n < 2) return false;
+        for (var i = 2; i * i <= n; i++) if (n % i === 0) return false;
+        return true;
+    }
+    /** Els nombres enters de la graella, o null si n'hi ha algun que no ho és. */
+    function enters(graella) {
+        if (!graella.every(F.esEnter)) return null;
+        return graella.map(function (v) {
+            return v[0] / v[1];
+        });
+    }
+    /** Com es llegeix un nombre girat cap per avall (6 ↔ 9, 2 ↔ 7; 0, 1 i 8 no canvien), o null. */
+    var GIR = { 0: '0', 1: '1', 2: '7', 6: '9', 7: '2', 8: '8', 9: '6' };
+    function giraNombre(n) {
+        var t = String(n).split('').reverse();
+        if (
+            t.some(function (x) {
+                return GIR[x] === undefined;
+            })
+        )
+            return null;
+        return +t
+            .map(function (x) {
+                return GIR[x];
+            })
+            .join('');
+    }
+    /** La graella (de nombres enters) girada mig tomb: la casella i passa a la n² − 1 − i. */
+    function giraQuadrat(nums) {
+        return nums
+            .slice()
+            .reverse()
+            .map(giraNombre);
     }
 
     // ── Bachet ─────────────────────────────────────────────────────────────
@@ -265,6 +314,10 @@
         PALS: PALS,
         CARTES: CARTES,
         sumes: sumes,
+        esPrimer: esPrimer,
+        enters: enters,
+        giraNombre: giraNombre,
+        giraQuadrat: giraQuadrat,
         repetits: repetits,
         comprovaMagic: comprovaMagic,
         familiaVuit: familiaVuit,

@@ -40,15 +40,23 @@
     // ============================================================
     // GRAVATS
     // ============================================================
-    function gravatMagic() {
+    function gravatMagic(p) {
+        const d = p.dades,
+            n = d.n || 3;
         const s = C.svg('svg', { 'viewBox': '0 0 120 120', 'aria-hidden': 'true' });
         C.svg('rect', { class: 'gr-ratlla', x: 6, y: 6, width: 108, height: 108 }, s);
-        [42, 78].forEach(k => {
-            C.svg('line', { class: 'gr-ratlla', x1: 6, y1: k, x2: 114, y2: k }, s);
-            C.svg('line', { class: 'gr-ratlla', x1: k, y1: 6, x2: k, y2: 114 }, s);
+        for (let k = 1; k < n; k++) {
+            const x = 6 + (108 * k) / n;
+            C.svg('line', { class: 'gr-ratlla', x1: 6, y1: x, x2: 114, y2: x }, s);
+            C.svg('line', { class: 'gr-ratlla', x1: x, y1: 6, x2: x, y2: 114 }, s);
+        }
+        // les xifres de la vinyeta: dades.gravat = { casella: text } (per defecte, el vuit rebel)
+        const g = d.gravat || { 1: '8', 4: '?' };
+        Object.keys(g).forEach(i => {
+            const c = 6 + (108 / n) * ((i % n) + 0.5),
+                f = 6 + (108 / n) * (Math.floor(i / n) + 0.5);
+            C.svg('text', { 'class': 'gr-xifra' + (n > 3 ? ' mini' : g[i] === '?' || g[i].length > 2 ? ' petita' : ''), 'x': c, 'y': f, 'text': g[i] }, s);
         });
-        C.svg('text', { 'class': 'gr-xifra', 'x': 60, 'y': 26, 'text': '8' }, s);
-        C.svg('text', { 'class': 'gr-xifra petita', 'x': 60, 'y': 62, 'text': '?' }, s);
         return s;
     }
     function gravatCartes() {
@@ -63,7 +71,7 @@
         return s;
     }
     function gravat(p) {
-        if (p.tauler === 'magic') return gravatMagic();
+        if (p.tauler === 'magic') return gravatMagic(p);
         if (p.tauler === 'cartes') return gravatCartes();
         const T = window.Taulers[p.tauler];
         const s = T.figura(p, { cavalls: 'exemple', vinyeta: true });
