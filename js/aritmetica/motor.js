@@ -10,6 +10,10 @@
  *     desplega la capsa seguint les cares per on passa l'aranya; al pla, el
  *     camí més curt és una recta. Diu si la recta és vàlida (passa per les
  *     cares en aquest ordre, creuant cada aresta pel tros que toca) i quant fa.
+ *   - comptar rectangles (AM 347): quants rectangles i quants quadrats té un
+ *     tauler de n × n, comptant-los un per un i amb les fórmules de Dudeney.
+ *   - l'amulet (CP 38): les maneres de llegir ABRACADABRA baixant per un
+ *     triangle de lletres (el triangle de Pascal).
  * ARQUITECTURA: Pur, sense DOM (també el fan servir els tests de Node).
  *   Sala: x al llarg (0…llarg), y d'una paret llarga a l'altra (0…ample),
  *   z cap amunt (0…alt). Cares: 'A' (x = 0, la de l'aranya), 'B' (x = llarg,
@@ -247,7 +251,48 @@
         return out;
     }
 
+    // ── Comptar rectangles (AM 347) ────────────────────────────────────────
+    /** Quants rectangles (amb els quadrats) i quants quadrats té un tauler de n × n, comptant-los un per un. */
+    function rectangles(n) {
+        var total = 0,
+            quadrats = 0;
+        for (var a = 1; a <= n; a++)
+            for (var b = 1; b <= n; b++) {
+                total += (n + 1 - a) * (n + 1 - b);
+                if (a === b) quadrats += (n + 1 - a) * (n + 1 - a);
+            }
+        return { total: total, quadrats: quadrats };
+    }
+    /** Les fórmules de la solució de Dudeney. */
+    function formulesRectangles(n) {
+        return {
+            total: Math.pow(n * n + n, 2) / 4,
+            quadrats: (2 * n * n * n + 3 * n * n + n) / 6,
+            noQuadrats: (3 * Math.pow(n, 4) + 2 * n * n * n - 3 * n * n - 2 * n) / 12,
+        };
+    }
+
+    // ── L'amulet (CP 38) ───────────────────────────────────────────────────
+    /** De quantes maneres s'arriba a cada lletra del triangle (fila f té f + 1 lletres): el triangle de Pascal. */
+    function maneresAmulet(files) {
+        var out = [[1]];
+        for (var f = 1; f < files; f++) {
+            var fila = [];
+            for (var i = 0; i <= f; i++) fila.push((i > 0 ? out[f - 1][i - 1] : 0) + (i < f ? out[f - 1][i] : 0));
+            out.push(fila);
+        }
+        return out;
+    }
+    /** Es pot passar de la lletra (f, i) a la (f + 1, j)? (A la de baix a l'esquerra o a la de baix a la dreta.) */
+    var baixaAmulet = function (i, j) {
+        return j === i || j === i + 1;
+    };
+
     return {
+        rectangles: rectangles,
+        formulesRectangles: formulesRectangles,
+        maneresAmulet: maneresAmulet,
+        baixaAmulet: baixaAmulet,
         estripa: estripa,
         diferents: diferents,
         etiquetes: etiquetes,

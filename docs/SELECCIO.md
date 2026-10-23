@@ -130,4 +130,5 @@ Knights’ Tours), CP 3 (The Miller’s Puzzle), CP 13 (The Man of Law’s Puzzl
 | Mostra (14, dos per tipus) | feta: cp-26, am-174, cp-1, am-214, am-365, am-373, am-300, am-319, am-242, am-243, am-399, am-304, am-113, cp-75 |
 | Tanda 1 (6) | feta: am-216, am-362, am-297, am-298, am-317, am-247 |
 | Tanda 2 (7) | feta: am-217, am-219, am-341, am-375, am-377, am-249, am-320 |
-| La resta (23) | pendent, per tandes de 6–8 |
+| Tanda 3 (8) | feta: am-146, am-147, am-151, am-221, am-245, am-406, am-347, cp-38 |
+| La resta (15) | pendent, per tandes de 6–8 |

@@ -23,6 +23,9 @@
 
     // El que cal fer en paper, i les opcions de la figura de cada enigma
     const PAPER = {
+        trapezi: { regla: 'Retalla la figura en quatre peces exactament iguals: de la mateixa mida i de la mateixa forma.' },
+        'cinc-triangles': { regla: 'Retalla cinc triangles com aquests (mig rectangle de 2 × 1) i fes-ne un quadrat. N’has de tallar un en dues peces; els altres, sencers.', figura: { paper: true } },
+        fuster: { regla: 'Talla la fusta en el mínim de peces possible per fer el tauler quadrat, sense que en sobri gens. Quantes peces calen?', figura: { paper: true } },
         brocat: { regla: 'Retalla els dos quadrats només per les línies de la quadrícula, en quatre peces en total, i munta un quadrat de 10 × 10 amb les flors ben alternades. Dues peces han de tenir la mateixa àrea.' },
         mercer: { regla: 'Aquí tens les quatre peces de Dudeney: retalla-les i fes-ne un quadrat, sense girar-ne cap del revés. (Repte complet: dibuixa un triangle equilàter i busca tu els talls.)', figura: { peces: true } },
         granotes: { regla: 'Fes-ho amb sis monedes o papers numerats. Apunta l’ordre en què mous les granotes i compta els moviments.' },
@@ -30,6 +33,7 @@
         twickenham: { regla: 'Fes-ho amb deu papers amb les lletres (cinc de clars i cinc de foscos) sobre onze llocs en cercle. Les foscos giren com les agulles del rellotge; les clares, al revés. Apunta les lletres que mous, per ordre: en calen vint-i-sis.', linia: 'Les lletres que mous:' },
         lletres: { regla: 'Fes-ho amb vuit papers amb lletres sobre una quadrícula de 3 × 3. Apunta les lletres que mous, per ordre. Quants moviments calen, com a mínim?', linia: 'Les lletres que mous:' },
         'quatre-granotes': { regla: 'Fes-ho amb dues monedes d’un tipus i dues d’un altre sobre el dibuix. Apunta cada jugada entre parèntesis, amb tots els moviments seguits d’una mateixa granota: en calen set.', linia: 'Les jugades:' },
+        locomotores: { regla: 'Fes-ho amb vuit papers numerats sobre el dibuix. Apunta les locomotores que mous, per ordre: en calen disset. Quina no s’ha mogut?', linia: 'Les locomotores que mous:' },
         formatges: { regla: 'Fes-ho amb vuit monedes de mides diferents (o vuit papers numerats) i quatre llocs. Compta els moviments: quants en calen, com a mínim?' },
         rierol: { regla: 'Escriu cada travessia: qui va a la barca i cap a on. La barca no pot portar més de 150 lliures, i el gos (que en pesa 30) no sap remar.', taula: ['Travessia', 'A la barca', 'Cap a'], files: 12 },
         gerres: { regla: 'Escriu, després de cada abocada, quant vi hi ha a cada recipient. Cada vegada que vesses, el vi passa fins que l’un queda buit o l’altre ple.', taula: ['', 'gerra de 10', 'gerra de 10', 'mesura de 5', 'mesura de 4'], files: 12, primera: ['inici', '10', '10', '0', '0'] },
@@ -46,9 +50,13 @@
         mina: { regla: 'Dibuixa la ruta sobre el plànol, sortint de la A, i escriu-la amb les lletres de les cruïlles. Quants furlongs fa, com a mínim?', linia: 'Ruta:' },
         mariner: { regla: 'Dibuixa la ruta sobre el mapa, sortint de la A, i escriu-la amb les lletres de les illes. Recorda que el mariner deixa la C per al més tard possible.', linia: 'Ruta:' },
         torre: { regla: 'Dibuixa el recorregut de la torre, sortint de d5: cada jugada és una línia recta per una fila o una columna, i cap casella no es pot repetir. Quantes jugades calen, com a mínim?' },
+        octaedre: { regla: 'Dibuixa una ruta per les dotze arestes, sortint de la A i sense repetir-ne cap. Quantes rutes diferents hi ha?', linia: 'Ruta:' },
         vuit: { regla: 'Escriu nou nombres diferents perquè totes les files, columnes i diagonals sumin 15, amb el 8 al lloc on és.' },
         bachet: { regla: 'Escriu les setze cartes al quadrat (A, K, Q, J i ♦ ♠ ♥ ♣): cap fila, columna ni diagonal llarga pot repetir pal ni valor. De quantes maneres es pot fer?', figura: { cartes: new Array(16).fill(null) } },
+        domino: { regla: 'Fes-ho amb un dòmino de veritat: tria divuit fitxes i posa-les de peu, com a la il·lustració, perquè totes les files, les columnes i les dues diagonals sumin 18.' },
         estripat: { regla: 'Busca un altre número de quatre xifres diferents que faci (primera meitat + segona meitat)² = el número.', linia: 'El número:' },
+        amulet: { regla: 'Compta de quantes maneres es pot llegir ABRACADABRA, sortint de la A de dalt i baixant cada vegada a una de les dues lletres que hi ha a sota.', linia: 'Resposta:' },
+        rectangles: { regla: 'Compta quants rectangles (quadrats inclosos) té el tauler d’escacs, i quants d’aquests rectangles són quadrats.', linia: 'Respostes:' },
         aranya: { regla: 'Dibuixa la sala desplegada com una capsa de cartró i traça-hi el camí recte de l’aranya. Quin és el camí més curt?' },
     };
 
@@ -74,13 +82,21 @@
             C.el('h1', { text: titol }),
             C.el('p', { class: 'entrada', text: entrada })
         );
-        const taula = C.el('table', { class: 'index-enigmes' });
-        LLISTA.forEach((p, i) =>
-            taula.appendChild(
-                C.el('tr', null, C.el('td', { text: i + 1 }), C.el('td', { text: p.titol }), C.el('td', { text: C.TIPUS[p.tipus].nom + ' · dificultat ' + p.dificultat + ' de 3' }))
-            )
-        );
-        s.append(taula, C.el('p', { class: 'peu-full', text: CREDIT }));
+        // L'índex, en dues columnes quan els enigmes no hi caben en una
+        const columnes = LLISTA.length > 28 ? 2 : 1;
+        const porColumna = Math.ceil(LLISTA.length / columnes);
+        const index = C.el('div', { class: 'index-columnes c' + columnes });
+        for (let k = 0; k < columnes; k++) {
+            const taula = C.el('table', { class: 'index-enigmes' });
+            LLISTA.slice(k * porColumna, (k + 1) * porColumna).forEach((p, j) => {
+                const i = k * porColumna + j;
+                taula.appendChild(
+                    C.el('tr', null, C.el('td', { text: i + 1 }), C.el('td', { text: p.titol }), C.el('td', { text: columnes > 1 ? `${C.TIPUS[p.tipus].nom} · ${p.dificultat}/3` : C.TIPUS[p.tipus].nom + ' · dificultat ' + p.dificultat + ' de 3' }))
+                );
+            });
+            index.appendChild(taula);
+        }
+        s.append(index, C.el('p', { class: 'peu-full', text: CREDIT }));
         return s;
     }
 

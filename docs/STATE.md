@@ -3,14 +3,16 @@
 Static vanilla-JS site with Henry E. Dudeney's puzzles translated into Catalan, playable on screen and printable
 in B/W. Target: 50 puzzles (`docs/SELECCIO.md`); the user approved the selection on 2026-10-23. Delivered so far:
 sample v1 with 14 puzzles (2 per type), shipped as `dudeney-mostra-v1.zip`; batch 1 (6 puzzles, 20 in total),
-shipped as `dudeney-tanda1.zip`; batch 2 (7 puzzles, 27 in total), shipped as a pull request to `main`. Work now
+shipped as `dudeney-tanda1.zip`; batch 2 (7 puzzles, 27 in total), merged as PR #1; batch 3 (8 puzzles, 35 in
+total), shipped as a pull request to `main`. Work now
 proceeds in batches of 6–8 puzzles; each batch ends with a delivery (see §1) and waits for the user's review.
 
 ## 0. Cold start (do this first)
 
-1. Clone `step-quiz/dudeney` and check that this file lists batch 2 as delivered and that
-   `node tests/motors.test.js` reports 106 checks, 0 errors (~15 s). If not, the batch 2 pull request has not been
-   merged yet: ask the user to merge it (or to upload the ZIP, see §1).
+1. Clone `step-quiz/dudeney` and check that this file lists batch 3 as delivered and that
+   `node tests/motors.test.js` reports 140 checks, 0 errors (~15 s). If not, the batch 3 pull request has not been
+   merged yet: ask the user to merge it (or to upload the ZIP, see §1). If the designated branch's previous PR is
+   already merged, restart the branch from `origin/main` before working.
 2. Get the source books (public domain; never commit them, `src/` is git-ignored). Download the **EPUB with
    images** of each book from Project Gutenberg and save it with exactly this name:
    - `src/amusements-in-mathematics-1917.epub` ← <https://www.gutenberg.org/ebooks/16713>
@@ -114,6 +116,23 @@ proceeds in batches of 6–8 puzzles; each batch ends with a delivery (see §1) 
   - `torre` (camins data, drawn in `js/escacs/tauler.js`, AM 320): rook tour, squares in algebraic notation; engine
     `MotorCamins.passosTorre/motiuTorre/voltesTorre`.
   - `Comu.llista(['a','b','c'])` → «a, b i c».
+- Boards and options added in batch 3:
+  - `retalla` (disseccio, AM 146): the figure already split into `triangles`; the player paints them with `peces`
+    colours; `MotorDisseccio.particio` checks equal size, connectedness and congruence (`formaCanonica`, 8
+    symmetries). Painting by tap or by dragging over triangles (own pointer handlers + `elementFromPoint`).
+  - `peces` (disseccio, AM 147, AM 151): polygons on a half-unit lattice, poses `{ r, x, y }` (`aXarxa`: r quarter
+    turns then translation), snap 0.5, rotate around the centroid; solved when `omple` (sampling `cobertura`).
+    `paper` = the uncut polygons for the printed sheet (`figura(p, { paper: true })`); `lletres` labels the
+    solution figure. Do not re-append a focused SVG element (it loses focus): only bring to front on drag.
+  - `xarxa` + `fitxa: 'locomotora'` (fitxes, AM 221): numbered counters, one hole (tap = move to the hole),
+    objective `ordre: { vora, buit }` in either direction; reports the counters that never moved.
+  - `carter` + `repetir: false` (AM 245): refuses repeated edges, dead-end message; `textos.titolResolt`.
+  - `domino` (quadrats, AM 406): 18 upright slots (index c·3 + k) and the 28-domino box in one SVG; tap, drag,
+    swap, flip; `MotorQuadrats.sumesDomino/comprovaDomino`. Tapping a box tile while a filled slot is selected
+    selects the tile (it does not replace).
+  - `rectangles` and `amulet` (aritmetica, AM 347, CP 38): exploration boards plus an answer form
+    (`formulariResposta` in `js/aritmetica/tauler.js`); solved when the numbers are right.
+  - Print cover: the index switches to two columns above 28 puzzles.
 - Interaction triad everywhere: drag (`Comu.arrossega`, Pointer Events, 6 px threshold), tap-tap, keyboard.
   `Comu.historial` for undo, `Comu.reprodueix` for solution replay.
 - Print: `imprimir/enigmes.html` (cover + one fixed A4 `.full` per puzzle: statement, figure, paper rule from
@@ -171,12 +190,13 @@ proceeds in batches of 6–8 puzzles; each batch ends with a delivery (see §1) 
 |---|---|---|
 | Sample v1 | cp-26, am-174, cp-1, am-214, am-365, am-373, am-300, am-319, am-242, am-243, am-399, am-304, am-113, cp-75 | delivered |
 | Batch 1 | am-216 `granotes-gots`, am-362 `bol`, am-297 `alfils`, am-298 `alfils-protegits`, am-317 `peons`, am-247 `mina` | delivered (awaiting review) |
-| Batch 2 | am-217 `twickenham`, am-219 `lletres`, am-341 `quatre-granotes`, am-375 `entrenadors` (jealous husbands → football coaches and their stars), am-377 `tresor`, am-249 `mariner`, am-320 `torre` | delivered as a PR (awaiting review) |
-| Batch 3 | proposal: am-146, am-147, am-151 (easy dissections), am-221 (eight engines), am-245 (fly on the octahedron, 1488), am-406 (dominoes), am-347 (rectangles), cp-38 (amulet) | next — confirm the list with the user first |
+| Batch 2 | am-217 `twickenham`, am-219 `lletres`, am-341 `quatre-granotes`, am-375 `entrenadors` (jealous husbands → football coaches and their stars), am-377 `tresor`, am-249 `mariner`, am-320 `torre` | merged (PR #1) |
+| Batch 3 | am-146 `trapezi`, am-147 `cinc-triangles`, am-151 `fuster`, am-221 `locomotores`, am-245 `octaedre`, am-406 `domino`, am-347 `rectangles`, cp-38 `amulet` | delivered as a PR (awaiting review) |
+| Batch 4 | proposal: am-143 (two crosses from one), am-150 (mitre), am-90 (century, 11 ways), am-83 (digital multiplication), am-133 (five brigands), am-409 (plums, primes), am-411 (composites), cp-102 (reversible magic square) | next — confirm the list with the user first |
 | Remaining | see `docs/SELECCIO.md` | pending |
 
 Known open points: `tests/motors.test.js` takes ~15 s (exhaustive bishop searches); the count of 16-move rook tours
 (16) takes ~14 s in JS, so the test only checks that there are none of 10–14 moves (the 16 was counted with a C
 search, ~4 s); the print cover (index table) holds ~30 rows: with 50 puzzles it will need two columns or a smaller
-font; `imprimir/solucions.pdf` is publicly reachable if its URL is known; the boat board has a
+font (done in batch 3: two columns above 28); `imprimir/solucions.pdf` is publicly reachable if its URL is known; the boat board has a
 compact two-row layout under 520 px; `docs/update.md` proposals await the user's decisions.

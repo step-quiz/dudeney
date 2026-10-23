@@ -10,7 +10,11 @@
  *     les cares per on passa l'aranya (tocant les cares de punts o amb els
  *     botons); quan s'arriba a la paret de la mosca, es dibuixa el camí recte
  *     i se'n diu la longitud. A dalt, la sala plegada amb el mateix camí.
- * ARQUITECTURA: window.Taulers.estripat / .caixa = { crea(lloc, p, ctx), figura(p, o),
+ *   - Taulers.rectangles (AM 347): un tauler on es marquen rectangles
+ *     arrossegant, amb taulers de 1 × 1 a 8 × 8, i les respostes a escriure.
+ *   - Taulers.amulet (CP 38): el triangle d'ABRACADABRA; es baixa de lletra en
+ *     lletra, es compten els camins diferents i s'escriu la resposta.
+ * ARQUITECTURA: window.Taulers.estripat / .caixa / .rectangles / .amulet = { crea(lloc, p, ctx), figura(p, o),
  *   figuraSolucio(p) }. La geometria (desplegar, la recta, tornar a plegar)
  *   és a js/aritmetica/motor.js.
  * DEPENDÈNCIES: js/comu/comu.js, js/aritmetica/motor.js
@@ -478,6 +482,327 @@
         return fig;
     }
 
+    // ════════════════════════════════════════════════════════════
+    // UNA RESPOSTA NUMÈRICA (comú als dos taulers de recompte)
+    // preguntes: [{ etiqueta }]; comprova(valors) rep els nombres escrits (NaN si no ho són).
+    // ════════════════════════════════════════════════════════════
+    function formulariResposta(titol, preguntes, comprova) {
+        const form = C.el('form', { class: 'resposta-recompte' });
+        form.appendChild(C.el('p', { class: 'titol-resposta', html: titol }));
+        const inputs = preguntes.map((q, i) => {
+            const id = 'resposta-' + i + '-' + Math.random().toString(36).slice(2, 6);
+            const input = C.el('input', { 'id': id, 'type': 'text', 'inputmode': 'numeric', 'autocomplete': 'off' });
+            form.appendChild(C.el('label', { for: id }, C.el('span', { text: q.etiqueta }), input));
+            return input;
+        });
+        form.appendChild(C.el('button', { type: 'submit', class: 'btn-sec', text: 'Comprova' }));
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            comprova(inputs.map(x => parseInt(x.value.replace(/[\s. ]/g, ''), 10)));
+        });
+        return { form, inputs };
+    }
+
+    // ════════════════════════════════════════════════════════════
+    // RECTANGLES: marcar rectangles en un tauler i comptar-los (AM 347)
+    // dades: n (8), total (1296), quadrats (204).
+    // ════════════════════════════════════════════════════════════
+    const QR = 40;
+    function dibuixaRectangles(n, opcions = {}) {
+        const s = C.svg('svg', {
+            'class': 'tauler-svg rectangles-svg',
+            'viewBox': `-4 -4 ${n * QR + 8} ${n * QR + 8}`,
+            'role': opcions.estatic ? 'img' : 'application',
+            'aria-label': opcions.etiqueta || `Un tauler de ${n} × ${n}`,
+        });
+        for (let f = 0; f < n; f++)
+            for (let c = 0; c < n; c++) C.svg('rect', { class: (f + c) % 2 ? 'cel fosca' : 'cel', x: c * QR, y: f * QR, width: QR, height: QR }, s);
+        C.svg('rect', { class: 'vora-rect', x: 0, y: 0, width: n * QR, height: n * QR }, s);
+        const marca = C.svg('rect', { class: 'marca-rect', x: 0, y: 0, width: 0, height: 0, rx: 3 }, s);
+        const cursor = C.svg('rect', { class: 'cursor-rect', x: 0, y: 0, width: QR, height: QR }, s);
+        function posa(a, b) {
+            if (!a) {
+                marca.setAttribute('width', 0);
+                return;
+            }
+            const f0 = Math.min(a[0], b[0]),
+                f1 = Math.max(a[0], b[0]),
+                c0 = Math.min(a[1], b[1]),
+                c1 = Math.max(a[1], b[1]);
+            marca.setAttribute('x', c0 * QR + 2);
+            marca.setAttribute('y', f0 * QR + 2);
+            marca.setAttribute('width', (c1 - c0 + 1) * QR - 4);
+            marca.setAttribute('height', (f1 - f0 + 1) * QR - 4);
+        }
+        return { svg: s, posa, cursor };
+    }
+    function figuraRectangles(p, opcions = {}) {
+        const D = dibuixaRectangles(p.dades.n, { estatic: true, etiqueta: 'Un tauler d’escacs de 8 × 8, amb un rectangle de 3 × 2 marcat' });
+        if (opcions.vinyeta || !opcions.buit) D.posa([2, 1], [3, 3]);
+        D.cursor.remove();
+        return D.svg;
+    }
+
+    function creaRectangles(lloc, p, ctx) {
+        const d = p.dades;
+        let n = d.n, D, inici = null, fi = null, cursor = [0, 0], primer = null;
+        const caixa = C.el('div', { class: 'tauler rectangles' });
+        const mides = C.el('div', { 'class': 'mides-tauler', 'role': 'group', 'aria-label': 'Mida del tauler' }, C.el('span', { text: 'Tauler: ' }));
+        const botonsMida = [];
+        for (let k = 1; k <= d.n; k++) {
+            const b = C.el('button', { type: 'button', class: 'btn-mida', text: `${k} × ${k}` });
+            b.addEventListener('click', () => munta(k));
+            botonsMida.push(b);
+            mides.appendChild(b);
+        }
+        const lloc2 = C.el('div', { class: 'lloc-rectangles' });
+        const text = C.el('p', { 'class': 'text-ruta', 'aria-live': 'polite' });
+        const R = formulariResposta(`Al tauler d’escacs (${d.n} × ${d.n}):`, [{ etiqueta: 'rectangles en total (quadrats inclosos)' }, { etiqueta: 'quadrats' }], comprova);
+        caixa.append(mides, lloc2, text, R.form);
+        lloc.appendChild(caixa);
+
+        function munta(k) {
+            n = k;
+            inici = fi = primer = null;
+            cursor = [0, 0];
+            D = dibuixaRectangles(n);
+            D.svg.setAttribute('tabindex', '0');
+            lloc2.replaceChildren(D.svg);
+            botonsMida.forEach((b, i) => b.classList.toggle('actiu', i + 1 === n));
+            const cel = e => {
+                const q = C.coords(D.svg, e.clientX, e.clientY);
+                return [Math.max(0, Math.min(n - 1, Math.floor(q.y / QR))), Math.max(0, Math.min(n - 1, Math.floor(q.x / QR)))];
+            };
+            D.svg.addEventListener('pointerdown', e => {
+                e.preventDefault();
+                inici = fi = cel(e);
+                pinta();
+                const mou = ev => {
+                    fi = cel(ev);
+                    pinta();
+                };
+                const acaba = () => {
+                    document.removeEventListener('pointermove', mou);
+                    document.removeEventListener('pointerup', acaba);
+                };
+                document.addEventListener('pointermove', mou);
+                document.addEventListener('pointerup', acaba);
+            });
+            // Teclat: les fletxes mouen el cursor; Retorn marca una cantonada i després l'altra
+            D.svg.addEventListener('keydown', e => {
+                const dir = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] }[e.key];
+                if (dir) {
+                    e.preventDefault();
+                    cursor = [Math.max(0, Math.min(n - 1, cursor[0] + dir[0])), Math.max(0, Math.min(n - 1, cursor[1] + dir[1]))];
+                    if (primer) fi = cursor;
+                    pinta();
+                } else if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    if (!primer) {
+                        primer = cursor;
+                        inici = fi = cursor;
+                    } else primer = null;
+                    pinta();
+                }
+            });
+            D.svg.addEventListener('focus', () => D.svg.classList.add('amb-cursor'));
+            D.svg.addEventListener('blur', () => D.svg.classList.remove('amb-cursor'));
+            pinta();
+        }
+        function pinta() {
+            D.posa(inici, fi);
+            D.cursor.setAttribute('x', cursor[1] * QR);
+            D.cursor.setAttribute('y', cursor[0] * QR);
+            ctx.estat([C.el('span', { text: `Tauler de ${n} × ${n}` })]);
+            if (!inici) {
+                text.textContent = 'Arrossega el dit (o el ratolí) pel tauler per marcar un rectangle.';
+                return;
+            }
+            const h = Math.abs(fi[0] - inici[0]) + 1,
+                w = Math.abs(fi[1] - inici[1]) + 1;
+            const quants = (n + 1 - h) * (n + 1 - w);
+            text.textContent = `${h === w ? 'Un quadrat' : 'Un rectangle'} de ${w} × ${h}. En aquest tauler n’hi ha ${quants} com aquest (de ${w} d’ample i ${h} d’alt).`;
+        }
+        function comprova([t, q]) {
+            ctx.amaga();
+            if (Number.isNaN(t) || Number.isNaN(q)) {
+                ctx.missatge('error', 'Escriu els dos nombres', ['Quants rectangles hi ha en total, i quants d’aquests són quadrats.']);
+                return;
+            }
+            const bT = t === d.total,
+                bQ = q === d.quadrats;
+            if (bT && bQ) ctx.resolt(`${C.nombre(d.total)} rectangles i ${d.quadrats} quadrats!`, [`I ${C.nombre(d.total)} = 36², el quadrat de 1 + 2 + … + 8.`]);
+            else if (bT) ctx.missatge('info', 'El total és correcte', ['Però els quadrats no: compta’ls mida per mida.']);
+            else if (bQ) ctx.missatge('info', 'Els quadrats són correctes', ['Però el total de rectangles no: compta també els que no són quadrats.']);
+            else ctx.missatge('error', 'Encara no', ['Prova-ho primer amb taulers petits: el de 2 × 2 té 9 rectangles, i 5 són quadrats.']);
+        }
+        munta(d.n);
+        return {
+            reinicia: () => {
+                R.inputs.forEach(x => (x.value = ''));
+                munta(d.n);
+            },
+            textSolucio: '▶ Escriu-la',
+            solucio() {
+                R.inputs[0].value = d.total;
+                R.inputs[1].value = d.quadrats;
+                ctx.missatge('info', 'La solució de Dudeney', [`${C.nombre(d.total)} rectangles, dels quals ${d.quadrats} són quadrats.`]);
+            },
+        };
+    }
+
+    // ════════════════════════════════════════════════════════════
+    // AMULET: llegir ABRACADABRA baixant pel triangle de lletres (CP 38)
+    // dades: paraula ('ABRACADABRA'), resposta (1024).
+    // ════════════════════════════════════════════════════════════
+    const DXA = 40,
+        DYA = 38;
+    const posAmulet = (f, i) => [(i - f / 2) * DXA, f * DYA];
+
+    function dibuixaAmulet(d, opcions = {}) {
+        const files = d.paraula.length;
+        const W = (files - 1) * DXA;
+        const s = C.svg('svg', {
+            'class': 'tauler-svg amulet-svg',
+            'viewBox': `${-W / 2 - 30} -32 ${W + 60} ${(files - 1) * DYA + 60}`,
+            'role': opcions.estatic ? 'img' : 'group',
+            'aria-label': opcions.etiqueta || d.etiqueta,
+        });
+        C.svg('path', { class: 'pergami', d: `M0 -28 L${W / 2 + 26} ${(files - 1) * DYA + 22} L${-W / 2 - 26} ${(files - 1) * DYA + 22} Z` }, s);
+        const cami = C.svg('polyline', { class: 'cami-amulet', points: '' }, s);
+        const lletres = [];
+        const comptes = opcions.comptes ? A.maneresAmulet(files) : null;
+        for (let f = 0; f < files; f++) {
+            lletres.push([]);
+            for (let i = 0; i <= f; i++) {
+                const [x, y] = posAmulet(f, i);
+                const g = C.svg('g', { 'class': 'lletra-amulet', 'data-f': f, 'data-i': i }, s);
+                g.style.transform = `translate(${x}px, ${y}px)`;
+                C.svg('circle', { class: 'zona', r: 17 }, g);
+                C.svg('text', { 'class': 'lletra', 'x': 0, 'y': 1, 'text': d.paraula[f] }, g);
+                if (comptes) C.svg('text', { 'class': 'compte-amulet', 'x': 0, 'y': 17, 'text': comptes[f][i] }, g);
+                lletres[f].push(g);
+            }
+        }
+        function posa(ruta) {
+            cami.setAttribute('points', ruta.map((i, f) => posAmulet(f, i).join(',')).join(' '));
+            lletres.forEach((fila, f) => fila.forEach((g, i) => g.classList.toggle('al-cami', ruta[f] === i)));
+        }
+        return { svg: s, lletres, posa };
+    }
+    function figuraAmulet(p, opcions = {}) {
+        const D = dibuixaAmulet(p.dades, { estatic: true, comptes: opcions.comptes, etiqueta: opcions.comptes ? p.dades.etiquetaComptes : p.dades.etiqueta });
+        D.posa([]);
+        return D.svg;
+    }
+
+    function creaAmulet(lloc, p, ctx) {
+        const d = p.dades;
+        const files = d.paraula.length;
+        let ruta, trobats, reproduccio;
+        const caixa = C.el('div', { class: 'tauler amulet' });
+        const D = dibuixaAmulet(d);
+        D.svg.setAttribute('tabindex', '0');
+        const text = C.el('p', { 'class': 'text-ruta', 'aria-live': 'polite' });
+        const R = formulariResposta('De quantes maneres es pot llegir la paraula?', [{ etiqueta: 'maneres' }], comprova);
+        caixa.append(D.svg, text, R.form);
+        lloc.appendChild(caixa);
+
+        const lletraA = e => {
+            const g = e.target.closest && e.target.closest('.lletra-amulet');
+            return g ? [+g.dataset.f, +g.dataset.i] : null;
+        };
+        D.svg.addEventListener('click', e => {
+            const q = lletraA(e);
+            if (q) toca(q[0], q[1]);
+        });
+        D.svg.addEventListener('keydown', e => {
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+                e.preventDefault();
+                if (ruta.length >= files) ruta = [0];
+                const i = ruta[ruta.length - 1];
+                toca(ruta.length, e.key === 'ArrowRight' ? i + 1 : i);
+            } else if (e.key === 'Backspace') {
+                e.preventDefault();
+                if (ruta.length > 1) {
+                    ruta = ruta.slice(0, -1);
+                    pinta();
+                }
+            }
+        });
+
+        function inicia() {
+            atura();
+            ruta = [0];
+            trobats = new Set();
+            pinta();
+        }
+        function toca(f, i) {
+            atura();
+            ctx.amaga();
+            // tornar a una lletra de la ruta: la ruta s'escurça fins allà
+            if (f < ruta.length && ruta[f] === i) {
+                ruta = ruta.slice(0, f + 1);
+                pinta();
+                return;
+            }
+            if (ruta.length >= files) ruta = [0];
+            if (f !== ruta.length || !A.baixaAmulet(ruta[ruta.length - 1], i)) {
+                ctx.missatge('error', 'Per aquí no', [`Des d’aquesta ${d.paraula[ruta.length - 1]} només pots baixar a una de les dues lletres que té just a sota, a l’esquerra o a la dreta.`]);
+                return;
+            }
+            ruta = ruta.concat([i]);
+            if (ruta.length === files) {
+                const k = ruta.join(',');
+                if (trobats.has(k)) ctx.missatge('info', 'Aquest camí ja el tenies', ['Prova’n un altre.']);
+                else {
+                    trobats.add(k);
+                    ctx.missatge('info', `Un camí nou: ja en tens ${trobats.size}`, ['Toca la A de dalt (o qualsevol lletra de la segona fila) per començar-ne un altre.']);
+                }
+            }
+            pinta();
+        }
+        function pinta() {
+            D.posa(ruta);
+            ctx.estat([C.el('span', null, 'Camins diferents trobats: ', C.el('b', { text: trobats.size }))]);
+            text.textContent = 'Camí: ' + ruta.map((_, f) => d.paraula[f]).join('') + (ruta.length < files ? '…' : '');
+        }
+        function comprova([x]) {
+            if (Number.isNaN(x)) {
+                ctx.missatge('error', 'Escriu un nombre', []);
+                return;
+            }
+            if (x === d.resposta) ctx.resolt(`${C.nombre(x)} maneres!`, ['2 × 2 × … × 2, deu vegades: 2¹⁰ = 1024.']);
+            else ctx.missatge('error', `${C.nombre(x)} no`, [x < d.resposta ? 'N’hi ha més. Compta de quantes maneres es pot arribar a cada lletra, fila per fila.' : 'N’hi ha menys.']);
+        }
+        function atura() {
+            if (reproduccio) reproduccio.atura();
+            reproduccio = null;
+        }
+        inicia();
+        return {
+            reinicia: () => {
+                R.inputs[0].value = '';
+                inicia();
+            },
+            textSolucio: '▶ Mira com es compta',
+            solucio() {
+                inicia();
+                // un camí: sempre a l'esquerra, i després sempre a la dreta; i el compte
+                reproduccio = C.reprodueix(
+                    Array.from({ length: files - 1 }, (_, k) => (k < 5 ? 0 : k - 4)),
+                    i => {
+                        ruta = ruta.concat([i]);
+                        pinta();
+                    },
+                    C.movimentReduit() ? 150 : 350,
+                    () => ctx.missatge('info', 'Així ho compta Sir Hugh', ['A cada pas hi ha dues maneres de seguir: 2¹⁰ = 1024.'])
+                );
+                return reproduccio;
+            },
+        };
+    }
+
     window.Taulers.estripat = {
         crea: creaEstripat,
         figura: figuraEtiqueta,
@@ -487,5 +812,15 @@
         figura: figuraSala,
         figuraSolucio: figuraSolucioCaixa,
         dibuixaXarxa,
+    };
+    window.Taulers.rectangles = { crea: creaRectangles, figura: figuraRectangles };
+    window.Taulers.amulet = {
+        crea: creaAmulet,
+        figura: figuraAmulet,
+        figuraSolucio: p => {
+            const svg = figuraAmulet(p, { comptes: true });
+            svg.classList.add('figura-estatica');
+            return C.el('figure', null, svg, C.el('figcaption', { text: p.dades.peuSolucio }));
+        },
     };
 })();

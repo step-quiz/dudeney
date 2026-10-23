@@ -21,7 +21,7 @@ const dades = {};
 );
 
 suite('Dades');
-eq('27 enigmes', Object.keys(dades).length, 27);
+eq('35 enigmes', Object.keys(dades).length, 35);
 Object.values(dades).forEach(p =>
     ok(`${p.id}: camps complets`, p.titol && p.enunciat.length && p.pistes.length === 4 && p.solucioDudeney.length && p.notaMatematic.length)
 );
@@ -111,6 +111,38 @@ eq('i 7 jugades', bfs(estQ(qg.inicial), Fx.xarxa.veinsJugada(arQ), Fx.xarxa.clau
     ok('la de Dudeney: 7 jugades i 16 moviments', ok2 && e2.join(',') === objQ && Fx.xarxa.jugades(movs) === 7 && movs.length === 16);
     const ordre = qg.cercle;
     ok('les línies formen un sol cercle', ordre.every((x, i) => Fx.xarxa.uneix(qg.arestes, x, ordre[(i + 1) % ordre.length])) && qg.arestes.length === ordre.length);
+}
+// AM 221: les vuit locomotores (només es poden moure cap al punt buit)
+{
+    const lo = dades.locomotores.dades;
+    const arL = lo.arestes.map(([a2, b2]) => [a2 - 1, b2 - 1]);
+    const iniL = Object.keys(lo.posicions).map(k => lo.inicial[k] || '');
+    const ordenat = e => {
+        if (e[lo.ordre.buit - 1]) return false;
+        const v = lo.ordre.vora.map(k => e[k - 1]);
+        const i = v.indexOf(1);
+        return [1, -1].some(sg => v.every((_, k) => v[(i + sg * k + 64) % 8] === k + 1));
+    };
+    const veinsFix = fix => e => Fx.xarxa.veins(arL)(e).filter(v => e[v.mov[0]] !== fix);
+    eq('locomotores: 17 moviments amb la 5 quieta', bfs(iniL, veinsFix(5), Fx.xarxa.clau, ordenat), 17);
+    eq('i 17 també sense cap quieta', bfs(iniL, veinsFix(0), Fx.xarxa.clau, ordenat), 17);
+    const dL = Cerca.distancies({ inicial: iniL, veins: veinsFix(0), clau: Fx.xarxa.clau });
+    // totes les solucions de 17: quantes són, i quines locomotores no es mouen
+    let camins17 = [{ e: iniL, m: new Set() }];
+    for (let k = 0; k < 17; k++)
+        camins17 = camins17.flatMap(c => veinsFix(0)(c.e).filter(v => dL.get(Fx.xarxa.clau(v.estat)) === k + 1).map(v => ({ e: v.estat, m: new Set(c.m).add(c.e[v.mov[0]]) })));
+    const fi17 = camins17.filter(c => ordenat(c.e));
+    ok('3 solucions de 17, i en totes la 5 no es mou', fi17.length === 3 && fi17.every(c => [1, 2, 3, 4, 6, 7, 8].every(x => c.m.has(x)) && !c.m.has(5)));
+    ok('amb la 2, la 3 o la 8 quietes en calen 19, 23 i 25; amb la 1, la 4, la 6 o la 7, és impossible',
+        [2, 3, 8].map(x => bfs(iniL, veinsFix(x), Fx.xarxa.clau, ordenat)).join() === '19,23,25' &&
+        [1, 4, 6, 7].every(x => bfs(iniL, veinsFix(x), Fx.xarxa.clau, ordenat) === null));
+    let eL = iniL, okL = true;
+    lo.solucio.forEach(x => {
+        const de = eL.indexOf(x), a2 = eL.indexOf('');
+        if (Fx.xarxa.motiu(eL, arL, de, a2) || x === 5) okL = false;
+        eL = Fx.xarxa.mou(eL, de, a2);
+    });
+    ok('la de Dudeney és vàlida i acaba en ordre', okL && ordenat(eL) && lo.solucio.length === 17 && Object.keys(lo.final).every(k => lo.final[k] === eL[k - 1]));
 }
 
 suite('Mesures');
@@ -255,6 +287,30 @@ eq('torre: cap volta de 10, 12 o 14 jugades', [10, 12, 14].map(k => Ca.voltesTor
     }
     ok(`la ${k ? 'segona' : 'primera'} figura de Dudeney: 16 jugades, totes les caselles`, ok2 && vist.every(f => f.every(x => x)));
 });
+// AM 245: la mosca a l'octàedre (circuits d'Euler des de la A)
+{
+    const oc = dades.octaedre.dades;
+    let n2 = 0;
+    const usat = new Array(oc.graf.arestes.length).fill(false);
+    let acabenA = true;
+    (function cerca(v, k) {
+        if (k === usat.length) {
+            n2++;
+            if (v !== 'A') acabenA = false;
+            return;
+        }
+        oc.graf.arestes.forEach((ar, i) => {
+            if (usat[i] || (ar[0] !== v && ar[1] !== v)) return;
+            usat[i] = true;
+            cerca(ar[0] === v ? ar[1] : ar[0], k + 1);
+            usat[i] = false;
+        });
+    })('A', 0);
+    ok('octàedre: 1488 rutes, i totes acaben a la A', n2 === 1488 && acabenA && dades.octaedre.extra.resposta === 1488);
+    ok('cada vèrtex té 4 arestes', oc.graf.vertexs.every(v => Ca.index(oc.graf).veins[v].length === 4));
+    const ro = Ca.recompte(oc.graf, oc.solucio);
+    ok('la ruta d’exemple passa per les 12 arestes una sola vegada', ro.longitud === 12 && !ro.falten.length && Object.values(ro.vegades).every(x => x === 1) && oc.solucio[0] === 'A');
+}
 
 suite('Quadrats');
 ok('el vuit rebel de Dudeney', Q.comprovaMagic(dades.vuit.dades.solucio.map(F.llegeix), F.fr(15)).resolt);
@@ -267,6 +323,17 @@ for (let a = 1; a <= 9; a++) {
 eq('cap solució amb enters positius', positius, 0);
 eq('Bachet: 1152 maneres', Q.compteBachet().total, 1152);
 eq('el diagrama 3 no té conflictes', Q.conflictesBachet(dades.bachet.dades.solucio).length, 0);
+// AM 406: les divuit fitxes de dòmino
+const dm = dades.domino.dades;
+eq('dòminos: la solució de Dudeney suma 18 a totes les línies', Q.comprovaDomino(dm.solucio, 6, 18), null);
+eq('i l’exemple de l’enunciat, 13', Q.comprovaDomino(dm.exemple, 6, 13), null);
+{
+    const sumesF = Q.FITXES_DOMINO.map(([a2, b2]) => a2 + b2).sort((x, y) => x - y);
+    const min18 = sumesF.slice(0, 18).reduce((x, y) => x + y, 0);
+    ok('13 és el mínim possible (les 18 fitxes més petites fan 76; 78 = 6 × 13)', min18 === 76 && Math.ceil(min18 / 6) === 13);
+    const compl = dm.exemple.map(f => f.map(x => 6 - x));
+    eq('i el complement a 6 dona un quadrat de 23', Q.comprovaDomino(compl, 6, 23), null);
+}
 
 suite('Aritmètica');
 eq('etiquetes de 4 xifres', Ar.etiquetes(2).join(), '0000,0001,2025,3025,9801');
@@ -274,6 +341,20 @@ const a = dades.aranya.dades;
 const camins = Ar.totsElsCamins(a.sala, a.aranya, a.mosca).filter(x => x.valid);
 eq('aranya: 40 peus el mínim', Math.min(...camins.map(x => x.longitud)), 40);
 eq('els quatre de Dudeney', a.camins.map(s => Ar.cami(a.sala, s, a.aranya, a.mosca).longitud.toFixed(3)).join(), '42.000,43.174,40.719,40.000');
+// AM 347: comptant els rectangles
+ok('rectangles: 1296, dels quals 204 quadrats', Ar.rectangles(8).total === 1296 && Ar.rectangles(8).quadrats === 204);
+ok('les fórmules de Dudeney, d’1 × 1 a 12 × 12', Array.from({ length: 12 }, (_, k) => k + 1).every(n2 => {
+    const r2 = Ar.rectangles(n2), f2 = Ar.formulesRectangles(n2);
+    return r2.total === f2.total && r2.quadrats === f2.quadrats && r2.total - r2.quadrats === f2.noQuadrats;
+}));
+ok('i el total és 1³ + … + 8³ = 36²', [1, 2, 3, 4, 5, 6, 7, 8].reduce((x, k) => x + k ** 3, 0) === 1296 && 36 ** 2 === 1296);
+// CP 38: l'amulet
+{
+    const am = dades.amulet.dades;
+    const files = Ar.maneresAmulet(am.paraula.length);
+    eq('amulet: 1024 maneres', files[files.length - 1].reduce((x, y) => x + y, 0), 1024);
+    eq('la fila de baix és el triangle de Pascal', files[10].join(' '), '1 10 45 120 210 252 210 120 45 10 1');
+}
 
 suite('Dissecció');
 const d = dades.mercer.dades;
@@ -290,4 +371,38 @@ const cel = br.peces.map(pc => {
 });
 const rb = Di.comprovaQuadricula(cel, br.solucio.map(t => ({ f: t[0], c: t[1] })), 10, [0, 0]);
 ok('brocat: omple el 10 × 10 amb el dibuix casat', rb.complet && rb.patro);
+// AM 146: una dissecció fàcil (quatre peces iguals amb els dotze triangles)
+{
+    const tz = dades.trapezi.dades;
+    eq('trapezi: la solució de Dudeney fa quatre peces iguals', Di.particio(tz.triangles, tz.solucio, 4), null);
+    let solucions = 0;
+    const g = new Array(12).fill(-1);
+    (function reparteix(i) {
+        if (i === 12) {
+            if (!Di.particio(tz.triangles, g, 4)) solucions++;
+            return;
+        }
+        // els grups s'obren per ordre (el primer triangle sempre al grup 0…) per no comptar el mateix repartiment amb colors canviats
+        const max = Math.max(-1, ...g.slice(0, i)) + 1;
+        for (let k = 0; k <= Math.min(3, max); k++) {
+            if (g.slice(0, i).filter(x => x === k).length === 3) continue;
+            g[i] = k;
+            reparteix(i + 1);
+        }
+        g[i] = -1;
+    })(0);
+    eq('i és l’única', solucions, 1);
+    const mitja = Di.formaCanonica([tz.contorn.map(q => [q[0] / 2, q[1] / 2])]);
+    const pecesD = [[[0, 2], [1, 1], [1, 0], [0, 0]], [[0, 2], [2, 2], [2, 1], [1, 1]], [[1, 1], [3, 1], [2, 0], [1, 0]], [[2, 2], [4, 2], [3, 1], [2, 1]]];
+    ok('cada peça és la figura sencera a mitja mida', pecesD.every(pg => Di.formaCanonica([pg]) === mitja));
+}
+// AM 147 i 151: peces en xarxa
+['cinc-triangles', 'fuster'].forEach(id => {
+    const dp = dades[id].dades;
+    const bases = dp.peces.map(pc => pc.pts);
+    const areaPeces = bases.reduce((x, pc) => x + Di.area(pc), 0);
+    ok(`${id}: les peces omplen el quadrat (àrea 5)`, Di.omple(bases, dp.solucio, dp.objectiu) && Math.abs(areaPeces - 5) < 1e-9 && Math.abs(Di.area(dp.objectiu) - 5) < 1e-9);
+    ok(`${id}: a la posició inicial, no`, !Di.omple(bases, dp.peces.map(() => ({ r: 0, x: 0, y: 0 })), dp.objectiu));
+    ok(`${id}: les peces de paper fan la mateixa àrea`, Math.abs(dp.paper.reduce((x, pg) => x + Di.area(pg), 0) - 5) < 1e-9);
+});
 finish('Motors');

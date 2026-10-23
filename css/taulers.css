@@ -2077,3 +2077,391 @@ DEPENDÈNCIES: css/tokens.css
     color: var(--tinta-suau);
     margin-top: 4px;
 }
+
+/* Les vuit locomotores (AM 221) */
+.vies-svg .fil-bolet {
+    stroke: var(--tinta-suau);
+    stroke-width: 7;
+    stroke-linecap: round;
+}
+.vies-svg .parada {
+    fill: var(--fusta);
+    stroke: var(--fusta-vora);
+    stroke-width: 2;
+}
+.locomotora {
+    cursor: pointer;
+    transition: transform 0.4s ease;
+}
+.locomotora .caldera,
+.locomotora .cabina,
+.locomotora .xemeneia {
+    fill: var(--tema);
+    stroke: var(--tema-fort);
+    stroke-width: 2;
+}
+.locomotora .cabina {
+    fill: color-mix(in srgb, var(--tema) 60%, var(--panell));
+}
+.locomotora .roda {
+    fill: var(--tinta);
+    stroke: var(--panell);
+    stroke-width: 1.5;
+}
+.num-loco {
+    font: 700 17px var(--serif);
+    fill: #fff;
+    text-anchor: middle;
+    dominant-baseline: central;
+}
+
+/* Una dissecció fàcil (AM 146): pintar triangles */
+.retalla-svg {
+    max-width: 560px;
+    touch-action: none;
+}
+.retalla-svg .tri {
+    fill: var(--panell);
+    stroke: var(--tinta-suau);
+    stroke-width: 0.02;
+    stroke-dasharray: 0.06 0.05;
+    cursor: pointer;
+}
+.retalla-svg .tri.sense-linies {
+    stroke: none;
+}
+.retalla-svg .tri:focus-visible {
+    stroke: var(--tema);
+    stroke-width: 0.06;
+    stroke-dasharray: none;
+}
+.retalla-svg .g0,
+.color-paleta.g0 {
+    fill: color-mix(in srgb, var(--tema) 55%, var(--panell));
+    background: color-mix(in srgb, var(--tema) 55%, var(--panell));
+}
+.retalla-svg .g1,
+.color-paleta.g1 {
+    fill: color-mix(in srgb, var(--tema) 25%, var(--panell));
+    background: color-mix(in srgb, var(--tema) 25%, var(--panell));
+}
+.retalla-svg .g2,
+.color-paleta.g2 {
+    fill: color-mix(in srgb, var(--tema) 22%, #f3d6a4);
+    background: color-mix(in srgb, var(--tema) 22%, #f3d6a4);
+}
+.retalla-svg .g3,
+.color-paleta.g3 {
+    fill: color-mix(in srgb, var(--tema) 78%, var(--tinta));
+    background: color-mix(in srgb, var(--tema) 78%, var(--tinta));
+}
+.retalla-svg .tall {
+    stroke: var(--tinta);
+    stroke-width: 0.07;
+    stroke-linecap: round;
+    pointer-events: none;
+}
+.retalla-svg .contorn-retalla {
+    fill: none;
+    stroke: var(--tinta);
+    stroke-width: 0.07;
+    stroke-linejoin: round;
+    pointer-events: none;
+}
+.paleta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+}
+.color-paleta {
+    min-width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    border: 2px solid var(--linia-forta);
+    font: 700 1rem var(--sans);
+    color: var(--tinta);
+    cursor: pointer;
+}
+.color-paleta.g3 {
+    color: #fff;
+}
+.color-paleta.goma {
+    background: var(--panell);
+    padding: 0 12px;
+}
+.color-paleta.actiu {
+    outline: 3px solid var(--tema);
+    outline-offset: 2px;
+}
+
+/* Un quadrat fàcil i el fuster (AM 147, AM 151): peces en una xarxa */
+.peces-svg {
+    max-width: 680px;
+    touch-action: none;
+}
+.peces-svg .punt-xarxa {
+    fill: var(--linia);
+}
+.peces-svg .lloc-objectiu {
+    fill: color-mix(in srgb, var(--tema) 8%, var(--panell));
+    stroke: var(--tinta-suau);
+    stroke-width: 0.04;
+    stroke-dasharray: 0.08 0.07;
+}
+.peces-svg.complet .lloc-objectiu {
+    stroke: var(--ok);
+    stroke-dasharray: none;
+}
+.peca-xarxa {
+    cursor: grab;
+}
+.peca-xarxa .cos-peca-xarxa {
+    stroke: var(--tinta);
+    stroke-width: 0.04;
+    stroke-linejoin: round;
+}
+.peca-xarxa.p0 .cos-peca-xarxa {
+    fill: color-mix(in srgb, var(--tema) 55%, var(--panell));
+}
+.peca-xarxa.p1 .cos-peca-xarxa {
+    fill: color-mix(in srgb, var(--tema) 25%, var(--panell));
+}
+.peca-xarxa.p2 .cos-peca-xarxa {
+    fill: color-mix(in srgb, var(--tema) 22%, #f3d6a4);
+}
+.peca-xarxa.p3 .cos-peca-xarxa {
+    fill: color-mix(in srgb, var(--tema) 40%, var(--fusta));
+}
+.peca-xarxa.triada .cos-peca-xarxa,
+.peca-xarxa:focus-visible .cos-peca-xarxa {
+    stroke: var(--tema);
+    stroke-width: 0.08;
+}
+.peca-xarxa.arrossegada {
+    cursor: grabbing;
+    filter: drop-shadow(0 0.06px 0.05px rgba(0, 0, 0, 0.3));
+}
+.num-peca-xarxa {
+    font: 700 0.38px var(--serif);
+    fill: var(--tinta);
+    text-anchor: middle;
+    dominant-baseline: central;
+    pointer-events: none;
+}
+.peces-svg .contorn-sencer {
+    fill: var(--fusta);
+    stroke: var(--tinta);
+    stroke-width: 0.05;
+    stroke-linejoin: round;
+}
+.peces-svg .lletra-punt {
+    font: 700 0.34px var(--serif);
+    fill: var(--tinta);
+    text-anchor: middle;
+    dominant-baseline: central;
+}
+
+/* Les divuit fitxes de dòmino (AM 406) */
+.domino-svg {
+    max-width: 460px;
+    touch-action: none;
+}
+.domino-svg .fons-domino {
+    fill: color-mix(in srgb, var(--tema) 10%, var(--panell));
+    stroke: var(--tinta);
+    stroke-width: 2;
+}
+.lloc-domino {
+    cursor: pointer;
+}
+.lloc-domino .buit-domino {
+    fill: transparent;
+    stroke: var(--linia);
+    stroke-width: 1.5;
+    stroke-dasharray: 4 4;
+}
+.lloc-domino.triat .buit-domino,
+.lloc-domino:focus-visible .buit-domino {
+    stroke: var(--tema);
+    stroke-width: 3;
+    stroke-dasharray: none;
+}
+.fitxa-domino {
+    cursor: pointer;
+}
+.fitxa-domino .cos-domino {
+    fill: #fbf8f0;
+    stroke: var(--tinta);
+    stroke-width: 1.6;
+}
+.fitxa-domino .ratlla-domino {
+    stroke: var(--tinta);
+    stroke-width: 1.4;
+}
+.fitxa-domino .punt-domino {
+    fill: #1d232c;
+}
+.fitxa-domino.usada {
+    opacity: 0.22;
+    cursor: default;
+}
+.fitxa-domino.triada .cos-domino,
+.fitxa-capsa:focus-visible .cos-domino {
+    stroke: var(--tema);
+    stroke-width: 3.5;
+}
+.fitxa-domino.fantasma {
+    pointer-events: none;
+    opacity: 0.85;
+    filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.3));
+}
+.fitxa-lloc {
+    pointer-events: all;
+}
+.suma-domino {
+    font: 700 16px var(--sans);
+    fill: var(--tinta-suau);
+    text-anchor: middle;
+}
+.suma-domino.ok {
+    fill: var(--ok);
+}
+.suma-domino.mal {
+    fill: var(--error);
+}
+.domino-svg .fletxa-diag {
+    font: 13px var(--sans);
+    fill: var(--tinta-suau);
+    text-anchor: middle;
+}
+.domino-svg .titol-capsa {
+    font: 600 13px var(--sans);
+    fill: var(--tinta-suau);
+}
+
+/* Comptant els rectangles (AM 347) i l'amulet (CP 38) */
+.resposta-recompte {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    align-items: flex-end;
+    justify-content: center;
+    margin-top: 6px;
+}
+.resposta-recompte .titol-resposta {
+    width: 100%;
+    margin: 0;
+    text-align: center;
+    font-weight: 600;
+}
+.resposta-recompte label {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font: 0.85rem var(--sans);
+    color: var(--tinta-suau);
+}
+.resposta-recompte input {
+    width: 8em;
+    font: 1.1rem var(--sans);
+    padding: 6px 8px;
+    border: 1.5px solid var(--linia-forta);
+    border-radius: 8px;
+    background: var(--panell);
+    color: var(--tinta);
+}
+.rectangles-svg {
+    max-width: 380px;
+    touch-action: none;
+}
+.rectangles-svg .cel {
+    fill: var(--panell);
+}
+.rectangles-svg .cel.fosca {
+    fill: color-mix(in srgb, var(--tinta) 12%, var(--panell));
+}
+.rectangles-svg .vora-rect {
+    fill: none;
+    stroke: var(--tinta);
+    stroke-width: 2.5;
+}
+.rectangles-svg .marca-rect {
+    fill: color-mix(in srgb, var(--tema) 30%, transparent);
+    stroke: var(--tema);
+    stroke-width: 3.5;
+    pointer-events: none;
+}
+.rectangles-svg .cursor-rect {
+    fill: none;
+    stroke: var(--tema);
+    stroke-width: 3;
+    stroke-dasharray: 5 4;
+    opacity: 0;
+    pointer-events: none;
+}
+.rectangles-svg.amb-cursor .cursor-rect {
+    opacity: 1;
+}
+.mides-tauler {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    align-items: center;
+    font: 0.9rem var(--sans);
+}
+.btn-mida {
+    font: 600 0.85rem var(--sans);
+    padding: 4px 8px;
+    border: 1.5px solid var(--linia-forta);
+    border-radius: 6px;
+    background: var(--panell);
+    color: var(--tinta);
+    cursor: pointer;
+}
+.btn-mida.actiu {
+    background: var(--tema);
+    border-color: var(--tema);
+    color: #fff;
+}
+.amulet-svg {
+    max-width: 520px;
+}
+.amulet-svg .pergami {
+    fill: color-mix(in srgb, var(--fusta) 45%, var(--panell));
+    stroke: var(--fusta-vora);
+    stroke-width: 2;
+    stroke-linejoin: round;
+}
+.lletra-amulet {
+    cursor: pointer;
+}
+.lletra-amulet .zona {
+    fill: transparent;
+}
+.lletra-amulet .lletra {
+    font: 700 19px var(--serif);
+    fill: var(--tinta);
+    text-anchor: middle;
+    dominant-baseline: central;
+}
+.lletra-amulet.al-cami .zona {
+    fill: var(--tema);
+}
+.lletra-amulet.al-cami .lletra {
+    fill: #fff;
+}
+.amulet-svg .cami-amulet {
+    fill: none;
+    stroke: var(--tema);
+    stroke-width: 4;
+    stroke-linejoin: round;
+    opacity: 0.5;
+    pointer-events: none;
+}
+.compte-amulet {
+    font: 600 10px var(--sans);
+    fill: var(--tema-fort);
+    text-anchor: middle;
+}

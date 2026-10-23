@@ -3,8 +3,8 @@
  * PROJECTE: dudeney (Step Quiz, vanilla JS)
  * FITXER: js/fitxes/problemes.js
  * ROL: Els enigmes de fitxes: les granotes (AM 214, 216 i 341), Twickenham
- *   (AM 217), les lletres a la capsa (AM 219) i els formatges de l'administrador
- *   (CP 1). Enunciat, pistes i solució de Dudeney traduïts i
+ *   (AM 217), les lletres a la capsa (AM 219), les vuit locomotores (AM 221) i
+ *   els formatges de l'administrador (CP 1). Enunciat, pistes i solució de Dudeney traduïts i
  *   adaptats al català; la nota del matemàtic és nostra.
  * ARQUITECTURA: Dades pures. Al navegador s'afegeixen a window.DUDENEY; a Node,
  *   el fitxer exporta la llista (tests). Els textos són HTML.
@@ -246,8 +246,65 @@
         ],
     },
     {
-        id: 'formatges',
+        id: 'locomotores',
         ordre: 6,
+        font: { llibre: 'am', numero: 221, titolOriginal: 'The Eight Engines' },
+        titol: 'Les vuit locomotores',
+        tipus: 'fitxes',
+        tauler: 'xarxa',
+        dificultat: 3,
+        enunciat: [
+            '<p>El diagrama representa el dipòsit de locomotores d’una companyia de ferrocarrils amb una direcció força excèntrica. Les locomotores només es poden aturar als nou punts indicats, un dels quals ara és buit. Cal moure les locomotores, d’una en una, de punt en punt, en disset moviments, de manera que els seus números quedin en ordre al voltant del cercle, amb el punt del mig buit.</p>',
+            '<p>Però a una de les locomotores li han apagat el foc i, per tant, no es pot moure. Com s’ha de fer? I quina és la locomotora que es queda quieta tota l’estona?</p>',
+            '<p class="pantalla">A la pantalla no et diem quina locomotora té el foc apagat: les pots moure totes. Si ho aconsegueixes en 17 moviments, n’hi haurà una que no s’haurà mogut. Les vies són la del cercle i les quatre que porten al centre, i els números poden quedar en ordre en un sentit o en l’altre.</p>',
+        ],
+        regla: 'Posa les locomotores <strong>en ordre</strong> al voltant del cercle (1, 2, 3… 8), amb el <strong>centre buit</strong>, en <strong>17 moviments</strong>.',
+        comEsJuga: [
+            'Toca una locomotora: si una via la uneix amb el punt buit, hi va. També la pots arrossegar.',
+            'Només hi ha un punt buit, i cada moviment és una locomotora que hi va.',
+        ],
+        tecles: '<kbd>1</kbd>…<kbd>8</kbd> mouen la locomotora d’aquest número; <kbd>⌫</kbd> desfà el darrer moviment.',
+        dades: {
+            fitxa: 'locomotora',
+            // Els punts: 1…8 al voltant del cercle (en el sentit de les agulles, des de dalt) i el 9 al centre
+            posicions: { 1: [1, 0.05], 2: [1.672, 0.328], 3: [1.95, 1], 4: [1.672, 1.672], 5: [1, 1.95], 6: [0.328, 1.672], 7: [0.05, 1], 8: [0.328, 0.328], 9: [1, 1] },
+            arestes: [[1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 8], [8, 1], [1, 9], [3, 9], [5, 9], [7, 9]],
+            inicial: { 1: 1, 2: 2, 3: 4, 4: 8, 5: 6, 6: 3, 8: 5, 9: 7 },
+            ordre: { vora: [1, 2, 3, 4, 5, 6, 7, 8], buit: 9 },
+            minimMoviments: 17,
+            // Els disset moviments de Dudeney: el número de la locomotora que va al punt buit
+            solucio: [7, 6, 3, 7, 6, 1, 2, 4, 1, 3, 8, 1, 3, 2, 4, 3, 2],
+            final: { 1: 4, 2: 3, 3: 2, 4: 1, 5: 8, 6: 7, 7: 6, 8: 5 },
+            peuFinal: 'Al final, en ordre en el sentit contrari a les agulles del rellotge; la 5 no s’ha mogut.',
+            resumSolucio: 'Disset moviments, i la 5 no es mou.',
+            etiqueta: 'Un cercle de vuit punts amb un punt al centre; al voltant, començant per dalt, les locomotores 1, 2, 4, 8, 6, 3, un punt buit i la 5, i la 7 al centre',
+            etiquetaFinal: 'Les locomotores en ordre al voltant del cercle, amb el centre buit',
+        },
+        extra: {
+            pregunta: 'I ara, la pregunta de Dudeney: <strong>quina locomotora</strong> té el foc apagat i no es pot moure?',
+            resposta: 5,
+            be: 'La 5. I encara més: en totes les solucions de 17 moviments, la 5 es queda quieta.',
+            malament: 'No. Mira quina locomotora no s’ha mogut en la teva solució de 17 moviments.',
+        },
+        pistes: [
+            'Ara el punt buit és a l’esquerra del cercle. Només s’hi poden moure les locomotores que hi estan unides per una via: la 3, la 5 i la 7, la del centre.',
+            'Pel cercle, cap locomotora no en pot avançar una altra: per canviar-ne l’ordre cal fer servir el centre i les quatre vies que hi porten.',
+            'L’ordre pot anar en el sentit contrari a les agulles del rellotge. Una locomotora que no es mogui pot quedar on és si, al final, té les seves dues veïnes a banda i banda.',
+            'Els primers moviments de Dudeney: 7, 6, 3, 7, 6, 1…',
+        ],
+        solucioDudeney: [
+            '<p>La locomotora a la qual han apagat el foc i que, per tant, no es pot moure és la número 5. Moveu les altres en aquest ordre: 7, 6, 3, 7, 6, 1, 2, 4, 1, 3, 8, 1, 3, 2, 4, 3, 2, disset moviments en total, i les vuit locomotores queden en l’ordre que es demanava.</p>',
+            '<p>Hi ha dues altres solucions lleugerament diferents.</p>',
+        ],
+        notaMatematic: [
+            '<p><strong>Comprovat per ordinador.</strong> Una cerca en amplada confirma que, amb la 5 quieta, 17 moviments és el mínim, i que hi ha exactament tres solucions de 17: la de Dudeney i les dues «lleugerament diferents» que esmenta.</p>',
+            '<p><strong>Una sorpresa.</strong> Si no s’apagués cap locomotora, el mínim continuaria sent 17, i les tres úniques solucions de 17 moviments serien les mateixes: totes deixen la 5 quieta. Per això, si ho resols en 17 moviments a la pantalla, la 5 no s’haurà mogut mai.</p>',
+            '<p><strong>I si fos una altra?</strong> Si la locomotora apagada fos la 2, en caldrien 19; si fos la 3, 23, i si fos la 8, 25. Amb la 1, la 4, la 6 o la 7 quietes, no hi hauria manera de posar-les en ordre.</p>',
+        ],
+    },
+    {
+        id: 'formatges',
+        ordre: 7,
         font: { llibre: 'cp', numero: 1, titolOriginal: 'The Reve’s Puzzle' },
         titol: 'Els formatges de l’administrador',
         tipus: 'fitxes',

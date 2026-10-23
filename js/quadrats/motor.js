@@ -9,11 +9,16 @@
  *   - quadrat de Bachet (AM 304): les 16 figures (as, rei, dama i valet de cada
  *     pal) en un quadrat 4 × 4 sense repetir pal ni figura en cap fila, columna
  *     ni diagonal llarga; i el recompte de totes les maneres (1.152).
+ *   - quadrat de dòminos (AM 406): 18 fitxes diferents de dòmino, posades de
+ *     peu en un quadrat 6 × 6 (tres per columna), amb totes les files, les
+ *     columnes i les dues diagonals llargues sumant el mateix.
  * ARQUITECTURA: Pur, sense DOM (també el fan servir els tests de Node).
  *   Quadrat màgic: graella = 9 caselles (de dalt a baix i d'esquerra a dreta),
  *   cada una una fracció [n, d] o null.
  *   Bachet: graella = 16 caselles, cada una una carta 'AD' (figura + pal) o null;
  *   figures A K Q J, pals D (diamants) S (piques) H (cors) C (trèvols).
+ *   Dòminos: llocs = 18 (columna c, de dalt a baix k: índex c·3 + k), cada un [punts de dalt,
+ *   punts de baix] o null.
  * DEPENDÈNCIES: js/comu/fraccio.js (Fraccio)
  * ============================================================================
  */
@@ -186,7 +191,74 @@
         return { total: n, primera: primera };
     }
 
+    // ── Quadrat de dòminos (AM 406) ────────────────────────────────────────
+    /** Les 28 fitxes d'un joc de dòmino: [a, b] amb a ≤ b. */
+    var FITXES_DOMINO = (function () {
+        var out = [];
+        for (var a = 0; a <= 6; a++) for (var b = a; b <= 6; b++) out.push([a, b]);
+        return out;
+    })();
+    /** La quadrícula n × n (null on no hi ha fitxa) a partir dels llocs de les fitxes de peu. */
+    function graellaDomino(llocs, n) {
+        var g = [];
+        for (var f = 0; f < n; f++) g.push(new Array(n).fill(null));
+        llocs.forEach(function (fx, i) {
+            if (!fx) return;
+            var c = Math.floor(i / (n / 2)),
+                k = i % (n / 2);
+            g[2 * k][c] = fx[0];
+            g[2 * k + 1][c] = fx[1];
+        });
+        return g;
+    }
+    /** Les sumes de les files, les columnes i les dues diagonals (null si hi falta algun nombre). */
+    function sumesDomino(llocs, n) {
+        var g = graellaDomino(llocs, n);
+        var suma = function (cs) {
+            var s = 0;
+            for (var i = 0; i < cs.length; i++) {
+                if (cs[i] === null) return null;
+                s += cs[i];
+            }
+            return s;
+        };
+        var files = [],
+            columnes = [],
+            d1 = [],
+            d2 = [];
+        for (var i = 0; i < n; i++) {
+            files.push(suma(g[i]));
+            columnes.push(
+                suma(
+                    g.map(function (fila) {
+                        return fila[i];
+                    })
+                )
+            );
+            d1.push(g[i][i]);
+            d2.push(g[i][n - 1 - i]);
+        }
+        return { files: files, columnes: columnes, diagonals: [suma(d1), suma(d2)] };
+    }
+    /** null si les fitxes són totes diferents i totes les línies sumen «objectiu»; si no, el motiu. */
+    function comprovaDomino(llocs, n, objectiu) {
+        if (llocs.some(function (x) { return !x; })) return 'incomplet';
+        var vistes = {};
+        for (var i = 0; i < llocs.length; i++) {
+            var k = Math.min(llocs[i][0], llocs[i][1]) + '-' + Math.max(llocs[i][0], llocs[i][1]);
+            if (vistes[k]) return 'repetida';
+            vistes[k] = true;
+        }
+        var s = sumesDomino(llocs, n);
+        var totes = s.files.concat(s.columnes, s.diagonals);
+        return totes.every(function (x) { return x === objectiu; }) ? null : 'sumes';
+    }
+
     return {
+        FITXES_DOMINO: FITXES_DOMINO,
+        graellaDomino: graellaDomino,
+        sumesDomino: sumesDomino,
+        comprovaDomino: comprovaDomino,
         LINIES3: LINIES3,
         LINIES4: LINIES4,
         FIGURES: FIGURES,

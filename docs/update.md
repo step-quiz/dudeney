@@ -72,3 +72,15 @@ bombolla), **modernitzar** (canviar-ho al text), **treure**.
 | El trencaclosques del mariner | Un mariner que comercia per les illes del Pacífic, «per raons comercials» | Context colonial de l'època, però sense cap estereotip | Mantenir |
 | La volta de la torre | La casella d5 | Dudeney no l'anomena: només la dibuixa | **Ja adaptat:** l'anomenem d5 (notació algebraica) |
 
+## Tanda 3
+
+| Enigma | Què | Per què pot estranyar | Proposta |
+|---|---|---|---|
+| L'amulet | Un foraster sospitós d'espia, escorcollat per ordre de Sir Hugh; «el varlet», «el pobre home» | Desconfiança cap als estrangers; vocabulari medieval | Mantenir (al final Sir Hugh li dona menjar i roba); la història de l'amulet s'explica a la nota |
+| L'amulet | «Abracadabra era el déu suprem dels assiris» | És fals | **Ja explicat** a la nota (⚠) |
+| Les vuit locomotores | Un dipòsit de locomotores de vapor; «apagar el foc» d'una locomotora | Les locomotores de vapor ja no es veuen | Mantenir (s'entén pel dibuix) |
+| La mosca a l'octàedre | Dos professors que es passen dies observant una mosca | S'entén | Mantenir |
+| El problema del fuster | «El fuster» i el «tauler d'una taula» | S'entén | Mantenir |
+| Les divuit fitxes de dòmino | El dòmino | Molts alumnes no hi han jugat mai | Explicar: una fitxa són dos quadrats amb punts de 0 a 6, i una capsa en té 28 |
+| Comptant els rectangles | El tauler d'escacs | S'entén | Mantenir |
+
