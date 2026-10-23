@@ -1,0 +1,33 @@
+# Revisió automàtica: cada cop que es puja alguna cosa a main (o s'obre una
+# pull request), GitHub comprova el projecte.
+#   ✓ verd  → tot correcte
+#   ✗ vermell → alguna cosa s'ha trencat (el detall és a la pestanya "Actions")
+#
+# Passos:
+#   1. Torna a calcular tot el que diu Dudeney als enigmes (tests/motors.test.js).
+#   2. Comprova que els ?v= dels CSS i JS de les pàgines són al dia (tools/versio.py).
+# Només cal Node i Python, sense instal·lar res.
+name: Tests
+
+on:
+  push:
+    branches: [main]      # el que es puja a main (també el commit del ZIP)
+  pull_request:           # les pull requests, abans de fusionar-les
+  workflow_dispatch:      # botó "Run workflow" per executar-ho a mà
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Comprova els càlculs dels enigmes
+        run: node tests/motors.test.js
+      - name: Comprova les versions dels fitxers (?v=)
+        run: python3 tools/versio.py --comprova
