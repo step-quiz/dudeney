@@ -21,9 +21,12 @@ Les solucions de Dudeney i les notes del matemàtic només es veuen al web amb `
 ## Proves
 
 ```bash
-node tests/motors.test.js        # torna a calcular tot el que diu Dudeney (50 comprovacions)
+node tests/motors.test.js        # torna a calcular tot el que diu Dudeney (75 comprovacions)
+node tools/prova-navegador.js    # totes les pàgines al navegador: mòbil, ordinador, clar i fosc
 node tools/genera-pdf.js         # torna a fer els dos PDF (cal Playwright amb Chromium)
+python3 tools/comprova-pdf.py    # que els PDF no tinguin cap color
 python3 tools/versio.py          # posa al dia els ?v= dels CSS i JS
+python3 tools/llibres.py am 216  # el text original d'un problema (cal tenir els EPUB a src/)
 ```
 
 Les discrepàncies trobades amb Dudeney són a [`docs/DISCREPANCIES.md`](docs/DISCREPANCIES.md).
