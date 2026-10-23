@@ -261,6 +261,16 @@ body {
     width: 10mm;
     font-weight: 700;
 }
+.index-columnes.c2 {
+    display: flex;
+    gap: 6mm;
+}
+.index-columnes.c2 .index-enigmes {
+    font-size: 8.6pt;
+}
+.index-columnes.c2 .index-enigmes td:last-child {
+    font-size: 7.6pt;
+}
 .index-enigmes td:last-child {
     font: 9pt var(--sans);
     color: #333;
@@ -470,4 +480,58 @@ body {
 }
 .fitxa-cercle.blanca .lletra-fitxa {
     fill: #000;
+}
+.locomotora .caldera,
+.locomotora .cabina,
+.locomotora .xemeneia,
+.vies-svg .parada {
+    fill: #fff;
+    stroke: #000;
+}
+.num-loco {
+    fill: #000;
+}
+.retalla-svg .g0 {
+    fill: #bbb;
+}
+.retalla-svg .g1 {
+    fill: #fff;
+}
+.retalla-svg .g2 {
+    fill: #e2e2e2;
+}
+.retalla-svg .g3 {
+    fill: #888;
+}
+.peca-xarxa.p0 .cos-peca-xarxa {
+    fill: #bbb;
+}
+.peca-xarxa.p1 .cos-peca-xarxa,
+.peces-svg .contorn-sencer,
+.peces-svg .lloc-objectiu {
+    fill: #fff;
+}
+.peca-xarxa.p2 .cos-peca-xarxa {
+    fill: #e2e2e2;
+}
+.peca-xarxa.p3 .cos-peca-xarxa {
+    fill: #999;
+}
+.fitxa-domino .cos-domino,
+.domino-svg .fons-domino {
+    fill: #fff;
+}
+.fitxa-domino .punt-domino {
+    fill: #000;
+}
+.amulet-svg .pergami,
+.rectangles-svg .cel {
+    fill: #fff;
+}
+.rectangles-svg .cel.fosca {
+    fill: #ddd;
+}
+.rectangles-svg .marca-rect {
+    fill: none;
+    stroke: #000;
 }

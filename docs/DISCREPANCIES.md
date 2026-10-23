@@ -28,3 +28,15 @@ girs i simetries (amb la torre a d5 n'hi ha 8, o 16 comptant el sentit). Dues pr
 |---|---|---|---|
 | El trencaclosques del mariner (AM 249) | Dona el mapa dibuixat a mà, amb rutes corbes que es creuen | L'hem reconstruït (20 illes, 28 rutes). Comprovació: les seves 4 rutes, juntes, fan servir exactament les 28 rutes del mapa, i el programa en troba 4, ni més ni menys, amb la C als llocs 12, 13, 16 i 17 | Mapa redibuixat amb les illes al mateix lloc i les rutes traçades perquè cap no passi per sobre d'una altra illa (s'avisa a l'enunciat) |
 | El tresor del castell (AM 377) | No diu qui posa el tresor a la cistella quan és sol a terra | La seva solució el deixa dins la cistella (passos 1 i 2): el comptem així | El tresor es pot carregar encara que no hi hagi ningú al costat (s'avisa a l'enunciat) |
+
+**Tanda 3** (AM 146, 147, 151, 221, 245, 406 i 347, CP 38): tot el que diu Dudeney s'ha confirmat (les quatre peces
+iguals, els quadrats de √5, 17 moviments amb la 5 quieta i tres solucions, 1488 rutes, els quadrats de 13 i de 18,
+1296 i 204, i 1024). A més: amb els dotze triangles d'AM 146 només hi ha una partició, i a AM 221 la 5 no es mou en
+cap de les solucions de 17, encara que no se'n prohibeixi cap.
+
+| Enigma | Què diu Dudeney | Què hem trobat | Què fa el web |
+|---|---|---|---|
+| L'amulet (CP 38) | «Abracadabra era el déu suprem dels assiris» | No és cert: la primera menció coneguda és del metge romà Quint Serè Samònic (cap a l'any 200), com a amulet contra la febre; l'origen de la paraula és desconegut | Es tradueix la frase i s'explica a la nota (⚠) |
+| Comptant els rectangles (AM 347) | Fórmules generals | El text de Project Gutenberg havia perdut els exponents («n2») | Exponents restituïts |
+| Les divuit fitxes de dòmino (AM 406) | La solució té les fitxes ajagudes | És el mateix quadrat que el de l'enunciat girat; les sumes no canvien | Es mostra amb les fitxes de peu, com a l'enunciat |
+| El problema del fuster (AM 151) | Tres peces és el mínim | No ho hem comprovat per ordinador | No es diu a la nota |

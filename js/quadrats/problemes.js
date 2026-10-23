@@ -107,4 +107,54 @@
             '<p>Avui, aquests quadrats serveixen, per exemple, per dissenyar experiments: provar quatre adobs en quatre varietats d’un cultiu sense que cap combinació es repeteixi en una mateixa fila o columna del camp.</p>',
         ],
     },
+    {
+        id: 'domino',
+        ordre: 3,
+        font: { llibre: 'am', numero: 406, titolOriginal: 'The Eighteen Dominoes' },
+        titol: 'Les divuit fitxes de dòmino',
+        tipus: 'quadrats',
+        tauler: 'domino',
+        dificultat: 2,
+        enunciat: [
+            '<p>La il·lustració mostra divuit fitxes de dòmino col·locades en forma de quadrat, de manera que els punts de cadascuna de les sis columnes, de les sis files i de les dues diagonals llargues sumen 13. És la suma més petita possible amb qualsevol tria de fitxes d’una capsa normal de vint-i-vuit.</p>',
+            '<p>La suma més gran possible és 23, i se’n pot trobar fàcilment una solució canviant cada nombre pel que li falta per arribar a 6: cada blanc per un 6, cada 1 per un 5, cada 2 per un 4, el 3 per un 3, el 4 per un 2, el 5 per un 1 i el 6 per un blanc. Però el trencaclosques consisteix a triar divuit fitxes i col·locar-les (exactament en la forma de la il·lustració) de manera que les sumes siguin 18 en totes catorze direccions.</p>',
+            '<p class="pantalla">A la pantalla, la capsa amb les 28 fitxes és a sota del quadrat, i les sumes de cada fila, de cada columna i de les dues diagonals es veuen a la vora.</p>',
+        ],
+        regla: 'Tria 18 fitxes i posa-les de peu perquè les <strong>6 files</strong>, les <strong>6 columnes</strong> i les <strong>2 diagonals</strong> sumin <strong>18</strong>.',
+        comEsJuga: [
+            'Toca una fitxa de la capsa i després un lloc del quadrat. També la pots arrossegar.',
+            'Toca una fitxa del quadrat per triar-la; si la tornes a tocar, gira cap per avall. Amb els botons, la pots girar o tornar a la capsa.',
+            'Si toques dues fitxes del quadrat l’una darrere l’altra, s’intercanvien.',
+        ],
+        tecles: '<kbd>Tab</kbd> recorre la capsa i el quadrat; <kbd>Retorn</kbd> tria i posa; <kbd>G</kbd> gira la fitxa triada; <kbd>Supr</kbd> la torna a la capsa; <kbd>⌫</kbd> desfà.',
+        dades: {
+            n: 6,
+            suma: 18,
+            sumaExemple: 13,
+            // Les fitxes de peu, columna per columna i de dalt a baix: [punts de dalt, punts de baix]
+            exemple: [[3, 4], [2, 1], [0, 3], [5, 0], [1, 1], [5, 1], [1, 6], [3, 3], [0, 0], [0, 2], [2, 4], [1, 4], [4, 0], [3, 2], [1, 3], [0, 1], [2, 2], [6, 2]],
+            // La solució de Dudeney (al llibre, amb les fitxes ajagudes: aquí, el mateix quadrat girat)
+            solucio: [[6, 3], [1, 5], [0, 3], [3, 1], [6, 2], [2, 4], [3, 3], [4, 3], [5, 0], [1, 4], [1, 2], [6, 4], [0, 4], [6, 6], [0, 2], [5, 3], [0, 0], [5, 5]],
+            etiqueta: 'Un quadrat de 6 × 6 per a divuit fitxes de dòmino de peu, i a sota la capsa amb les 28 fitxes',
+            etiquetaExemple: 'El quadrat de dòminos de Dudeney en què totes les línies sumen 13',
+            etiquetaSolucio: 'El quadrat de dòminos de Dudeney en què totes les línies sumen 18',
+            peuSolucio: 'Totes les files, les columnes i les dues diagonals sumen 18.',
+        },
+        figuraEnunciat: { peu: 'La il·lustració de Dudeney: totes les línies sumen 13.', despres: 1 },
+        pistes: [
+            'Les sis files sumen 6 × 18 = 108: les divuit fitxes que triïs han de tenir 108 punts entre totes. La capsa sencera en té 168.',
+            'Per tant, les deu fitxes que es queden a la capsa han de sumar 168 − 108 = 60 punts.',
+            'Ajusta les sumes girant fitxes: girar una fitxa no canvia la suma de la seva columna ni la de les altres columnes, però sí la de dues files.',
+            'Dudeney fa servir el doble blanc, el doble 3, el doble 5 i el doble 6. La primera columna de la seva solució, de dalt a baix: 6–3, 1–5 i 0–3.',
+        ],
+        solucioDudeney: [
+            '<p>La il·lustració s’explica tota sola. Es veurà que els punts de cada columna, de cada fila i de cada diagonal llarga sumen 18, tal com es demanava.</p>',
+            '<p class="pantalla">A la il·lustració de la solució, Dudeney posa les fitxes ajagudes; aquí és el mateix quadrat girat, amb les fitxes de peu com a l’enunciat. Les sumes no canvien.</p>',
+        ],
+        posicioFiguraSolucio: 1,
+        notaMatematic: [
+            '<p><strong>Per què 13 és el mínim.</strong> Si totes les línies sumen <i>S</i>, les sis files juntes sumen 6<i>S</i>: els punts de les divuit fitxes han de ser un múltiple de 6. Les divuit fitxes amb menys punts en sumen 76, i el primer múltiple de 6 que no és més petit que 76 és 78 = 6 × 13. I si es canvia cada nombre pel que li falta per arribar a 6, cada línia passa de sumar <i>S</i> a sumar 36 − <i>S</i>, i les fitxes continuen sent totes diferents: per això el màxim és 36 − 13 = 23.</p>',
+            '<p><strong>Comprovat per ordinador.</strong> El quadrat de 13 de l’enunciat i el de 18 de la solució tenen divuit fitxes diferents i les catorze sumes correctes. No hem comptat quantes solucions de 18 hi ha.</p>',
+        ],
+    },
 ]);

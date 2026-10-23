@@ -11,7 +11,12 @@
  *   - Taulers.quadricula (AM 174, el brocat): peces de quadrets que es mouen
  *     sense girar i s'enganxen a la quadrícula; el dibuix (flors alternades)
  *     ha de casar al quadrat de 10 × 10.
- * ARQUITECTURA: window.Taulers.lliure / .quadricula = { crea, figura, figuraSolucio }.
+ *   - Taulers.retalla (AM 146): la figura ja dividida en triangles, que es pinten
+ *     de colors; es comprova que surten peces iguals (motor: particio).
+ *   - Taulers.peces (AM 147, AM 151): peces que es mouen per una xarxa de mig
+ *     quadret i giren 90°, fins que omplen el quadrat (motor: aXarxa, omple).
+ * ARQUITECTURA: window.Taulers.lliure / .quadricula / .retalla / .peces =
+ *   { crea, figura, figuraSolucio }.
  *   Mercer: coordenades del motor amb la y cap amunt; a l'SVG es dibuixa (x, −y).
  *   Brocat: unitats de quadret (Q px a l'SVG), fila 0 a dalt.
  * DEPENDÈNCIES: js/comu/comu.js, js/disseccio/motor.js
@@ -691,6 +696,389 @@
         };
     }
 
+    // ════════════════════════════════════════════════════════════
+    // RETALLA: repartir una figura feta de triangles en peces iguals (AM 146)
+    // dades: triangles [[[x, y] × 3], …] (unitats, y cap avall), contorn (el polígon de la figura),
+    // peces (quantes), solucio (el grup de cada triangle).
+    // ════════════════════════════════════════════════════════════
+    const NOMS_GRUP = ['la peça 1', 'la peça 2', 'la peça 3', 'la peça 4'];
+    const ptsXY = pts => pts.map(q => q.join(',')).join(' ');
+
+    function dibuixaRetalla(d, opcions = {}) {
+        const xs = d.contorn.map(q => q[0]),
+            ys = d.contorn.map(q => q[1]);
+        const m = 0.25;
+        const s = C.svg('svg', {
+            'class': 'tauler-svg retalla-svg',
+            'viewBox': `${Math.min(...xs) - m} ${Math.min(...ys) - m} ${Math.max(...xs) - Math.min(...xs) + 2 * m} ${Math.max(...ys) - Math.min(...ys) + 2 * m}`,
+            'role': opcions.estatic ? 'img' : 'group',
+            'aria-label': opcions.etiqueta || d.etiqueta,
+        });
+        const capa = C.svg('g', { class: 'triangles' }, s);
+        const tris = d.triangles.map((t, i) => C.svg('polygon', { 'class': 'tri', 'points': ptsXY(t), 'data-i': i }, capa));
+        const talls = C.svg('g', { class: 'talls' }, s);
+        C.svg('polygon', { class: 'contorn-retalla', points: ptsXY(d.contorn) }, s);
+        /** Pinta els grups (−1 = sense pintar) i els talls entre peces diferents. */
+        function posa(grups, ambLinies = true) {
+            tris.forEach((t, i) => t.setAttribute('class', 'tri' + (grups[i] >= 0 ? ' g' + grups[i] : '') + (ambLinies ? '' : ' sense-linies')));
+            talls.replaceChildren();
+            for (let i = 0; i < d.triangles.length; i++)
+                for (let j = i + 1; j < d.triangles.length; j++) {
+                    if (grups[i] < 0 || grups[j] < 0 || grups[i] === grups[j]) continue;
+                    const comuns = d.triangles[i].filter(p => d.triangles[j].some(q => q[0] === p[0] && q[1] === p[1]));
+                    if (comuns.length === 2) C.svg('line', { class: 'tall', x1: comuns[0][0], y1: comuns[0][1], x2: comuns[1][0], y2: comuns[1][1] }, talls);
+                }
+        }
+        return { svg: s, tris, posa };
+    }
+
+    function figuraRetalla(p, opcions = {}) {
+        const d = p.dades;
+        const D = dibuixaRetalla(d, { estatic: true, etiqueta: opcions.solucio ? d.etiquetaSolucio : d.etiqueta });
+        if (opcions.solucio) D.posa(d.solucio);
+        else D.posa(d.triangles.map(() => -1), !!opcions.vinyeta);
+        return D.svg;
+    }
+
+    function creaRetalla(lloc, p, ctx) {
+        const d = p.dades;
+        let grups, color = 0, pintant = null;
+        const hist = C.historial(x => x.slice());
+        const caixa = C.el('div', { class: 'tauler retalla' });
+        const D = dibuixaRetalla(d);
+        const paleta = C.el('div', { 'class': 'paleta', 'role': 'radiogroup', 'aria-label': 'Color per pintar' });
+        const botons = [];
+        for (let g = 0; g <= d.peces; g++) {
+            const esGoma = g === d.peces;
+            const b = C.el('button', {
+                'type': 'button',
+                'class': 'color-paleta' + (esGoma ? ' goma' : ' g' + g),
+                'role': 'radio',
+                'aria-label': esGoma ? 'Esborra' : `Peça ${g + 1}`,
+                'text': esGoma ? 'Esborra' : String(g + 1),
+            });
+            b.addEventListener('click', () => {
+                color = esGoma ? -1 : g;
+                pintaPaleta();
+            });
+            botons.push(b);
+            paleta.appendChild(b);
+        }
+        caixa.append(paleta, D.svg);
+        lloc.appendChild(caixa);
+
+        D.tris.forEach((t, i) => {
+            t.setAttribute('tabindex', '0');
+            t.setAttribute('role', 'button');
+        });
+        // Pintar tocant o arrossegant el dit per sobre dels triangles
+        const triA = (x, y) => {
+            const e = document.elementFromPoint(x, y);
+            return e && e.classList && e.classList.contains('tri') && D.svg.contains(e) ? +e.dataset.i : -1;
+        };
+        D.svg.addEventListener('pointerdown', e => {
+            const i = triA(e.clientX, e.clientY);
+            if (i < 0) return;
+            e.preventDefault();
+            hist.desa(grups);
+            // si el triangle ja és d'aquest color, el traç esborra
+            pintant = grups[i] === color && color >= 0 ? -1 : color;
+            posa(i, pintant);
+            const mou = ev => {
+                const j = triA(ev.clientX, ev.clientY);
+                if (j >= 0) posa(j, pintant);
+            };
+            const acaba = () => {
+                document.removeEventListener('pointermove', mou);
+                document.removeEventListener('pointerup', acaba);
+                document.removeEventListener('pointercancel', acaba);
+                pintant = null;
+                canvi();
+            };
+            document.addEventListener('pointermove', mou);
+            document.addEventListener('pointerup', acaba);
+            document.addEventListener('pointercancel', acaba);
+        });
+        caixa.addEventListener('keydown', e => {
+            const t = e.target.closest && e.target.closest('.tri');
+            const n = parseInt(e.key, 10);
+            if (t && n >= 1 && n <= d.peces) {
+                e.preventDefault();
+                hist.desa(grups);
+                posa(+t.dataset.i, n - 1);
+                canvi();
+            } else if (t && (e.key === '0' || e.key === 'Delete')) {
+                e.preventDefault();
+                hist.desa(grups);
+                posa(+t.dataset.i, -1);
+                canvi();
+            } else if (t && (e.key === 'Enter' || e.key === ' ')) {
+                e.preventDefault();
+                hist.desa(grups);
+                const i = +t.dataset.i;
+                posa(i, grups[i] === color ? -1 : color);
+                canvi();
+            } else if (e.key === 'Backspace') {
+                e.preventDefault();
+                desfes();
+            }
+        });
+
+        function posa(i, g) {
+            grups[i] = g;
+            D.posa(grups);
+        }
+        function pintaPaleta() {
+            botons.forEach((b, g) => {
+                const actiu = g === d.peces ? color === -1 : color === g;
+                b.classList.toggle('actiu', actiu);
+                b.setAttribute('aria-checked', actiu ? 'true' : 'false');
+            });
+        }
+        function inicia() {
+            grups = d.triangles.map(() => -1);
+            color = 0;
+            hist.buida();
+            pintaPaleta();
+            canvi(true);
+        }
+        function canvi(silenci) {
+            D.posa(grups);
+            D.tris.forEach((t, i) => t.setAttribute('aria-label', `Triangle ${i + 1}: ${grups[i] >= 0 ? NOMS_GRUP[grups[i]] : 'sense pintar'}`));
+            const compte = [];
+            for (let g = 0; g < d.peces; g++) compte.push(grups.filter(x => x === g).length);
+            ctx.estat([
+                C.el('span', null, 'Triangles pintats: ', C.el('b', { text: `${grups.filter(x => x >= 0).length} de ${d.triangles.length}` })),
+                C.el('span', { text: 'Peces: ' + compte.join(' · ') }),
+            ]);
+            ctx.desfes(hist.mida > 0);
+            ctx.amaga();
+            if (silenci) return;
+            const r = M.particio(d.triangles, grups, d.peces);
+            if (!r) {
+                ctx.resolt('Quatre peces iguals!', [d.textResolt]);
+                return;
+            }
+            if (r.motiu === 'incomplet') return;
+            const mida = d.triangles.length / d.peces;
+            if (r.motiu === 'mida') ctx.missatge('error', 'Les peces no són de la mateixa mida', [`${NOMS_GRUP[r.peca].replace(/^l/, 'L')} té ${C.plural(r.mida, 'triangle')}, i cada peça n’ha de tenir ${mida}.`]);
+            else if (r.motiu === 'partida') ctx.missatge('error', 'Una peça està partida', [`${NOMS_GRUP[r.peca].replace(/^l/, 'L')} està feta de trossos que no es toquen per cap costat.`]);
+            else ctx.missatge('error', 'Les peces no són iguals', [`${NOMS_GRUP[r.peca].replace(/^l/, 'L')} i ${NOMS_GRUP[r.altra]} tenen formes diferents, encara que les giris o els donis la volta.`]);
+        }
+        function desfes() {
+            const ant = hist.desfes();
+            if (!ant) return;
+            grups = ant;
+            canvi(true);
+        }
+        inicia();
+        return {
+            reinicia: inicia,
+            desfes,
+            textSolucio: '▶ Posa-la al tauler',
+            solucio() {
+                hist.desa(grups);
+                grups = d.solucio.slice();
+                canvi(true);
+                ctx.missatge('info', 'Així ho fa Dudeney', [d.resumSolucio]);
+            },
+        };
+    }
+
+    // ════════════════════════════════════════════════════════════
+    // PECES: polígons que es mouen per una xarxa de mig quadret i giren de 90° en 90° (AM 147, AM 151)
+    // dades: peces [{ nom, pts }] (a la seva posició inicial; unitats, y cap avall), objectiu (el
+    // quadrat que han d'omplir), vista [x, y, amplada, alçada], solucio [{ r, x, y }], contorn
+    // paper (opcional: els polígons de l'enunciat sense els talls, per a la fitxa en paper).
+    // ════════════════════════════════════════════════════════════
+    const PAS_PECA = 0.5;
+    const arrodoneix = v => Math.round(v / PAS_PECA) * PAS_PECA;
+
+    function dibuixaPeces(d, opcions = {}) {
+        const [x0, y0, w, h] = d.vista;
+        const s = C.svg('svg', {
+            'class': 'tauler-svg peces-svg',
+            'viewBox': `${x0} ${y0} ${w} ${h}`,
+            'role': opcions.estatic ? 'img' : 'group',
+            'aria-label': opcions.etiqueta || d.etiqueta,
+        });
+        // la xarxa de punts (cada mig quadret) i el lloc on va el quadrat
+        const xarxa = C.svg('g', { class: 'xarxa-punts' }, s);
+        if (!opcions.estatic)
+            for (let x = Math.ceil(x0); x <= x0 + w; x++) for (let y = Math.ceil(y0); y <= y0 + h; y++) C.svg('circle', { class: 'punt-xarxa', cx: x, cy: y, r: 0.035 }, xarxa);
+        if (!opcions.senseObjectiu) C.svg('polygon', { class: 'lloc-objectiu', points: ptsXY(d.objectiu) }, s);
+        const capa = C.svg('g', { class: 'peces' }, s);
+        const peces = d.peces.map((pc, i) => {
+            const g = C.svg('g', { 'class': 'peca-xarxa p' + (i % 4), 'data-i': i }, capa);
+            C.svg('polygon', { class: 'cos-peca-xarxa' }, g);
+            C.svg('text', { 'class': 'num-peca-xarxa', 'text': pc.nom }, g);
+            return g;
+        });
+        function posa(poses) {
+            peces.forEach((g, i) => {
+                const pts = M.aXarxa(d.peces[i].pts, poses[i]);
+                g.firstChild.setAttribute('points', ptsXY(pts));
+                const c = M.centre(pts);
+                g.lastChild.setAttribute('x', c[0]);
+                g.lastChild.setAttribute('y', c[1]);
+            });
+        }
+        return { svg: s, peces, posa };
+    }
+
+    function figuraPeces(p, opcions = {}) {
+        const d = p.dades;
+        if (opcions.paper && d.paper) {
+            // les peces de l'enunciat, sense els talls de la solució (la fitxa en paper)
+            const D = dibuixaPeces({ ...d, peces: [] }, { estatic: true, senseObjectiu: true, etiqueta: d.etiquetaPaper });
+            d.paper.forEach(pg => C.svg('polygon', { class: 'contorn-sencer', points: ptsXY(pg) }, D.svg));
+            const xs = d.paper.flat().map(q => q[0]),
+                ys = d.paper.flat().map(q => q[1]);
+            D.svg.setAttribute('viewBox', `${Math.min(...xs) - 0.3} ${Math.min(...ys) - 0.3} ${Math.max(...xs) - Math.min(...xs) + 0.6} ${Math.max(...ys) - Math.min(...ys) + 0.6}`);
+            return D.svg;
+        }
+        const D = dibuixaPeces(d, { estatic: true, senseObjectiu: !!(opcions.solucio || opcions.lletres), etiqueta: opcions.solucio ? d.etiquetaSolucio : d.etiqueta });
+        D.posa(opcions.solucio ? d.solucio : d.peces.map(() => ({ r: 0, x: 0, y: 0 })));
+        if (opcions.lletres && d.lletres) {
+            // la figura original amb les lletres de Dudeney, retallada a la seva mida
+            Object.keys(d.lletres).forEach(k => C.svg('text', { 'class': 'lletra-punt', 'x': d.lletres[k][0], 'y': d.lletres[k][1], 'text': k }, D.svg));
+            const tots = d.peces.flatMap(pc => pc.pts);
+            const xs = tots.map(q => q[0]),
+                ys = tots.map(q => q[1]);
+            D.svg.setAttribute('viewBox', `${Math.min(...xs) - 0.45} ${Math.min(...ys) - 0.45} ${Math.max(...xs) - Math.min(...xs) + 0.9} ${Math.max(...ys) - Math.min(...ys) + 0.9}`);
+        }
+        if (opcions.solucio) {
+            // només el quadrat, retallat a la seva mida
+            const xs = d.objectiu.map(q => q[0]),
+                ys = d.objectiu.map(q => q[1]);
+            D.svg.setAttribute('viewBox', `${Math.min(...xs) - 0.3} ${Math.min(...ys) - 0.3} ${Math.max(...xs) - Math.min(...xs) + 0.6} ${Math.max(...ys) - Math.min(...ys) + 0.6}`);
+        }
+        return D.svg;
+    }
+
+    function creaPeces(lloc, p, ctx) {
+        const d = p.dades;
+        let poses, triada = null, resolt = false;
+        const hist = C.historial(x => x.map(q => ({ ...q })));
+        const caixa = C.el('div', { class: 'tauler peces-joc' });
+        const D = dibuixaPeces(d);
+        const gira = C.el('button', { type: 'button', class: 'btn-sec', text: '↻ Gira', disabled: true });
+        caixa.append(D.svg, C.el('div', { class: 'eines-tauler' }, gira));
+        lloc.appendChild(caixa);
+        const centreDe = i => M.centre(M.aXarxa(d.peces[i].pts, poses[i]));
+
+        D.peces.forEach((g, i) => {
+            g.setAttribute('tabindex', '0');
+            g.setAttribute('role', 'button');
+            g.setAttribute('aria-label', `Peça ${d.peces[i].nom}`);
+            g.addEventListener('focus', () => tria(i));
+        });
+        gira.addEventListener('click', () => triada !== null && giraPeca(triada));
+        C.arrossega(D.svg, {
+            inici: e => {
+                const g = e.target.closest('.peca-xarxa');
+                if (!g) return null;
+                const i = +g.dataset.i;
+                const q = C.coords(D.svg, e.clientX, e.clientY);
+                return { i, q, ini: { ...poses[i] } };
+            },
+            comenca: c => {
+                hist.desa(poses);
+                tria(c.i, true);
+                D.peces[c.i].classList.add('arrossegada');
+            },
+            mou: (c, e) => {
+                const q = C.coords(D.svg, e.clientX, e.clientY);
+                poses[c.i] = { r: c.ini.r, x: c.ini.x + q.x - c.q.x, y: c.ini.y + q.y - c.q.y };
+                D.posa(poses);
+            },
+            deixa: c => {
+                D.peces[c.i].classList.remove('arrossegada');
+                poses[c.i] = { r: poses[c.i].r, x: arrodoneix(poses[c.i].x), y: arrodoneix(poses[c.i].y) };
+                canvi();
+            },
+            toc: c => tria(c.i),
+            cancela: c => {
+                D.peces[c.i].classList.remove('arrossegada');
+                poses[c.i] = c.ini;
+                canvi(true);
+            },
+        });
+        caixa.addEventListener('keydown', e => {
+            if (triada === null) return;
+            const dir = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] }[e.key];
+            if (dir) {
+                e.preventDefault();
+                hist.desa(poses);
+                const q = poses[triada];
+                poses[triada] = { r: q.r, x: q.x + dir[0] * PAS_PECA, y: q.y + dir[1] * PAS_PECA };
+                canvi();
+            } else if (e.key === 'r' || e.key === 'R') {
+                e.preventDefault();
+                giraPeca(triada);
+            } else if (e.key === 'Backspace') {
+                e.preventDefault();
+                desfes();
+            }
+        });
+
+        function tria(i, alDavant) {
+            triada = i;
+            D.peces.forEach((g, j) => g.classList.toggle('triada', j === i));
+            gira.disabled = false;
+            // la peça que s'arrossega es dibuixa per sobre de les altres (no en triar-la amb el teclat: perdria el focus)
+            if (alDavant) D.peces[i].parentNode.appendChild(D.peces[i]);
+        }
+        /** Gira la peça 90° mantenint-la més o menys al mateix lloc. */
+        function giraPeca(i) {
+            hist.desa(poses);
+            const c = centreDe(i);
+            const r = (poses[i].r + 1) % 4;
+            const c2 = M.centre(M.aXarxa(d.peces[i].pts, { r, x: 0, y: 0 }));
+            poses[i] = { r, x: arrodoneix(c[0] - c2[0]), y: arrodoneix(c[1] - c2[1]) };
+            canvi();
+        }
+        function inicia() {
+            poses = d.peces.map(() => ({ r: 0, x: 0, y: 0 }));
+            triada = null;
+            resolt = false;
+            D.peces.forEach(g => g.classList.remove('triada'));
+            gira.disabled = true;
+            hist.buida();
+            canvi(true);
+        }
+        function canvi(silenci) {
+            D.posa(poses);
+            ctx.desfes(hist.mida > 0);
+            const fet = M.omple(d.peces.map(pc => pc.pts), poses, d.objectiu);
+            D.svg.classList.toggle('complet', fet);
+            if (silenci) return;
+            ctx.amaga();
+            if (fet && !resolt) {
+                resolt = true;
+                ctx.resolt('Un quadrat perfecte!', [d.textResolt]);
+            } else if (!fet) resolt = false;
+        }
+        function desfes() {
+            const ant = hist.desfes();
+            if (!ant) return;
+            poses = ant;
+            canvi(true);
+        }
+        inicia();
+        return {
+            reinicia: inicia,
+            desfes,
+            textSolucio: '▶ Posa-la al tauler',
+            solucio() {
+                hist.desa(poses);
+                poses = d.solucio.map(q => ({ ...q }));
+                canvi(true);
+                ctx.missatge('info', 'Així ho fa Dudeney', [d.resumSolucio]);
+            },
+        };
+    }
+
     window.Taulers.lliure = {
         crea: creaLliure,
         figura: figuraMercer,
@@ -714,6 +1102,28 @@
                 )
             );
             return fig;
+        },
+    };
+    window.Taulers.retalla = {
+        crea: creaRetalla,
+        figura: figuraRetalla,
+        figuraSolucio: p => {
+            const svg = figuraRetalla(p, { solucio: true });
+            svg.classList.add('figura-estatica');
+            return C.el('figure', null, svg, C.el('figcaption', { text: p.dades.peuSolucio }));
+        },
+    };
+    window.Taulers.peces = {
+        crea: creaPeces,
+        figura: figuraPeces,
+        // La figura original (amb els talls) i el quadrat, l'un al costat de l'altre
+        figuraSolucio: p => {
+            const fila = C.el('div', { class: 'fila-diagrames' });
+            [figuraPeces(p, { lletres: true }), figuraPeces(p, { solucio: true })].forEach(svg => {
+                svg.classList.add('figura-estatica');
+                fila.appendChild(C.el('div', { class: 'diagrama' }, svg));
+            });
+            return C.el('figure', null, fila, C.el('figcaption', { text: p.dades.peuSolucio }));
         },
     };
 })();

@@ -3,7 +3,7 @@
 Trencaclosques de **Henry E. Dudeney** (1857–1930), traduïts al català i fets interactius, per jugar a la pantalla
 o en paper. Web: <https://dudeney.step-quiz.net>.
 
-**Ara:** 27 enigmes (la mostra de 14, dos de cada tipus, i dues tandes, de 6 i de 7) de dissecció, fitxes, mesures i
+**Ara:** 35 enigmes (la mostra de 14, dos de cada tipus, i tres tandes, de 6, 7 i 8) de dissecció, fitxes, mesures i
 travesses, escacs, camins, quadrats màgics i aritmètica. La selecció completa de 50 és a
 [`docs/SELECCIO.md`](docs/SELECCIO.md); l'estat de la feina, a [`docs/STATE.md`](docs/STATE.md).
 
@@ -21,7 +21,7 @@ Les solucions de Dudeney i les notes del matemàtic només es veuen al web amb `
 ## Proves
 
 ```bash
-node tests/motors.test.js        # torna a calcular tot el que diu Dudeney (106 comprovacions)
+node tests/motors.test.js        # torna a calcular tot el que diu Dudeney (140 comprovacions)
 node tools/prova-navegador.js    # totes les pàgines al navegador: mòbil, ordinador, clar i fosc
 node tools/genera-pdf.js         # torna a fer els dos PDF (cal Playwright amb Chromium)
 python3 tools/comprova-pdf.py    # que els PDF no tinguin cap color

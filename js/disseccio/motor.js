@@ -11,6 +11,11 @@
  *   - peces de quadrícula (AM 174, els quadrats de brocat): grups de quadrets
  *     que només es poden traslladar (el dibuix de la roba no es pot girar) i
  *     que han d'omplir el quadrat gran amb el dibuix ben casat.
+ *   - particions (AM 146): una figura feta de triangles petits que es reparteixen
+ *     en grups; es comprova que els grups són connexos, de la mateixa mida i
+ *     iguals (congruents, girant-los o donant-los la volta).
+ *   - peces en xarxa (AM 147, AM 151): polígons amb els vèrtexs en una xarxa de
+ *     mig quadret, que es traslladen per la xarxa i giren de 90° en 90°.
  * ARQUITECTURA: Pur, sense DOM (també el fan servir els tests de Node).
  *   Punts [x, y] amb la y cap amunt. Una posició (pose) és { g, x, y }: el gir
  *   g (graus, múltiple de 90) al voltant del centre de la peça i, després, la
@@ -286,7 +291,122 @@
         return { complet: !forats && !dobles && !fora, forats: forats, dobles: dobles, fora: fora, patro: patro };
     }
 
+    // ── Particions en peces iguals (AM 146) ────────────────────────────────
+    var SIMETRIES = [
+        function (x, y) { return [x, y]; },
+        function (x, y) { return [-y, x]; },
+        function (x, y) { return [-x, -y]; },
+        function (x, y) { return [y, -x]; },
+        function (x, y) { return [-x, y]; },
+        function (x, y) { return [y, x]; },
+        function (x, y) { return [x, -y]; },
+        function (x, y) { return [-y, -x]; },
+    ];
+    /** Una forma (llista de polígons) escrita igual per a totes les seves còpies girades, mogudes o del revés. */
+    function formaCanonica(poligons) {
+        var millor = null;
+        SIMETRIES.forEach(function (f) {
+            var ps = poligons.map(function (pg) {
+                return pg.map(function (q) {
+                    var r = f(q[0], q[1]);
+                    return [Math.round(r[0] * 4), Math.round(r[1] * 4)];
+                });
+            });
+            var mx = Infinity,
+                my = Infinity;
+            ps.forEach(function (pg) {
+                pg.forEach(function (q) {
+                    mx = Math.min(mx, q[0]);
+                    my = Math.min(my, q[1]);
+                });
+            });
+            var k = ps
+                .map(function (pg) {
+                    return pg
+                        .map(function (q) {
+                            return q[0] - mx + ',' + (q[1] - my);
+                        })
+                        .sort()
+                        .join(' ');
+                })
+                .sort()
+                .join(' | ');
+            if (millor === null || k < millor) millor = k;
+        });
+        return millor;
+    }
+    /** Dos polígons comparteixen un costat sencer? */
+    function costatComu(a, b) {
+        var cl = function (p, q) {
+            var u = p.join(','),
+                v = q.join(',');
+            return u < v ? u + '/' + v : v + '/' + u;
+        };
+        var ca = {};
+        a.forEach(function (p, i) {
+            ca[cl(p, a[(i + 1) % a.length])] = true;
+        });
+        return b.some(function (p, i) {
+            return ca[cl(p, b[(i + 1) % b.length])];
+        });
+    }
+    /**
+     * Comprova un repartiment: grups[i] és el grup (0…k − 1) del triangle i, o −1. Retorna null si hi ha k
+     * peces iguals; si no, { motiu: 'incomplet' | 'mida' | 'partida' | 'diferents', peca, altra }.
+     */
+    function particio(triangles, grups, k) {
+        if (grups.some(function (g) { return g < 0; })) return { motiu: 'incomplet' };
+        var peces = [];
+        for (var g = 0; g < k; g++)
+            peces.push(
+                triangles.filter(function (t, i) {
+                    return grups[i] === g;
+                })
+            );
+        var mida = triangles.length / k;
+        for (g = 0; g < k; g++) if (peces[g].length !== mida) return { motiu: 'mida', peca: g, mida: peces[g].length };
+        for (g = 0; g < k; g++) {
+            var pc = peces[g],
+                vist = [0],
+                cua = [0];
+            while (cua.length) {
+                var a = cua.shift();
+                for (var j = 0; j < pc.length; j++)
+                    if (vist.indexOf(j) < 0 && costatComu(pc[a], pc[j])) {
+                        vist.push(j);
+                        cua.push(j);
+                    }
+            }
+            if (vist.length < pc.length) return { motiu: 'partida', peca: g };
+        }
+        var f0 = formaCanonica(peces[0]);
+        for (g = 1; g < k; g++) if (formaCanonica(peces[g]) !== f0) return { motiu: 'diferents', peca: 0, altra: g };
+        return null;
+    }
+
+    // ── Peces en xarxa (AM 147, AM 151) ────────────────────────────────────
+    // Una posició és { r, x, y }: r girs de 90° (x, y) → (−y, x) i després la translació (x, y).
+    function aXarxa(pts, pose) {
+        return pts.map(function (q) {
+            var v = q;
+            for (var i = 0; i < ((pose.r % 4) + 4) % 4; i++) v = [-v[1], v[0]];
+            return [v[0] + pose.x, v[1] + pose.y];
+        });
+    }
+    /** Les peces (amb les seves posicions) omplen el polígon objectiu sense forats ni trossos de més? */
+    function omple(peces, poses, objectiu) {
+        var pgs = peces.map(function (pc, i) {
+            return aXarxa(pc, poses[i]);
+        });
+        var c = cobertura(pgs, objectiu, 160);
+        return c.forats < 0.002 && c.doble < 0.002 && c.fora < 0.002;
+    }
+
     return {
+        formaCanonica: formaCanonica,
+        particio: particio,
+        aXarxa: aXarxa,
+        omple: omple,
         area: area,
         areaAmbSigne: areaAmbSigne,
         centre: centre,

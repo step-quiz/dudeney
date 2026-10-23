@@ -272,6 +272,14 @@
                     }
                     return;
                 }
+                // AM 245: cap aresta no es pot recórrer dues vegades
+                if (!hamilton && d.repetir === false && G.recompte(d.graf, ruta).vegades[G.claAresta(darrer, v)]) {
+                    if (desdeToc) {
+                        ctx.missatge('error', `Ja has passat per ${darrer}–${v}`, [T.repetit]);
+                        C.anima(D.punts[v], 'sacseja');
+                    }
+                    return;
+                }
                 if (hamilton && ruta.includes(v) && !(v === d.inici && ruta.length === d.graf.vertexs.length)) {
                     if (desdeToc) {
                         ctx.missatge('error', `Ja has passat per la ${v}`, [T.unaVegada]);
@@ -338,10 +346,16 @@
                     C.el('span', null, `${T.trams.charAt(0).toUpperCase() + T.trams.slice(1)} revisades: `, C.el('b', { text: `${fetes} de ${totalArestes}` })),
                 ]);
                 textRuta.textContent = ruta.length > (fixat ? 1 : 0) ? 'Ruta: ' + ruta.join(' ') : T.comenca;
+                if (!silenci && r.falten.length && d.repetir === false && ruta.length) {
+                    const darrer = ruta[ruta.length - 1];
+                    const lliures = G.index(d.graf).veins[darrer].filter(w => !r.vegades[G.claAresta(darrer, w)]);
+                    if (!lliures.length)
+                        ctx.missatge('info', 'Per aquí no hi ha sortida', [`Des de la ${darrer} ja no queda cap ${T.tram} per recórrer, i en falten ${r.falten.length}. Fes enrere i prova un altre camí.`]);
+                }
                 if (silenci || r.falten.length) return;
                 acabat = true;
                 if (r.longitud === d.minim)
-                    ctx.resolt(`${r.longitud} ${T.unitat[1]}: el mínim!`, [T.resolt || 'Totes les línies revisades, i cap milla de més.']);
+                    ctx.resolt(T.titolResolt || `${r.longitud} ${T.unitat[1]}: el mínim!`, [T.resolt || 'Totes les línies revisades, i cap milla de més.']);
                 else
                     ctx.missatge('info', `Totes les ${T.trams} revisades, en ${r.longitud} ${T.unitat[1]}`, [
                         `Es pot fer en ${d.minim}. Ho tornes a provar?`,

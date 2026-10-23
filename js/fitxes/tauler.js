@@ -1026,10 +1026,12 @@
     }
 
     // ════════════════════════════════════════════════════════════
-    // XARXA: granotes sobre bolets units per línies (AM 341)
+    // XARXA: granotes sobre bolets units per línies (AM 341), o locomotores en unes vies (AM 221)
     // dades: posicions {bolet: [x, y]} (quadrícula), arestes [[a, b], …], cercle (l'ordre dels bolets
     // al cercle), inicial i objectiu ({bolet: 'blanca' | 'negra'}), minimJugades, minimMoviments,
     // solucio (jugades: llistes de moviments [d'on, cap on]). Els bolets són 1…n; l'estat, 0…n − 1.
+    // Amb fitxa: 'locomotora' (AM 221), les fitxes són números (inicial = {punt: número}), hi ha un sol
+    // punt buit (en tocar una locomotora, hi va) i l'objectiu és ordre = { vora: [punts per ordre], buit }.
     // ════════════════════════════════════════════════════════════
     const PAS_X = 150;
     function posXarxa(d, cercle) {
@@ -1050,9 +1052,22 @@
         return g;
     }
 
+    /** Una locomotora vista de costat, amb el seu número. */
+    function locomotora(num, pare) {
+        const g = C.svg('g', { 'class': 'locomotora', 'data-v': num }, pare);
+        const dins = C.svg('g', { class: 'salt' }, g);
+        C.svg('rect', { class: 'xemeneia', x: -20, y: -24, width: 8, height: 12, rx: 1.5 }, dins);
+        C.svg('rect', { class: 'cabina', x: 6, y: -24, width: 18, height: 26, rx: 2 }, dins);
+        C.svg('rect', { class: 'caldera', x: -26, y: -13, width: 34, height: 19, rx: 8 }, dins);
+        [-17, 0, 15].forEach(x => C.svg('circle', { class: 'roda', cx: x, cy: 9, r: 6 }, dins));
+        C.svg('text', { 'class': 'num-loco', 'x': -9, 'y': -3, 'text': num }, dins);
+        return g;
+    }
+    const esLoco = d => d.fitxa === 'locomotora';
+
     function dibuixaXarxa(d, opcions = {}) {
         const s = C.svg('svg', {
-            'class': 'tauler-svg bolets-svg',
+            'class': 'tauler-svg bolets-svg' + (esLoco(d) ? ' vies-svg' : ''),
             'viewBox': '-50 -50 420 440',
             'role': opcions.estatic ? 'img' : 'group',
             'aria-label': opcions.etiqueta || d.etiqueta,
@@ -1064,14 +1079,18 @@
         Object.keys(d.posicions).forEach(k => {
             const g = C.svg('g', { 'class': 'punt-bolet', 'data-b': k }, capaBolets);
             C.svg('circle', { class: 'zona', r: 44 }, g);
-            boletXarxa(g);
-            C.svg('text', { 'class': 'num-bolet', 'x': 0, 'y': 44, 'text': k }, g);
+            if (esLoco(d)) C.svg('ellipse', { class: 'parada', rx: 30, ry: 9, cy: 15 }, g);
+            else {
+                boletXarxa(g);
+                C.svg('text', { 'class': 'num-bolet', 'x': 0, 'y': 44, 'text': k }, g);
+            }
             bolets[k] = g;
         });
         const capaGranotes = C.svg('g', { class: 'granotes' }, s);
         const granotes = Object.keys(d.inicial).map(k => {
-            const g = granota(k, capaGranotes, d.inicial[k]);
+            const g = esLoco(d) ? locomotora(d.inicial[k], capaGranotes) : granota(k, capaGranotes, d.inicial[k]);
             g.classList.add('granota-xarxa');
+            g.dataset.v = String(d.inicial[k]);
             return g;
         });
         let pos = posXarxa(d, !!opcions.cercle);
@@ -1089,16 +1108,36 @@
             granotes.forEach(g => (g.dataset.lliure = '1'));
             estat.forEach((c, i) => {
                 if (!c) return;
-                const g = granotes.find(x => x.dataset.lliure === '1' && x.dataset.b === String(i + 1) && x.classList.contains(c)) ||
-                    granotes.find(x => x.dataset.lliure === '1' && x.classList.contains(c));
+                const v = String(c);
+                const g = granotes.find(x => x.dataset.lliure === '1' && x.dataset.b === String(i + 1) && x.dataset.v === v) ||
+                    granotes.find(x => x.dataset.lliure === '1' && x.dataset.v === v);
                 g.dataset.lliure = '0';
                 g.dataset.b = String(i + 1);
-                g.style.transform = `translate(${p[i + 1][0]}px, ${p[i + 1][1] - 16}px) scale(0.78)`;
+                g.style.transform = `translate(${p[i + 1][0]}px, ${p[i + 1][1] - (esLoco(d) ? 2 : 16)}px) scale(${esLoco(d) ? 1 : 0.78})`;
             });
         }
         return { svg: s, bolets, granotes, posa, pos: () => pos };
     }
     const estatXarxa = (d, mapa) => Object.keys(d.posicions).map(k => mapa[k] || '');
+    /** S'ha arribat a l'objectiu? (Un mapa {punt: fitxa}, o les fitxes 1…n en ordre al voltant de la vora.) */
+    function arribatXarxa(d, estat) {
+        if (!d.ordre) return estat.join(',') === estatXarxa(d, d.objectiu).join(',');
+        if (estat[d.ordre.buit - 1]) return false;
+        const vora = d.ordre.vora.map(k => estat[k - 1]),
+            n = vora.length;
+        const i = vora.indexOf(1);
+        return [1, -1].some(sentit => vora.every((_, k) => vora[(i + sentit * k + n * n) % n] === k + 1));
+    }
+    /** Les fitxes que encara no s'han mogut. */
+    const quietes = (d, movs) => {
+        let e = estatXarxa(d, d.inicial);
+        const mogudes = new Set();
+        movs.forEach(([a, b]) => {
+            mogudes.add(e[a]);
+            e = M.xarxa.mou(e, a, b);
+        });
+        return Object.values(d.inicial).filter(v => !mogudes.has(v)).sort((a, b) => a - b);
+    };
 
     function figuraXarxa(p, opcions = {}) {
         const D = dibuixaXarxa(p.dades, { estatic: true, cercle: opcions.cercle });
@@ -1115,7 +1154,8 @@
         const D = dibuixaXarxa(d);
         const boto = C.el('button', { type: 'button', class: 'btn-sec boto-fils', text: 'Desembolica els fils' });
         const textRuta = C.el('p', { 'class': 'text-ruta', 'aria-live': 'polite' });
-        caixa.append(D.svg, C.el('div', { class: 'eines-tauler' }, boto), textRuta);
+        caixa.append(...[D.svg, d.cercle ? C.el('div', { class: 'eines-tauler' }, boto) : null, textRuta].filter(Boolean));
+        const nomFitxa = i => (esLoco(d) ? `La locomotora ${estat[i]}` : `La granota del ${i + 1}`);
         lloc.appendChild(caixa);
 
         Object.keys(D.bolets).forEach(k => {
@@ -1177,7 +1217,11 @@
             },
         });
         caixa.addEventListener('keydown', e => {
-            if (/^[1-9]$/.test(e.key) && D.bolets[e.key]) {
+            if (esLoco(d) && /^[1-9]$/.test(e.key) && estat.includes(+e.key)) {
+                // amb les locomotores, la tecla és el número de la locomotora
+                e.preventDefault();
+                toca(estat.indexOf(+e.key));
+            } else if (!esLoco(d) && /^[1-9]$/.test(e.key) && D.bolets[e.key]) {
                 e.preventDefault();
                 toca(+e.key - 1);
                 D.bolets[e.key].focus();
@@ -1235,20 +1279,35 @@
                 const g = D.bolets[k];
                 g.classList.toggle('triat', triat === i);
                 g.classList.toggle('desti-possible', triat !== null && !M.xarxa.motiu(estat, ar, triat, i));
-                g.setAttribute('aria-label', `Bolet ${k}: ${estat[i] ? 'granota ' + estat[i] : 'buit'}`);
+                g.setAttribute('aria-label', esLoco(d) ? `Punt ${k}: ${estat[i] ? 'locomotora ' + estat[i] : 'buit'}` : `Bolet ${k}: ${estat[i] ? 'granota ' + estat[i] : 'buit'}`);
             });
             D.granotes.forEach(g => g.classList.toggle('triada', triat !== null && +g.dataset.b - 1 === triat));
             D.svg.classList.toggle('amb-seleccio', triat !== null);
             const jug = M.xarxa.jugades(movs);
             ctx.estat([
-                C.el('span', null, 'Jugades: ', C.el('b', { text: jug })),
+                d.minimJugades ? C.el('span', null, 'Jugades: ', C.el('b', { text: jug })) : null,
                 C.el('span', null, 'Moviments: ', C.el('b', { text: movs.length })),
             ]);
-            textRuta.textContent = movs.length ? 'Moviments: ' + movs.map(([a, b]) => `${a + 1}–${b + 1}`).join(', ') : 'Toca una granota i després el bolet on ha d’anar.';
+            if (esLoco(d)) textRuta.textContent = movs.length ? 'Locomotores: ' + mogudes().join(', ') : 'Toca una locomotora: va sola al punt buit, si hi ha via.';
+            else textRuta.textContent = movs.length ? 'Moviments: ' + movs.map(([a, b]) => `${a + 1}–${b + 1}`).join(', ') : 'Toca una granota i després el bolet on ha d’anar.';
             ctx.desfes(hist.mida > 0);
+        }
+        /** Les locomotores, en l'ordre en què s'han mogut. */
+        function mogudes() {
+            let e = estatXarxa(d, d.inicial);
+            return movs.map(([a, b]) => {
+                const v = e[a];
+                e = M.xarxa.mou(e, a, b);
+                return v;
+            });
         }
         function toca(i) {
             atura();
+            if (esLoco(d)) {
+                // un sol punt buit: la locomotora hi va directament
+                if (estat[i]) prova(i, estat.indexOf(''));
+                return;
+            }
             if (triat === null) {
                 if (!estat[i]) {
                     C.anima(D.bolets[i + 1].querySelector('.bolet'), 'sacseja');
@@ -1275,6 +1334,12 @@
         }
         function prova(de, a) {
             const motiu = M.xarxa.motiu(estat, ar, de, a);
+            if (motiu === 'linia' && esLoco(d)) {
+                ctx.missatge('error', `${nomFitxa(de)} no hi pot anar`, ['No hi ha cap via directa entre el seu punt i el punt buit.']);
+                C.anima(D.granotes.find(g => g.dataset.v === String(estat[de])).querySelector('.salt'), 'sacseja');
+                pinta();
+                return;
+            }
             if (motiu === 'linia') {
                 ctx.missatge('error', `Del ${de + 1} al ${a + 1} no hi ha cap línia`, [`Des del ${de + 1}, la granota només pot anar ${veinsDe(de)}.`]);
                 C.anima(D.bolets[a + 1].querySelector('.bolet'), 'sacseja');
@@ -1297,7 +1362,14 @@
             return `al ${v.join(' o al ')}`;
         };
         function revisa() {
-            if (estat.join(',') !== estatXarxa(d, d.objectiu).join(',')) return;
+            if (!arribatXarxa(d, estat)) return;
+            if (esLoco(d)) {
+                const q = quietes(d, movs);
+                const frase = q.length === 1 ? `La locomotora ${q[0]} no s’ha mogut en cap moment.` : q.length ? `Les locomotores ${C.llista(q.map(String))} no s’han mogut.` : 'Totes les locomotores s’han mogut.';
+                if (movs.length <= d.minimMoviments) ctx.resolt(`${movs.length} moviments: el mínim!`, [frase]);
+                else ctx.missatge('info', `En ordre, en ${movs.length} moviments`, [frase, `Es pot fer en ${d.minimMoviments}, amb una locomotora sense moure’s. Ho tornes a provar?`]);
+                return;
+            }
             const jug = M.xarxa.jugades(movs);
             if (jug <= d.minimJugades)
                 ctx.resolt(`${jug} jugades: el mínim!`, [
@@ -1322,18 +1394,20 @@
         return {
             reinicia: inicia,
             desfes,
-            textSolucio: `▶ Mira-la al tauler (${d.minimJugades} jugades)`,
+            textSolucio: d.minimJugades ? `▶ Mira-la al tauler (${d.minimJugades} jugades)` : `▶ Mira-la al tauler (${d.minimMoviments} moviments)`,
             solucio() {
                 inicia();
                 reproduccio = C.reprodueix(
-                    d.solucio.flat(),
-                    ([de, a]) => {
-                        estat = M.xarxa.mou(estat, de - 1, a - 1);
-                        movs = movs.concat([[de - 1, a - 1]]);
+                    // les locomotores: només el número (va al punt buit); les granotes: [d'on, cap on]
+                    esLoco(d) ? d.solucio : d.solucio.flat(),
+                    x => {
+                        const [de, a] = esLoco(d) ? [estat.indexOf(x), estat.indexOf('')] : [x[0] - 1, x[1] - 1];
+                        estat = M.xarxa.mou(estat, de, a);
+                        movs = movs.concat([[de, a]]);
                         pinta();
                     },
                     C.movimentReduit() ? 300 : 560,
-                    () => ctx.missatge('info', 'Així ho fa Dudeney', ['Set jugades i setze moviments.'])
+                    () => ctx.missatge('info', 'Així ho fa Dudeney', [d.resumSolucio || 'Set jugades i setze moviments.'])
                 );
                 return reproduccio;
             },
@@ -1364,6 +1438,12 @@
         crea: creaXarxa,
         figura: figuraXarxa,
         figuraSolucio: p => {
+            if (esLoco(p.dades)) {
+                const D = dibuixaXarxa(p.dades, { estatic: true, etiqueta: p.dades.etiquetaFinal });
+                D.posa(estatXarxa(p.dades, p.dades.final));
+                D.svg.classList.add('figura-estatica');
+                return C.el('figure', null, D.svg, C.el('figcaption', { text: p.dades.peuFinal }));
+            }
             const svg = figuraXarxa(p, { cercle: true });
             svg.classList.add('figura-estatica');
             return C.el('figure', null, svg, C.el('figcaption', { text: 'Els mateixos bolets i les mateixes línies, desembolicats: un sol cercle (1, 5, 6, 2, 8, 4, 3, 7).' }));
