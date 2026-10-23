@@ -347,6 +347,8 @@ window.Comu = (() => {
     }
     /** «1 moviment», «33 moviments» */
     const plural = (n, u, p) => `${nombre(n)} ${n === 1 ? u : p || u + 's'}`;
+    /** «a», «a i b», «a, b i c» */
+    const llista = xs => (xs.length < 2 ? xs.join('') : xs.slice(0, -1).join(', ') + ' i ' + xs[xs.length - 1]);
 
     return {
         el,
@@ -374,5 +376,6 @@ window.Comu = (() => {
         decimal,
         mesura,
         plural,
+        llista,
     };
 })();

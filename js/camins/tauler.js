@@ -26,13 +26,22 @@
     /** El mapa: carreteres o línies, punts (ciutats o estacions) i les capes del recorregut. */
     function dibuixaMapa(d, estil, opcions = {}) {
         const pos = d.posicions;
+        /** El camí d'una ruta corba (dades.corbes: un punt de control, o dos), o null si és recta. */
+        const camiCorba = (a, b) => {
+            const c = d.corbes && d.corbes[G.claAresta(a, b)];
+            if (!c) return null;
+            // els punts de control són de la ruta en l'ordre de claAresta: si va al revés, es giren
+            const [p, q] = a < b ? [pos[a], pos[b]] : [pos[b], pos[a]];
+            return c.length === 1 ? `M${p} Q${c[0]} ${q}` : `M${p} C${c[0]} ${c[1]} ${q}`;
+        };
         const xs = Object.values(pos).map(p => p[0]),
             ys = Object.values(pos).map(p => p[1]);
         const m = 34;
-        const x0 = Math.min(...xs) - m,
+        let x0 = Math.min(...xs) - m,
             y0 = Math.min(...ys) - m,
             w = Math.max(...xs) - x0 + m,
             h = Math.max(...ys) - y0 + m;
+        if (d.vista) [x0, y0, w, h] = d.vista;
         const s = C.svg('svg', {
             'class': `tauler-svg mapa-svg ${estil}`,
             'viewBox': `${x0} ${y0} ${w} ${h}`,
@@ -44,11 +53,17 @@
             // La roca: un rectangle de terra; les galeries són els camins buidats per sobre
             C.svg('rect', { class: 'roca', x: x0 + 4, y: y0 + 4, width: w - 8, height: h - 8, rx: 6 }, s);
         }
+        if (estil === 'illes') C.svg('rect', { class: 'mar', x: x0 + 4, y: y0 + 4, width: w - 8, height: h - 8, rx: 6 }, s);
         const carreteres = C.svg('g', { class: 'carreteres' }, s);
         d.graf.arestes.forEach(a => {
-            const p = pos[a[0]],
-                q = pos[a[1]];
-            C.svg('line', { 'class': 'carretera', 'x1': p[0], 'y1': p[1], 'x2': q[0], 'y2': q[1], 'data-a': G.claAresta(a[0], a[1]) }, carreteres);
+            const k = G.claAresta(a[0], a[1]);
+            const corba = camiCorba(a[0], a[1]);
+            if (corba) C.svg('path', { 'class': 'carretera', 'd': corba, 'data-a': k }, carreteres);
+            else {
+                const p = pos[a[0]],
+                    q = pos[a[1]];
+                C.svg('line', { 'class': 'carretera', 'x1': p[0], 'y1': p[1], 'x2': q[0], 'y2': q[1], 'data-a': k }, carreteres);
+            }
         });
         const recorregut = C.svg('g', { class: 'recorregut' }, s);
         const capaPunts = C.svg('g', { class: 'punts' }, s);
@@ -60,6 +75,7 @@
             C.svg('circle', { class: 'zona', r: 32 }, g);
             if (estil === 'metro') C.svg('rect', { class: 'marca', x: -19, y: -19, width: 38, height: 38, rx: 5 }, g);
             else if (estil === 'mina') C.svg('circle', { class: 'marca', r: 15 }, g);
+            else if (estil === 'illes') C.svg('path', { class: 'marca', d: 'M-18 -6 Q-20 -18 -8 -19 Q0 -25 9 -18 Q21 -17 19 -4 Q24 8 13 16 Q4 23 -6 18 Q-20 18 -19 6 Q-24 0 -18 -6 Z' }, g);
             else C.svg('circle', { class: 'marca', r: 19 }, g);
             C.svg('text', { 'class': 'nom-punt', 'x': 0, 'y': 1, 'text': v }, g);
             punts[v] = g;
@@ -75,6 +91,11 @@
                 extrems[k] = [ruta[i - 1], ruta[i]].sort();
             }
             Object.keys(vegades).forEach(k => {
+                const corba = camiCorba(...extrems[k]);
+                if (corba) {
+                    C.svg('path', { 'class': 'tram', 'd': corba, 'data-a': k }, recorregut);
+                    return;
+                }
                 const [p, q] = extrems[k].map(v => pos[v]);
                 const n = dobles ? vegades[k] : 1;
                 const dx = q[0] - p[0],
@@ -128,7 +149,18 @@
             comenca: 'Toca l’estació on vols començar.',
             noVei: 'Només pots anar a una estació veïna, per una línia del plànol.',
         },
-        ciutats: { punt: 'Ciutat', tram: 'carretera', trams: 'carreteres', etiqueta: 'Les setze ciutats i les carreteres' },
+        ciutats: {
+            punt: 'Ciutat',
+            tram: 'carretera',
+            trams: 'carreteres',
+            etiqueta: 'Les setze ciutats i les carreteres',
+            visitades: 'Ciutats visitades',
+            recte: 'Has d’anar recte de ciutat a ciutat, per una de les carreteres que surten de la ',
+            unaVegada: 'El viatger només pot visitar cada ciutat una vegada.',
+            resolt: 'Setze ciutats, cada una una sola vegada, i de tornada a l’1.',
+            sortida: 'ja no pots anar a cap ciutat on no hagis estat',
+            final: 'L’única ruta: les carreteres obligades porten a les altres.',
+        },
     };
     const textos = (d, estil) => Object.assign({}, TEXTOS[estil === 'ciutats' ? 'ciutats' : 'metro'], d.textos || {});
 
@@ -234,9 +266,7 @@
                 if (!G.hiHaAresta(d.graf, darrer, v)) {
                     if (desdeToc) {
                         ctx.missatge('error', `De ${darrer} a ${v} no hi ha cap ${T.tram}`, [
-                            hamilton
-                                ? 'Has d’anar recte de ciutat a ciutat, per una de les carreteres que surten de la ' + darrer + '.'
-                                : T.noVei,
+                            hamilton ? T.recte + darrer + '.' : T.noVei,
                         ]);
                         C.anima(D.punts[v], 'sacseja');
                     }
@@ -244,7 +274,7 @@
                 }
                 if (hamilton && ruta.includes(v) && !(v === d.inici && ruta.length === d.graf.vertexs.length)) {
                     if (desdeToc) {
-                        ctx.missatge('error', `Ja has passat per la ${v}`, ['El viatger només pot visitar cada ciutat una vegada.']);
+                        ctx.missatge('error', `Ja has passat per la ${v}`, [T.unaVegada]);
                         C.anima(D.punts[v], 'sacseja');
                     }
                     return;
@@ -277,12 +307,18 @@
             }
             function revisaHamilton(silenci) {
                 const visitades = new Set(ruta).size;
-                ctx.estat([C.el('span', null, 'Ciutats visitades: ', C.el('b', { text: `${visitades} de ${d.graf.vertexs.length}` }))]);
+                ctx.estat([C.el('span', null, `${T.visitades}: `, C.el('b', { text: `${visitades} de ${d.graf.vertexs.length}` }))]);
                 textRuta.textContent = 'Ruta: ' + ruta.join(', ');
                 if (silenci) return;
                 if (G.motiuHamilton(d.graf, ruta, d.inici) === null) {
                     acabat = true;
-                    ctx.resolt('Ruta completa!', ['Setze ciutats, cada una una sola vegada, i de tornada a l’1.']);
+                    // AM 249: el mariner ajorna tant com pot la visita a una illa (dades.tard)
+                    const lloc = d.tard ? ruta.indexOf(d.tard) + 1 : 0;
+                    if (d.tard && lloc < d.llocTard)
+                        ctx.missatge('info', 'Ruta completa, però…', [
+                            `La ${d.tard} és la ${lloc}a illa de la ruta (comptant la ${d.inici} com la 1a). El mariner l’ajorna tant com pot: hi ha una ruta en què hi arriba més tard. Fes enrere i busca-la.`,
+                        ]);
+                    else ctx.resolt('Ruta completa!', [T.resolt]);
                     return;
                 }
                 const darrer = ruta[ruta.length - 1];
@@ -291,7 +327,7 @@
                 );
                 if (!lliures.length)
                     ctx.missatge('info', 'Per aquí no hi ha sortida', [
-                        `Des de la ${darrer} ja no pots anar a cap ciutat on no hagis estat. Fes enrere i prova un altre camí.`,
+                        `Des de la ${darrer} ${T.sortida}. Fes enrere i prova un altre camí.`,
                     ]);
             }
             function revisaCarter(silenci) {
@@ -336,9 +372,7 @@
                             ctx.missatge(
                                 'info',
                                 'Així ho fa Dudeney',
-                                hamilton
-                                    ? ['L’única ruta: les carreteres obligades porten a les altres.']
-                                    : [T.final]
+                                [T.final]
                             )
                     );
                 },

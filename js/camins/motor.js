@@ -7,11 +7,14 @@
  *     metro: el «problema del carter xinès» amb principi i final lliures);
  *   - passar per tots els vèrtexs una sola vegada i tornar a l'inici (AM 243,
  *     visitant les ciutats: un cicle de Hamilton).
+ *   - la volta de la torre (AM 320): una torre que passa per totes les caselles
+ *     del tauler una sola vegada i torna on ha sortit, amb el mínim de jugades.
  *   Comprova una ruta (pas a pas, amb el motiu si un pas no es pot fer) i té els
  *   solucionadors que confirmen el que diu Dudeney.
  * ARQUITECTURA: Pur, sense DOM (també el fan servir els tests de Node).
  *   graf = { vertexs: [id, …], arestes: [[a, b, longitud?], …] } (longitud 1 si no hi és)
  *   ruta = [id, id, …] (vèrtexs per ordre)
+ *   torre: caselles [fila, columna] (fila 0 a dalt); visitades = matriu n × n de booleans
  * DEPENDÈNCIES: cap
  * ============================================================================
  */
@@ -231,7 +234,83 @@
         return null;
     }
 
+    // ── La volta de la torre ───────────────────────────────────────────────
+    /** Les caselles per on passa una torre de «de» a «a» (sense «de» i amb «a»), o null si no van en línia. */
+    function passosTorre(de, a) {
+        if ((de[0] !== a[0] && de[1] !== a[1]) || (de[0] === a[0] && de[1] === a[1])) return null;
+        var df = Math.sign(a[0] - de[0]),
+            dc = Math.sign(a[1] - de[1]),
+            out = [],
+            f = de[0],
+            c = de[1];
+        while (f !== a[0] || c !== a[1]) {
+            f += df;
+            c += dc;
+            out.push([f, c]);
+        }
+        return out;
+    }
+    /**
+     * null si la torre pot anar de «de» a «a»; si no, { motiu, casella }: 'linia' (no és a la mateixa fila
+     * ni columna), 'repetida' (passaria per una casella ja visitada) o 'aviat' (tornaria a l'inici sense
+     * haver-les visitat totes). Només es pot tornar a l'inici amb l'última jugada.
+     */
+    function motiuTorre(visitades, de, a, inici) {
+        var passos = passosTorre(de, a);
+        if (!passos) return { motiu: 'linia' };
+        var n = visitades.length,
+            falten = 0;
+        for (var f = 0; f < n; f++) for (var c = 0; c < n; c++) if (!visitades[f][c]) falten++;
+        for (var i = 0; i < passos.length; i++) {
+            var q = passos[i];
+            var esInici = q[0] === inici[0] && q[1] === inici[1];
+            if (esInici && i === passos.length - 1) return falten === passos.length - 1 ? null : { motiu: 'aviat', casella: q };
+            if (visitades[q[0]][q[1]]) return { motiu: 'repetida', casella: q };
+        }
+        return null;
+    }
+    /** Quantes voltes tancades de «jugades» jugades hi ha des d'«inici» en un tauler n × n (cerca exhaustiva). */
+    function voltesTorre(n, inici, jugades) {
+        var vist = [];
+        for (var f = 0; f < n; f++) vist.push(new Array(n).fill(false));
+        vist[inici[0]][inici[1]] = true;
+        var total = n * n,
+            compte = 0,
+            D = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+        (function cerca(f, c, fetes, visitades, eix) {
+            var queden = jugades - fetes;
+            if (queden <= 0 || total - visitades > (n - 1) * queden) return;
+            for (var k = 0; k < 4; k++) {
+                var e = k < 2 ? 0 : 1;
+                if (e === eix) continue;
+                var ff = f,
+                    cc = c,
+                    marcades = [];
+                for (;;) {
+                    ff += D[k][0];
+                    cc += D[k][1];
+                    if (ff < 0 || cc < 0 || ff >= n || cc >= n) break;
+                    if (ff === inici[0] && cc === inici[1]) {
+                        if (queden === 1 && visitades + marcades.length === total) compte++;
+                        break;
+                    }
+                    if (vist[ff][cc]) break;
+                    vist[ff][cc] = true;
+                    marcades.push([ff, cc]);
+                    cerca(ff, cc, fetes + 1, visitades + marcades.length, e);
+                }
+                marcades.forEach(function (q) {
+                    vist[q[0]][q[1]] = false;
+                });
+            }
+        })(inici[0], inici[1], 0, 1, -1);
+        return compte;
+    }
+
     return {
+        passosTorre: passosTorre,
+        motiuTorre: motiuTorre,
+        voltesTorre: voltesTorre,
         claAresta: claAresta,
         index: index,
         hiHaAresta: hiHaAresta,

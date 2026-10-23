@@ -2,8 +2,9 @@
  * ============================================================================
  * PROJECTE: dudeney (Step Quiz, vanilla JS)
  * FITXER: js/fitxes/problemes.js
- * ROL: Els enigmes de fitxes: les sis granotes (AM 214) i els formatges de
- *   l'administrador (CP 1). Enunciat, pistes i solució de Dudeney traduïts i
+ * ROL: Els enigmes de fitxes: les granotes (AM 214, 216 i 341), Twickenham
+ *   (AM 217), les lletres a la capsa (AM 219) i els formatges de l'administrador
+ *   (CP 1). Enunciat, pistes i solució de Dudeney traduïts i
  *   adaptats al català; la nota del matemàtic és nostra.
  * ARQUITECTURA: Dades pures. Al navegador s'afegeixen a window.DUDENEY; a Node,
  *   el fitxer exporta la llista (tests). Els textos són HTML.
@@ -107,8 +108,146 @@
         ],
     },
     {
-        id: 'formatges',
+        id: 'twickenham',
         ordre: 3,
+        font: { llibre: 'am', numero: 217, titolOriginal: 'The Twickenham Puzzle' },
+        titol: 'El trencaclosques de Twickenham',
+        tipus: 'fitxes',
+        tauler: 'cercle',
+        dificultat: 2,
+        enunciat: [
+            '<p>A la il·lustració hi ha onze discos en cercle. Sobre cinc dels discos hi posem fitxes blanques amb lletres negres, com es veu, i sobre cinc més, fitxes negres amb lletres blanques. El disc de baix queda buit. Partint d’aquí, cal posar les fitxes en ordre perquè, llegides en el sentit de les agulles del rellotge, formin la paraula «Twickenham», amb el disc buit al mateix lloc que al principi.</p>',
+            '<p>Les fitxes negres es mouen en el sentit de les agulles del rellotge, i les blanques, en el sentit contrari. Una fitxa pot saltar per sobre d’una de l’altre color si el disc que ve just després és buit. Així, si el primer moviment és amb la K, la C pot saltar per sobre de la K. Si llavors la K avança cap a la E, pots fer saltar la W per sobre de la C, i així successivament. El trencaclosques es pot resoldre en vint-i-sis moviments. Recorda que una fitxa no pot saltar mai per sobre d’una del seu color.</p>',
+            '<p class="pantalla">Twickenham és una població del costat de Londres, a la vora del Tàmesi. La paraula comença just després del disc buit: T, W, I, C, K… i s’acaba amb la M just abans del disc buit.</p>',
+        ],
+        regla: 'Escriu <strong>TWICKENHAM</strong> en el sentit de les agulles del rellotge, començant just després del disc buit, que ha de tornar a quedar a baix.',
+        comEsJuga: [
+            'Toca una fitxa: si pot, va sola al disc buit (al disc del costat o saltant). També la pots arrossegar.',
+            'Les <strong>negres</strong> només avancen en el sentit de les agulles del rellotge, i les <strong>blanques</strong>, en el sentit contrari.',
+            'Una fitxa només pot saltar per sobre d’<strong>una</strong> fitxa de l’<strong>altre color</strong>. Un pas i un salt compten igual: un moviment.',
+        ],
+        tecles: 'la lletra d’una fitxa (<kbd>K</kbd>, <kbd>C</kbd>…) la mou; <kbd>⌫</kbd> desfà el darrer moviment.',
+        dades: {
+            // Els discos, en el sentit de les agulles del rellotge, començant pel de baix (el buit)
+            inicial: ['', 'C', 'E', 'H', 'M', 'I', 'N', 'A', 'T', 'W', 'K'],
+            negres: 'NATWK',
+            paraula: 'TWICKENHAM',
+            minim: 26,
+            solucio: 'KCEKWTCEHMKWTANCEHMIKCEHMT',
+            etiqueta: 'Onze discos en cercle: el de baix és buit i, en el sentit de les agulles del rellotge, hi ha les fitxes blanques C, E, H, M, I i les negres N, A, T, W, K',
+        },
+        pistes: [
+            'Al principi només es poden moure dues fitxes: la K (negra), que avança fins al disc buit, i la C (blanca), que hi arriba girant al revés. L’enunciat et suggereix començar per la K.',
+            'Com que cap fitxa no pot saltar les del seu color, les negres mai no s’avancen entre elles, i les blanques tampoc: l’ordre de cada color al voltant del cercle es manté. Fixa’t que a TWICKENHAM les negres també surten en l’ordre N, A, T, W, K (comptant en rodona).',
+            'La C ha de fer gairebé una volta sencera, girant al revés; la T i la W, gairebé mitja volta. Com més salts facis, menys moviments necessitaràs.',
+            'Els deu primers moviments de Dudeney: K, C, E, K, W, T, C, E, H, M.',
+        ],
+        solucioDudeney: [
+            '<p>Moveu les fitxes en aquest ordre: K, C, E, K, W, T, C, E, H, M, K, W, T, A, N, C, E, H, M, I, K, C, E, H, M, T, i ja som a Twickenham. La mateixa posició de les fitxes us dirà, cada vegada, si toca fer un salt o un pas.</p>',
+        ],
+        notaMatematic: [
+            '<p><strong>Comprovat per ordinador.</strong> Des de la posició inicial es poden arribar a formar 16 060 posicions diferents. Una cerca en amplada per totes elles confirma que 26 moviments és el mínim. I encara més: la solució de Dudeney és l’<em>única</em> de 26 moviments.</p>',
+            '<p><strong>Salts i passos.</strong> Dels 26 moviments de Dudeney, 19 són salts i 7 són passos. No és casualitat: comptant les caselles que ha d’avançar cada fitxa fins al seu lloc, les negres n’han de fer 17 en total i les blanques 28, és a dir, 45 (si cap fitxa no fa cap volta de més). Un pas en fa avançar una i un salt, dues; per tant, amb <i>p</i> passos i <i>s</i> salts, <i>p</i> + 2<i>s</i> = 45. Amb 26 moviments, <i>p</i> + <i>s</i> = 26, i d’aquí surt <i>s</i> = 19 i <i>p</i> = 7.</p>',
+            '<p>És un parent de «Les sis granotes» i de «Les granotes ensinistrades»: fitxes que s’han de creuar fent salts, i on el que s’estalvia són els passos.</p>',
+        ],
+    },
+    {
+        id: 'lletres',
+        ordre: 4,
+        font: { llibre: 'am', numero: 219, titolOriginal: 'The Letter Block Puzzle' },
+        titol: 'Les lletres a la capsa',
+        tipus: 'fitxes',
+        tauler: 'blocs',
+        dificultat: 2,
+        enunciat: [
+            '<p>Aquí tenim un petit record del nostre vell amic, el trencaclosques del 15. Vuit blocs de fusta amb lletres són dins una capsa, com es veu a la il·lustració. Només es pot moure un bloc cada vegada, cap al lloc que en aquell moment és buit, perquè cap bloc no es pot treure de la capsa. El trencaclosques consisteix a anar-los movent fins que quedin en aquest ordre:</p>',
+            '<table class="taula-dudeney taula-blocs"><tbody><tr><td>A</td><td>B</td><td>C</td></tr><tr><td>D</td><td>E</td><td>F</td></tr><tr><td>G</td><td>H</td><td></td></tr></tbody></table>',
+            '<p>Si et deixen fer tants moviments com vulguis, veuràs que no és gens difícil. Però el trencaclosques és fer-ho amb el mínim de moviments possible. No diré quin és aquest mínim, perquè potser el lector el voldrà descobrir pel seu compte. Per apuntar els moviments n’hi ha prou d’escriure les lletres en l’ordre en què es mouen. Així, els cinc primers moviments podrien ser C, H, G, E, F, i aquesta manera d’apuntar-ho no pot portar cap confusió. A la pràctica, només et calen vuit fitxes i un diagrama senzill en un full de paper.</p>',
+            '<p class="pantalla">Com Dudeney, la pantalla no et dirà quin és el mínim fins que l’aconsegueixis.</p>',
+        ],
+        regla: 'Deixa els blocs en l’ordre <strong>A B C · D E F · G H</strong>, amb el forat a baix a la dreta, amb el mínim de moviments.',
+        comEsJuga: [
+            'Toca un bloc que toqui el forat: hi llisca. També el pots arrossegar.',
+            'Els blocs no es poden treure de la capsa ni moure en diagonal.',
+        ],
+        tecles: 'la lletra d’un bloc (<kbd>A</kbd>…<kbd>H</kbd>) el mou; les fletxes fan lliscar cap al forat el bloc del costat; <kbd>⌫</kbd> desfà el darrer moviment.',
+        dades: {
+            cols: 3,
+            inicial: 'GEFHCBD_A',
+            objectiu: 'ABCDEFGH_',
+            minim: 23,
+            solucio: 'ABFECABFECABDHGABDHGDEF',
+            etiqueta: 'Una capsa de 3 × 3 amb vuit blocs: G, E, F a dalt; H, C, B al mig; D, el forat i A a baix',
+        },
+        pistes: [
+            'El forat comença a baix al mig i ha d’acabar a baix a la dreta. Cada moviment el fa passar a una casella veïna, i una casella sí, una casella no, és «blanca» o «negra», com en un tauler d’escacs. Per tant, el nombre de moviments ha de ser senar.',
+            'Sovint convé fer girar tres blocs al voltant d’un quadrat de 2 × 2, com en un carrusel: cada volta els avança una casella a tots.',
+            'Dudeney comença fent girar els blocs del quadrat de la dreta: A, B, F, E, C… i ho repeteix.',
+            'Els deu primers moviments de Dudeney: A, B, F, E, C, A, B, F, E, C. Quedes amb G, forat, C a dalt; H, A, E al mig, i D, B, F a baix: la C ja és al seu lloc.',
+        ],
+        solucioDudeney: [
+            '<p>Aquest trencaclosques es pot resoldre en 23 moviments, el mínim possible. Moveu els blocs en aquest ordre: A, B, F, E, C, A, B, F, E, C, A, B, D, H, G, A, B, D, H, G, D, E, F.</p>',
+        ],
+        notaMatematic: [
+            '<p><strong>Comprovat per ordinador.</strong> Una cerca en amplada per totes les posicions a què es pot arribar confirma que 23 moviments és el mínim, i que la seqüència de Dudeney és l’<em>única</em> de 23 moviments. Des de la posició inicial, la posició més llunyana necessita 31 moviments.</p>',
+            '<p><strong>La meitat de les posicions són impossibles.</strong> Els vuit blocs i el forat es poden col·locar de 9! = 362 880 maneres, però des de la posició inicial només se’n pot arribar a la meitat, 181 440. Si en una posició es canvien de lloc dos blocs (traient-los de la capsa), s’arriba a l’altra meitat, i ja no hi ha manera de resoldre-ho. Ho van demostrar W. W. Johnson i W. E. Story el 1879 per al trencaclosques del 15, que aquells anys feia furor: cada moviment és un intercanvi del forat amb un bloc, i la paritat del nombre d’intercanvis (parell o senar) està lligada al lloc on és el forat.</p>',
+        ],
+    },
+    {
+        id: 'quatre-granotes',
+        ordre: 5,
+        font: { llibre: 'am', numero: 341, titolOriginal: 'The Four Frogs' },
+        titol: 'Les quatre granotes',
+        tipus: 'fitxes',
+        tauler: 'xarxa',
+        dificultat: 2,
+        enunciat: [
+            '<p>A la il·lustració hi ha vuit bolets, amb granotes blanques a l’1 i al 3 i granotes negres al 6 i al 8. El trencaclosques consisteix a moure una granota cada vegada, en l’ordre que vulguis, per una de les línies rectes que van de bolet a bolet, fins que hagin canviat de lloc: les blanques han de quedar al 6 i al 8, i les negres, a l’1 i al 3.</p>',
+            '<p>Si fas servir quatre fitxes sobre un diagrama senzill, ho trobaràs força fàcil. Però és una mica més difícil fer-ho en només set jugades, si compten com una sola jugada tots els moviments seguits d’una mateixa granota. És clar que mai no hi pot haver dues granotes en un mateix bolet.</p>',
+            '<p class="pantalla">A la pantalla es compten els moviments i les jugades: si mous la mateixa granota diverses vegades seguides, tot plegat és una sola jugada.</p>',
+        ],
+        regla: 'Les blanques als bolets <strong>6 i 8</strong> i les negres a l’<strong>1 i al 3</strong>, en <strong>7 jugades</strong>.',
+        comEsJuga: [
+            'Toca una granota i després el bolet buit on vols que vagi, seguint una línia. També la pots arrossegar.',
+            'Els moviments seguits d’una mateixa granota són una sola jugada.',
+            'El botó «Desembolica els fils» mou els bolets sense canviar cap línia: prova’l!',
+        ],
+        tecles: '<kbd>1</kbd>…<kbd>8</kbd> trien un bolet (primer el de la granota, després on va); <kbd>Esc</kbd> desfà la tria; <kbd>⌫</kbd> desfà el darrer moviment.',
+        dades: {
+            // Els bolets 1…8 en una quadrícula de 3 × 3 sense el del mig
+            posicions: { 1: [0, 0], 2: [1, 0], 3: [2, 0], 4: [0, 1], 5: [2, 1], 6: [0, 2], 7: [1, 2], 8: [2, 2] },
+            arestes: [[1, 5], [1, 7], [2, 6], [2, 8], [3, 4], [3, 7], [4, 8], [5, 6]],
+            // L'ordre dels bolets al cercle dels «botons i fils» de Dudeney
+            cercle: [1, 5, 6, 2, 8, 4, 3, 7],
+            inicial: { 1: 'blanca', 3: 'blanca', 6: 'negra', 8: 'negra' },
+            objectiu: { 1: 'negra', 3: 'negra', 6: 'blanca', 8: 'blanca' },
+            minimJugades: 7,
+            minimMoviments: 16,
+            // Les set jugades de Dudeney, amb els moviments [d'on, cap on]
+            solucio: [[[1, 5]], [[3, 7], [7, 1]], [[8, 4], [4, 3], [3, 7]], [[6, 2], [2, 8], [8, 4], [4, 3]], [[5, 6], [6, 2], [2, 8]], [[1, 5], [5, 6]], [[7, 1]]],
+            etiqueta: 'Vuit bolets units per vuit línies; granotes blanques als bolets 1 i 3 i negres al 6 i al 8',
+        },
+        pistes: [
+            'De cada bolet surten exactament dues línies. Surt de l’1 i segueix-les: on arribes? I després?',
+            'Seguint les línies passes per tots els bolets i tornes a l’1: 1, 5, 6, 2, 8, 4, 3, 7. Les vuit línies formen un sol circuit!',
+            'Imagina aquest circuit com un cercle (o prem «Desembolica els fils»): les granotes no es poden avançar, només girar. Per canviar de lloc, totes han de girar en el mateix sentit.',
+            'Les dues primeres jugades de Dudeney: la blanca de l’1 al 5; després, la blanca del 3 al 7 i, seguit, del 7 a l’1.',
+        ],
+        solucioDudeney: [
+            '<p>El mínim de moviments, comptant-los un per un, és setze. Però el trencaclosques es pot resoldre en set jugades, si compten com una de sola tots els moviments seguits d’una mateixa granota. Cada parèntesi és una jugada, i els números són els dels bolets: (1–5), (3–7, 7–1), (8–4, 4–3, 3–7), (6–2, 2–8, 8–4, 4–3), (5–6, 6–2, 2–8), (1–5, 5–6), (7–1).</p>',
+            '<p>És el conegut problema de Guarini, proposat el 1512, i el poso aquí per explicar el meu mètode dels «botons i fils» per resoldre aquesta mena de problemes de fitxes que es mouen. La manera antiga de presentar el problema de Guarini és amb dos cavalls blancs i dos de negres en un tauler de 3 × 3, que han de canviar de lloc. A «Les quatre granotes», les línies indiquen cap on es pot moure cada granota, perquè el lector no hagi de saber com es mou el cavall dels escacs; però es veu de seguida que els dos problemes són idèntics. La casella del mig, és clar, no compta, perquè cap cavall no hi pot entrar mai.</p>',
+            '<p>Ara imagineu que els bolets són botons i les línies, fils. Si desemboliquem els fils, podem dibuixar el diagrama com a la figura, on la relació entre els botons és exactament la mateixa. Qualsevol solució en aquesta figura serveix per a l’altra. Poseu les granotes blanques a l’1 i al 3 i les negres al 6 i al 8, i veureu com n’és, de senzilla, la solució: només cal fer girar les granotes pel cercle, en un sentit o en l’altre. Feu les jugades de més amunt i veureu que tota dificultat ha desaparegut.</p>',
+        ],
+        posicioFiguraSolucio: 3,
+        notaMatematic: [
+            '<p><strong>Per què setze moviments.</strong> Al cercle, les granotes no es poden avançar: l’ordre en què hi són es manté. Comptant els llocs del cercle (1, 5, 6, 2, 8, 4, 3, 7), les blanques són als llocs 1r i 7è i les negres, al 3r i al 5è, i han d’acabar a l’inrevés. L’única manera de fer-ho sense que ningú s’avanci és que totes girin quatre llocs en el mateix sentit: 4 granotes × 4 moviments = 16.</p>',
+            '<p><strong>Comprovat per ordinador.</strong> Una cerca en amplada confirma els dos mínims de Dudeney: 16 moviments i 7 jugades, i que la seva solució és vàlida.</p>',
+            '<p>Paolo Guarini di Forlì va proposar el problema dels cavalls en un manuscrit del 1512, i és un dels trencaclosques d’escacs més antics que es coneixen. El mètode dels «botons i fils» de Dudeney és el que avui en diem treballar amb el <i>graf</i> del problema: el que importa no és on són els punts, sinó quins estan units amb quins.</p>',
+        ],
+    },
+    {
+        id: 'formatges',
+        ordre: 6,
         font: { llibre: 'cp', numero: 1, titolOriginal: 'The Reve’s Puzzle' },
         titol: 'Els formatges de l’administrador',
         tipus: 'fitxes',

@@ -241,20 +241,20 @@ body {
 /* ---- Portada ---- */
 .portada-full h1 {
     font-size: 34pt;
-    margin-top: 14mm;
+    margin-top: 6mm;
 }
 .portada-full .entrada {
     font-size: 13pt;
     max-width: 150mm;
 }
 .index-enigmes {
-    margin: 6mm 0;
+    margin: 4mm 0;
     border-collapse: collapse;
     width: 100%;
-    font-size: 10.5pt;
+    font-size: 9.5pt;
 }
 .index-enigmes td {
-    padding: 1.1mm 2mm;
+    padding: 0.55mm 2mm;
     border-bottom: 0.25mm solid #777;
 }
 .index-enigmes td:first-child {
@@ -376,12 +376,18 @@ body {
 .passatger .figura.adulta .cos,
 .passatger .figura.adulta .cap,
 .passatger .figura.nen .cos,
-.passatger .figura.nen .cap {
+.passatger .figura.nen .cap,
+.passatger .figura.jugador .cos,
+.passatger .figura.jugador .cap {
     fill: #fff;
     stroke: #000;
 }
 .passatger .pes {
     fill: #000;
+}
+.passatger .figura .pilota {
+    fill: #fff;
+    stroke: #000;
 }
 .carta,
 .carta.vermella {
@@ -432,5 +438,36 @@ body {
     stroke: #fff;
 }
 .punt.visitat .nom-punt {
+    fill: #000;
+}
+.fitxa-cercle.negra .cos,
+.cercle-svg .fletxa.negra .mostra-color {
+    fill: #333;
+}
+.fitxa-cercle.blanca .cos,
+.cercle-svg .fletxa.blanca .mostra-color {
+    fill: #fff;
+}
+.politja-svg .mur,
+.politja-svg .terra,
+.objecte .figura .cap,
+.objecte .figura .cos,
+.objecte .cofre .caixa-cofre,
+.objecte .cofre .tapa-cofre {
+    fill: #fff;
+    stroke: #000;
+}
+.objecte .pes,
+.objecte .cofre .pany {
+    fill: #000;
+}
+.escacs-svg .visitada {
+    fill: #fff;
+    stroke: #fff;
+}
+.full[data-id='tresor'] .figura-full > svg {
+    max-height: 70mm;
+}
+.fitxa-cercle.blanca .lletra-fitxa {
     fill: #000;
 }

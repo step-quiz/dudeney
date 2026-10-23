@@ -2,7 +2,8 @@
  * ============================================================================
  * PROJECTE: dudeney (Step Quiz, vanilla JS)
  * FITXER: js/mesures/problemes.js
- * ROL: Els enigmes de mesures i travesses: travessant el rierol (AM 373) i el
+ * ROL: Els enigmes de mesures i travesses: travessant el rierol (AM 373), cinc
+ *   entrenadors i una barca (AM 375), el tresor del castell (AM 377) i el
  *   nou problema de mesures (AM 365). Enunciat, pistes i solució de Dudeney
  *   traduïts i adaptats; la nota del matemàtic és nostra.
  * ARQUITECTURA: Dades pures (vegeu js/fitxes/problemes.js).
@@ -193,6 +194,155 @@
         notaMatematic: [
             '<p><strong>Les persones són recipients diferents.</strong> Un rodamón és com una gerra enorme que mai no es buida: hi pots vessar tant com vulguis, però no en pots treure res. Per això no es pot fer servir per guardar llimonada «de pas», com es fa amb les gerres, i el problema és més difícil del que sembla.</p>',
             '<p><strong>Comprovat per ordinador.</strong> Una cerca en amplada per totes les situacions possibles (quanta llimonada hi ha al barril i a cada gerra, i quanta se n’ha begut cada rodamón) confirma que 11 manipulacions és el mínim i que la taula de Dudeney és correcta pas a pas. Hi ha 72 maneres de fer-ho en 11 manipulacions; si no importa quin rodamón és quin, en queden 12.</p>',
+        ],
+    },
+    {
+        id: 'tresor',
+        ordre: 4,
+        font: { llibre: 'am', numero: 377, titolOriginal: 'Stealing the Castle Treasure' },
+        titol: 'El tresor del castell',
+        tipus: 'mesures',
+        tauler: 'politja',
+        dificultat: 2,
+        enunciat: [
+            '<p>La família De Gourney encara explica, de generació en generació, la manera enginyosa com uns lladres es van endur un cofre ple de joies i pedres precioses del castell de Gloomhurst. Els lladres eren un home, un jove i un noi petit, i l’única manera d’escapar amb el cofre era per una finestra molt alta. A fora de la finestra hi havia una politja, i per la politja passava una corda amb una cistella a cada punta. Quan una cistella era a terra, l’altra era a la finestra. La corda estava posada de manera que els qui anaven a les cistelles no s’hi podien ajudar, ni podien rebre l’ajuda de ningú. En resum, l’única manera de fer servir les cistelles era posar més pes en una que en l’altra.</p>',
+            '<p>L’home pesava 195 <span class="unitat" data-nota="1 lliura ≈ 0,45 kg">lliures</span>; el jove, 105; el noi, 90, i el cofre del tresor, 75. La cistella que baixava no podia pesar més de 15 lliures més que l’altra: si no, baixaria tan de pressa que seria molt perillós per a una persona, tot i que al tresor no li faria cap mal. A cada cistella només hi podien anar dues persones, o una persona i el tresor. Com s’ho van fer per escapar tots i endur-se el tresor?</p>',
+            '<p>El trencaclosques és trobar la manera més curta de fer-ho, que en si no és difícil. Recorda que ningú no es pot ajudar estirant la corda: l’única manera de baixar és «de cop», amb un contrapès a l’altra cistella.</p>',
+            '<p class="pantalla">Cada vegada que deixes anar les cistelles compta com una manipulació. Pots posar el tresor a la cistella encara que no hi hagi ningú al costat: és com si s’hi hagués quedat dins.</p>',
+        ],
+        regla: 'Baixa tothom a terra, amb el tresor. La cistella que baixa amb una persona no pot pesar més de <strong>15 lliures</strong> més que l’altra.',
+        comEsJuga: [
+            'Toca una persona (o el tresor) per posar-la a la cistella que té al costat, o per treure-la’n. També la pots arrossegar.',
+            'Toca <strong>Deixa anar les cistelles</strong>: la que pesa més baixa i l’altra puja. En arribar, tothom en surt.',
+            'A cada cistella hi caben dues persones, o una persona i el tresor. Si hi baixa una persona, la diferència de pes no pot passar de 15 lliures; el tresor sol pot baixar amb la diferència que sigui.',
+        ],
+        tecles: '<kbd>1</kbd>…<kbd>4</kbd> posen o treuen l’home, el jove, el noi i el tresor; <kbd>Retorn</kbd> deixa anar les cistelles; <kbd>⌫</kbd> desfà.',
+        dades: {
+            unitat: 'lliures',
+            diferencia: 15,
+            maxim: 2,
+            objectes: [
+                { id: 'home', nom: 'l’home', curt: 'home', pes: 195, persona: true, figura: 'adult' },
+                { id: 'jove', nom: 'el jove', curt: 'jove', pes: 105, persona: true, figura: 'jove' },
+                { id: 'noi', nom: 'el noi', curt: 'noi', pes: 90, persona: true, figura: 'nen' },
+                { id: 'tresor', nom: 'el tresor', curt: 'tresor', pes: 75, persona: false, figura: 'cofre' },
+            ],
+            nomPassos: 'Manipulacions',
+            etiqueta: 'La finestra del castell, amb l’home, el jove, el noi i el cofre del tresor; a fora, una politja amb una cistella a la finestra i l’altra a terra',
+            textResolt: 'Tots tres a terra, i el tresor també.',
+            textFinal: 'Onze manipulacions: el tresor baixa sol cinc vegades i puja de contrapès quatre.',
+            // La solució de Dudeney: [qui baixa, qui puja] (0 = l'home, 1 = el jove, 2 = el noi, 3 = el tresor)
+            solucio: [[[3], []], [[2], [3]], [[1], [2]], [[3], []], [[0], [1, 3]], [[3], []], [[2], [3]], [[3], []], [[1], [2]], [[2], [3]], [[3], []]],
+        },
+        pistes: [
+            'El tresor pot baixar tot sol, sense contrapès: no es fa mal. És el primer moviment de Dudeney.',
+            'Una persona només pot baixar si a l’altra cistella hi ha un contrapès que pesi com a molt 15 lliures menys. El noi (90) pot baixar si puja el tresor (75), i el jove (105), si puja el noi (90).',
+            'L’home és el més difícil: amb 195 lliures, només pot baixar si a l’altra cistella pugen junts el jove i el tresor (180).',
+            'Els quatre primers passos de Dudeney: baixa el tresor; baixa el noi i puja el tresor; baixa el jove i puja el noi; baixa el tresor.',
+        ],
+        solucioDudeney: [
+            '<p>Aquesta és la millor solució, en onze manipulacions:</p>',
+            '<ol class="passos-dudeney">' +
+                [
+                    'Baixa el tresor.',
+                    'Baixa el noi, i puja el tresor.',
+                    'Baixa el jove, i puja el noi.',
+                    'Baixa el tresor.',
+                    'Baixa l’home, i pugen el jove i el tresor.',
+                    'Baixa el tresor.',
+                    'Baixa el noi, i puja el tresor.',
+                    'Baixa el tresor.',
+                    'Baixa el jove, i puja el noi.',
+                    'Baixa el noi, i puja el tresor.',
+                    'Baixa el tresor.',
+                ]
+                    .map(x => '<li>' + x + '</li>')
+                    .join('') +
+                '</ol>',
+        ],
+        notaMatematic: [
+            '<p><strong>Tres diferències de 15.</strong> Fixa’t en els pesos: noi − tresor = 90 − 75 = 15, jove − noi = 105 − 90 = 15 i home − (jove + tresor) = 195 − 180 = 15. Són les tres úniques maneres que té una persona de baixar, i totes van just al límit. Dudeney va triar els pesos amb molta cura.</p>',
+            '<p><strong>Comprovat per ordinador.</strong> Una cerca en amplada per totes les situacions possibles (qui és a dalt i qui és a terra: només n’hi ha 16) confirma que 11 manipulacions és el mínim i que la solució de Dudeney és vàlida pas a pas. Hi ha 8 maneres de fer-ho en 11 manipulacions, i totes fan servir els mateixos onze passos que la de Dudeney, en un ordre una mica diferent.</p>',
+        ],
+    },
+    {
+        id: 'entrenadors',
+        ordre: 5,
+        font: { llibre: 'am', numero: 375, titolOriginal: 'Five Jealous Husbands' },
+        titol: 'Cinc entrenadors i una barca',
+        tipus: 'mesures',
+        tauler: 'barca',
+        dificultat: 3,
+        enunciat: [
+            '<p>Durant unes inundacions, cinc entrenadors de futbol i les cinc estrelles dels seus equips es van quedar envoltats d’aigua, i havien d’escapar amb una barca on només hi cabien tres persones cada vegada. Cada entrenador desconfiava tant dels altres que no volia que la seva estrella estigués, ni a la barca ni a cap de les dues ribes, amb un altre entrenador (o amb uns quants) si ell no hi era: li podrien fer una oferta per fitxar-la! Quina és la manera més ràpida de passar tots deu a l’altra banda?</p>',
+            '<p>Anomenem els entrenadors A, B, C, D i E, i les seves estrelles, a, b, c, d i e. Anar i tornar compta com dues travessies. No s’hi valen trucs com cordes, nedar, aprofitar els corrents, etc.</p>',
+            '<p class="pantalla">A l’original de Dudeney són cinc matrimonis amb uns marits molt gelosos. Hem canviat la història, però la regla és la mateixa i, per tant, la matemàtica també.</p>',
+        ],
+        regla: 'Passa tothom a l’altra riba. A la barca hi caben <strong>3 persones</strong>, i cap estrella no pot estar amb un altre entrenador si el seu no hi és.',
+        comEsJuga: [
+            'Toca una persona per pujar-la a la barca o fer-la baixar. També la pots arrossegar.',
+            'Quan la barca estigui a punt, toca <strong>Travessa</strong>. En arribar, tothom baixa a la riba.',
+            'Tothom sap remar. Una estrella (en minúscula) no pot quedar, ni a la barca ni a cap riba, amb un entrenador (en majúscula) que no és el seu si el seu no hi és.',
+        ],
+        tecles: 'la lletra de cada persona (<kbd>A</kbd>…<kbd>E</kbd> els entrenadors, <kbd>a</kbd>…<kbd>e</kbd> les estrelles) la puja o la fa baixar; <kbd>Retorn</kbd> travessa; <kbd>⌫</kbd> desfà.',
+        dades: {
+            places: 3,
+            passatgers: [
+                { id: 'A', nom: 'l’entrenador A', curt: 'A', rema: true, cap: true, figura: 'entrenador' },
+                { id: 'B', nom: 'l’entrenador B', curt: 'B', rema: true, cap: true, figura: 'entrenador' },
+                { id: 'C', nom: 'l’entrenador C', curt: 'C', rema: true, cap: true, figura: 'entrenador' },
+                { id: 'D', nom: 'l’entrenador D', curt: 'D', rema: true, cap: true, figura: 'entrenador' },
+                { id: 'E', nom: 'l’entrenador E', curt: 'E', rema: true, cap: true, figura: 'entrenador' },
+                { id: 'a', nom: 'l’estrella a', curt: 'a', rema: true, parella: 0, figura: 'jugador' },
+                { id: 'b', nom: 'l’estrella b', curt: 'b', rema: true, parella: 1, figura: 'jugador' },
+                { id: 'c', nom: 'l’estrella c', curt: 'c', rema: true, parella: 2, figura: 'jugador' },
+                { id: 'd', nom: 'l’estrella d', curt: 'd', rema: true, parella: 3, figura: 'jugador' },
+                { id: 'e', nom: 'l’estrella e', curt: 'e', rema: true, parella: 4, figura: 'jugador' },
+            ],
+            textos: {
+                barca: 'A la barca, {qui} aniria amb {amb} sense {seu}.',
+                riba: 'En arribar, {qui} quedaria {riba} amb {amb} sense {seu}.',
+            },
+            etiqueta: 'Cinc entrenadors (A, B, C, D, E) i les seves cinc estrelles (a, b, c, d, e), a la riba de l’esquerra, amb una barca de tres places',
+            textResolt: 'Tots deu a l’altra riba, i cap estrella no ha estat mai sola amb un altre entrenador.',
+            textFinal: 'Onze travessies: primer passen les estrelles, i les estrelles fan anar i venir la barca.',
+            // La solució de Dudeney: qui va a cada travessia (índexs: 0–4 = A–E, 5–9 = a–e)
+            solucio: [[5, 6, 7], [6, 7], [6, 7, 8], [8], [0, 1, 2], [2, 7], [2, 3, 4], [6], [6, 7, 8], [6, 7], [6, 7, 9]],
+        },
+        pistes: [
+            'Les estrelles poden anar juntes sense cap problema: al principi, només elles fan anar i venir la barca.',
+            'Un entrenador només pot passar a una riba on hi hagi estrelles d’altres equips si els seus entrenadors també hi són, o si s’hi troba la seva pròpia estrella… i cap altra sense el seu entrenador.',
+            'En algun moment han de passar tres entrenadors junts, quan les seves tres estrelles ja són a l’altra riba.',
+            'Les quatre primeres travessies de Dudeney: passen a, b i c; tornen b i c; passen b, c i d; torna d.',
+        ],
+        solucioDudeney: [
+            '<p>És clar que el nombre de travessies ha de ser senar, i que si els entrenadors no haguessin desconfiat els uns dels altres, el grup hauria pogut passar en nou travessies. Però cap estrella no podia estar amb un entrenador o més si el seu no hi era, i això obliga a fer dues travessies més: onze en total.</p>',
+            '<p>La taula mostra com es podria fer. Les majúscules són els entrenadors i les minúscules, les seves estrelles. Es veu com queden les coses al principi i després de cada travessia, i l’asterisc és la barca. Així, es veu d’un cop d’ull que a la primera travessia passen a, b i c, que a la segona tornen b i c, etc.</p>',
+            '<table class="taula-dudeney taula-travesses"><thead><tr><th></th><th>aquesta riba</th><th></th><th>l’altra riba</th></tr></thead><tbody>' +
+                [
+                    ['', 'ABCDE abcde *', ''],
+                    ['1', 'ABCDE de', '* abc'],
+                    ['2', 'ABCDE bcde *', 'a'],
+                    ['3', 'ABCDE e', '* abcd'],
+                    ['4', 'ABCDE de *', 'abc'],
+                    ['5', 'DE de', '* ABC abc'],
+                    ['6', 'CDE cde *', 'AB ab'],
+                    ['7', 'cde', '* ABCDE ab'],
+                    ['8', 'bcde *', 'ABCDE a'],
+                    ['9', 'e', '* ABCDE abcd'],
+                    ['10', 'bc e *', 'ABCDE a d'],
+                    ['11', '', '* ABCDE abcde'],
+                ]
+                    .map(f => `<tr><th>${f[0]}</th><td>${f[1]}</td><td>≈</td><td>${f[2]}</td></tr>`)
+                    .join('') +
+                '</tbody></table>',
+            '<p>Les paraules «la manera més ràpida» amaguen una petita subtilesa. Tothom suposa, i amb raó, que com que no se’ns diu res de com remen, tots remen igual de bé. Però és evident que dues persones remen més de pressa que una. Per tant, a la segona i a la tercera travessia són dues estrelles les que han de tornar amb la barca a buscar la d, i no una de sola. Això no canvia el nombre de travessies, de manera que no s’hi perd temps. A les travessies 10 i 11 hi ha una oportunitat semblant: el grup pot enviar dues estrelles o una de sola.</p>',
+            '<p>Als qui creguin que ho han resolt en nou travessies, els diria que, en tots els casos, s’equivoquen. Cap entrenador desconfiat, en aquestes circumstàncies, no enviaria la seva estrella a l’altra riba amb un entrenador o més, encara que ella li assegurés que tornaria al viatge següent. Si el lector té en compte aquest detall, descobrirà de seguida el seu error.</p>',
+        ],
+        notaMatematic: [
+            '<p><strong>Un problema amb molta història.</strong> La primera versió coneguda és d’Alcuí de York, al segle VIII, amb tres parelles i una barca de dues places, al mateix recull que «Travessant el rierol». Al segle XVI, Tartaglia en va donar una solució poc clara per a quatre parelles, i Bachet, el 1612, va advertir que amb quatre parelles i una barca de dues places no es pot fer, tot i que no ho va demostrar.</p>',
+            '<p><strong>Comprovat per ordinador.</strong> Una cerca en amplada per totes les situacions possibles (qui és a cada riba i on és la barca) confirma els tres nombres de Dudeney: sense la regla n’hi ha prou amb 9 travessies; amb la regla, el mínim és 11, i la seva solució és vàlida pas a pas. Si es compta qui va a cada travessia, hi ha més de 700 000 maneres de fer-ho en 11 travessies.</p>',
+            '<p><strong>Quantes parelles hi caben?</strong> La mateixa cerca diu que amb una barca de dues places es poden passar dues o tres parelles, però quatre ja no; i amb una barca de tres places, fins a cinc parelles, però sis ja no. Amb una barca de quatre places, la cerca les passa totes, almenys fins a vuit parelles. Bachet tenia raó, doncs, i Dudeney va triar cinc parelles perquè és el màxim que funciona amb tres places.</p>',
         ],
     },
 ]);

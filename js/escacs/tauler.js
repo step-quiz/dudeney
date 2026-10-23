@@ -12,16 +12,20 @@
  *     (dades.peca 'cavall' | 'alfil') tocant les caselles; les atacades porten
  *     un punt. Quan no en queda cap de lliure, es marquen les peces sense
  *     protecció (si dades.protegits no és false).
+ *   - Taulers.torre (AM 320, de tipus camins): la torre surt de d5 i es toca la
+ *     casella on ha d'anar; es marquen totes les caselles per on passa, i no en
+ *     pot repetir cap. S'acaba en tornar a d5 després de visitar-les totes.
  *   Teclat: cursor amb les fletxes (una sola casella amb tabindex 0).
  * ARQUITECTURA: window.Taulers.reines / .cavalls = { crea(lloc, p, ctx), figura(p, o) }.
  *   Caselles [fila, columna], fila 0 a dalt. Les regles són a js/escacs/motor.js.
- * DEPENDÈNCIES: js/comu/comu.js, js/escacs/motor.js
+ * DEPENDÈNCIES: js/comu/comu.js, js/escacs/motor.js, js/camins/motor.js (la torre)
  * ============================================================================
  */
 (() => {
     'use strict';
     const C = window.Comu;
     const E = window.MotorEscacs;
+    const G = window.MotorCamins;
     const Q = 60; // costat d'una casella
     const MARGE = 22; // per a les lletres i els números de les vores
 
@@ -538,6 +542,166 @@
         };
     }
 
+    // ════════════════════════════════════════════════════════════
+    // TORRE: la volta de la torre (AM 320)
+    // dades: mida, inici ('d5'), minim, solucio i altra (les caselles on s'atura la torre, en notació
+    // algebraica). Les regles són a js/camins/motor.js (passosTorre, motiuTorre).
+    // ════════════════════════════════════════════════════════════
+    const TORRE = 'M-12 12 L-10 -6 L-14 -6 L-14 -16 L-8 -16 L-8 -11 L-3 -11 L-3 -16 L3 -16 L3 -11 L8 -11 L8 -16 L14 -16 L14 -6 L10 -6 L12 12 Z';
+    const deAlg = (t, n) => [n - +t.slice(1), 'abcdefgh'.indexOf(t[0])];
+
+    function pecaTorre(capa, q) {
+        const g = C.svg('g', { class: 'peca torre' }, capa);
+        C.svg('path', { class: 'silueta', d: TORRE }, g);
+        C.svg('rect', { class: 'silueta', x: -15, y: 11, width: 30, height: 6, rx: 2 }, g);
+        const [x, y] = centre(q);
+        g.style.transform = `translate(${x}px, ${y}px)`;
+        return g;
+    }
+    /** Pinta el recorregut: les caselles visitades (un punt), el traç i la torre. */
+    function pintaTorre(T, parades, opcions = {}) {
+        T.marques.replaceChildren();
+        T.linies.replaceChildren();
+        T.peces.replaceChildren();
+        const n = T.n;
+        const vist = [];
+        for (let f = 0; f < n; f++) vist.push(new Array(n).fill(false));
+        if (parades.length) vist[parades[0][0]][parades[0][1]] = true;
+        for (let i = 1; i < parades.length; i++) G.passosTorre(parades[i - 1], parades[i]).forEach(q => (vist[q[0]][q[1]] = true));
+        for (let f = 0; f < n; f++)
+            for (let c = 0; c < n; c++)
+                if (vist[f][c]) C.svg('rect', { class: 'visitada', x: c * Q + 4, y: f * Q + 4, width: Q - 8, height: Q - 8, rx: 4 }, T.marques);
+        if (parades.length > 1) C.svg('polyline', { class: 'cami-torre', points: parades.map(q => centre(q).join(',')).join(' ') }, T.linies);
+        parades.slice(1, -1).forEach(q => {
+            const [x, y] = centre(q);
+            C.svg('circle', { class: 'parada', cx: x, cy: y, r: 5 }, T.linies);
+        });
+        if (parades.length && !opcions.senseTorre) pecaTorre(T.peces, opcions.torreA || parades[parades.length - 1]);
+        return vist;
+    }
+
+    function figuraTorre(p, opcions = {}) {
+        const d = p.dades;
+        const T = dibuixaTauler(d.mida, { estatic: true, prefix: 'ft' + (opcions.altra ? 'b' : 'a'), etiqueta: opcions.etiqueta || `Un tauler d’escacs amb la torre a ${d.inici}` });
+        const llista = opcions.solucio ? d.solucio : opcions.altra ? d.altra : [d.inici];
+        pintaTorre(T, llista.map(t => deAlg(t, d.mida)), { torreA: deAlg(d.inici, d.mida) });
+        return T.svg;
+    }
+
+    function creaTorre(lloc, p, ctx) {
+        const d = p.dades;
+        const n = d.mida;
+        const inici = deAlg(d.inici, n);
+        let parades, vist, acabat, reproduccio;
+        const hist = C.historial(x => x.map(q => q.slice()));
+        const caixa = C.el('div', { class: 'tauler escacs torre-joc' });
+        const T = dibuixaTauler(n, { prefix: 'jt' });
+        const textRuta = C.el('p', { 'class': 'text-ruta', 'aria-live': 'polite' });
+        caixa.append(T.svg, textRuta);
+        lloc.appendChild(caixa);
+        const teclatT = teclat(T, q => toca(q));
+        T.svg.addEventListener('click', e => {
+            const q = casellaDe(T, e, false);
+            if (q) toca(q);
+        });
+        const nom = q => nomCasella(q[0], q[1], n);
+        const darrera = () => parades[parades.length - 1];
+
+        function inicia() {
+            atura();
+            parades = [inici];
+            acabat = false;
+            hist.buida();
+            teclatT.posa(inici);
+            canvi(true);
+        }
+        function toca(q) {
+            atura();
+            const de = darrera();
+            if (q[0] === de[0] && q[1] === de[1]) {
+                if (!acabat && parades.length > 1) desfes();
+                return;
+            }
+            if (acabat) return;
+            const motiu = G.motiuTorre(vist, de, q, inici);
+            if (motiu) {
+                if (motiu.motiu === 'linia')
+                    ctx.missatge('error', `De ${nom(de)} a ${nom(q)} no hi pot anar`, ['La torre només es mou en línia recta: per la seva fila o per la seva columna.']);
+                else if (motiu.motiu === 'repetida')
+                    ctx.missatge('error', 'Per aquí ja hi has passat', [`La torre passaria un altre cop per ${nom(motiu.casella)}: cada casella només es pot visitar una vegada.`]);
+                else if (motiu.motiu === 'aviat')
+                    ctx.missatge('error', `Encara no pots tornar a ${d.inici}`, ['Primer has de visitar totes les caselles: la torre torna a la casella de sortida amb l’última jugada.']);
+                return;
+            }
+            hist.desa(parades);
+            parades = parades.concat([q]);
+            canvi();
+        }
+        function desfes() {
+            atura();
+            const ant = hist.desfes();
+            if (!ant) return;
+            parades = ant;
+            acabat = false;
+            canvi(true);
+        }
+        function canvi(silenci) {
+            ctx.amaga();
+            vist = pintaTorre(T, parades);
+            let fetes = 0;
+            T.caselles.forEach((fila, f) =>
+                fila.forEach((g, c) => {
+                    if (vist[f][c]) fetes++;
+                    g.setAttribute('aria-label', `${nomCasella(f, c, n)}${vist[f][c] ? ', visitada' : ''}${f === darrera()[0] && c === darrera()[1] ? ', hi ha la torre' : ''}`);
+                })
+            );
+            const jugades = parades.length - 1;
+            ctx.estat([
+                C.el('span', null, 'Jugades: ', C.el('b', { text: jugades })),
+                C.el('span', null, 'Caselles visitades: ', C.el('b', { text: `${fetes} de ${n * n}` })),
+            ]);
+            textRuta.textContent = jugades ? 'Recorregut: ' + parades.map(nom).join(' – ') : `La torre és a ${d.inici}: toca una casella de la seva fila o de la seva columna.`;
+            ctx.desfes(hist.mida > 0);
+            if (silenci) return;
+            const tornada = jugades > 0 && darrera()[0] === inici[0] && darrera()[1] === inici[1];
+            if (tornada) {
+                acabat = true;
+                if (jugades <= d.minim) ctx.resolt(`${jugades} jugades: el mínim!`, [`Les ${n * n} caselles, cada una una sola vegada, i de tornada a ${d.inici}.`]);
+                else ctx.missatge('info', `Volta completa en ${jugades} jugades`, [`Es pot fer en ${d.minim}. Ho tornes a provar?`]);
+                return;
+            }
+            // Queda alguna jugada possible?
+            const pot = [];
+            for (let k = 0; k < n; k++) pot.push([darrera()[0], k], [k, darrera()[1]]);
+            if (!pot.some(q => !G.motiuTorre(vist, darrera(), q, inici)))
+                ctx.missatge('info', 'Per aquí no hi ha sortida', ['La torre ja no pot anar enlloc sense repetir caselles. Fes enrere i prova un altre camí.']);
+        }
+        function atura() {
+            if (reproduccio) reproduccio.atura();
+            reproduccio = null;
+        }
+        inicia();
+        return {
+            reinicia: inicia,
+            desfes,
+            textSolucio: `▶ Mira-la al tauler (${d.minim} jugades)`,
+            solucio() {
+                inicia();
+                reproduccio = C.reprodueix(
+                    d.solucio.slice(1).map(t => deAlg(t, n)),
+                    q => {
+                        hist.desa(parades);
+                        parades = parades.concat([q]);
+                        canvi(true);
+                    },
+                    C.movimentReduit() ? 260 : 560,
+                    () => ctx.missatge('info', 'Així ho fa Dudeney', [d.resumSolucio])
+                );
+                return reproduccio;
+            },
+        };
+    }
+
     window.Taulers.reines = {
         crea: creaReines,
         figura: figuraReines,
@@ -554,6 +718,23 @@
             const fig = C.el('figure', null, figuraCavalls(p, {}));
             fig.firstChild.classList.add('figura-estatica');
             return fig;
+        },
+    };
+    window.Taulers.torre = {
+        crea: creaTorre,
+        figura: figuraTorre,
+        // Les dues solucions mínimes de Dudeney, una al costat de l'altra
+        figuraSolucio: p => {
+            const fila = C.el('div', { class: 'fila-diagrames' });
+            [
+                [{ solucio: true }, 'La primera solució de Dudeney'],
+                [{ altra: true }, 'La segona solució de Dudeney'],
+            ].forEach(([o, peu]) => {
+                const svg = figuraTorre(p, Object.assign({ etiqueta: peu }, o));
+                svg.classList.add('figura-estatica');
+                fila.appendChild(C.el('div', { class: 'diagrama' }, svg, C.el('span', { class: 'peu-diagrama', text: peu })));
+            });
+            return C.el('figure', null, fila);
         },
     };
 })();
