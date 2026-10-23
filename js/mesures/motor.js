@@ -26,13 +26,17 @@
 
     // ── Gerres ─────────────────────────────────────────────────────────────
     var gerres = {
-        /** La quantitat que passaria de i a j (0 si no se'n pot vessar res). */
+        /**
+         * La quantitat que passaria de i a j (0 si no se'n pot vessar res). Una capacitat Infinity és una
+         * persona que beu: rep tot el que hi ha al recipient i no en torna res (AM 362).
+         */
         quantitat: function (estat, caps, i, j) {
-            if (i === j) return 0;
+            if (i === j || caps[i] === Infinity) return 0;
             return Math.min(estat[i], caps[j] - estat[j]);
         },
         motiu: function (estat, caps, i, j) {
             if (i === j) return 'mateixa';
+            if (caps[i] === Infinity) return 'persona';
             if (!estat[i]) return 'buida';
             if (estat[j] === caps[j]) return 'plena';
             return null;

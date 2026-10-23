@@ -3,10 +3,12 @@
  * PROJECTE: dudeney (Step Quiz, vanilla JS)
  * FITXER: js/mesures/tauler.js
  * ROL: Els taulers de mesures i travesses:
- *   - Taulers.gerres: recipients sense marques (AM 365). Es toca el que vessa
- *     i el que rep (o s'arrossega l'un sobre l'altre); el vi passa fins que un
- *     queda buit o l'altre ple. A sota, «el quadern»: una fila per abocada,
- *     com la taula de la solució de Dudeney.
+ *   - Taulers.gerres: recipients sense marques (AM 365, AM 362). Es toca el
+ *     que vessa i el que rep (o s'arrossega l'un sobre l'altre); el líquid
+ *     passa fins que un queda buit o l'altre ple. Una capacitat Infinity és
+ *     una persona (AM 362): beu tot el que li donen i no torna res; les
+ *     persones van en una segona filera. A sota, «el quadern»: una fila per
+ *     abocada, com la taula de la solució de Dudeney.
  *   - Taulers.barca: dues ribes, un rierol i una barca amb un pes màxim
  *     (AM 373). Es pugen i es baixen els passatgers tocant-los (o
  *     arrossegant-los) i «Travessa» porta la barca a l'altra riba.
@@ -26,10 +28,15 @@
     // ════════════════════════════════════════════════════════════
     const COLG = 150,
         QUART = 21,
-        BASE = 292;
+        BASE = 292,
+        // La filera de les persones (AM 362): a sota dels recipients
+        FILA_PERSONES = 230,
+        ALT_PERSONA = 112;
+
+    const esPersona = (d, i) => d.capacitats[i] === Infinity;
 
     function formaRecipient(forma, w, h) {
-        // Interior (per al vi) i contorn, amb l'origen a baix al mig
+        // Interior (per al líquid) i contorn, amb l'origen a baix al mig
         const x = w / 2;
         if (forma === 'gerra') {
             return {
@@ -39,50 +46,97 @@
                     ` M${x - 3} ${-h + 12} C${x + 26} ${-h + 14} ${x + 26} ${-h * 0.45} ${x - 2} ${-h * 0.4}`,
             };
         }
+        if (forma === 'barril') {
+            // Un barril de fusta: ventre corbat, dos cèrcols i l'aixeta a baix
+            return {
+                interior: `M${-x + 10} ${-h + 4} Q${-x - 4} ${-h / 2} ${-x + 10} -6 L${x - 10} -6 Q${x + 4} ${-h / 2} ${x - 10} ${-h + 4} Z`,
+                contorn:
+                    `M${-x + 8} ${-h} Q${-x - 8} ${-h / 2} ${-x + 8} 0 L${x - 8} 0 Q${x + 8} ${-h / 2} ${x - 8} ${-h} Z` +
+                    ` M${-x + 1} ${-h * 0.25} L${x - 1} ${-h * 0.25} M${-x + 1} ${-h * 0.75} L${x - 1} ${-h * 0.75}` +
+                    ` M${x - 2} -22 L${x + 12} -22 L${x + 12} -14`,
+            };
+        }
+        if (forma === 'persona') {
+            // Una persona de mig cos: el tors és el «recipient» (el que ha begut) i el cap, a sobre
+            const t = ALT_PERSONA;
+            return {
+                interior: `M${-x + 6} -4 L${-x + 10} ${-t + 26} Q${-x + 12} ${-t + 6} ${-x + 30} ${-t + 4} L${x - 30} ${-t + 4} Q${x - 12} ${-t + 6} ${x - 10} ${-t + 26} L${x - 6} -4 Z`,
+                contorn:
+                    `M${-x + 2} 0 L${-x + 7} ${-t + 26} Q${-x + 9} ${-t + 2} ${-x + 30} ${-t} L${x - 30} ${-t} Q${x - 9} ${-t + 2} ${x - 7} ${-t + 26} L${x - 2} 0 Z` +
+                    ` M0 ${-t - 4} m-21 -20 a21 21 0 1 0 42 0 a21 21 0 1 0 -42 0`,
+            };
+        }
         return {
             interior: `M${-x + 5} ${-h} L${-x + 5} -10 Q${-x + 5} -4 ${-x + 11} -4 L${x - 11} -4 Q${x - 5} -4 ${x - 5} -10 L${x - 5} ${-h} Z`,
             contorn: `M${-x - 3} ${-h - 5} L${-x + 2} ${-h} L${-x + 2} -10 Q${-x + 2} 0 ${-x + 12} 0 L${x - 12} 0 Q${x - 2} 0 ${x - 2} -10 L${x - 2} ${-h} L${x + 3} ${-h - 5}`,
         };
     }
 
+    /**
+     * Els recipients en una filera; si n'hi ha que són persones (capacitat Infinity), van en una segona filera,
+     * a sota. dades.escala = píxels per unitat (21 si no hi és); dades.escalaPersona = quantitat que omple el tors.
+     */
     function dibuixaGerres(d, opcions = {}) {
-        const n = d.capacitats.length;
-        const W = n * COLG,
-            H = BASE + 46;
+        const escala = d.escala || QUART;
+        const idx = d.capacitats.map((c, i) => i);
+        const fila1 = idx.filter(i => !esPersona(d, i)),
+            fila2 = idx.filter(i => esPersona(d, i));
+        const cols = Math.max(fila1.length, fila2.length);
+        const W = cols * COLG,
+            H = BASE + 46 + (fila2.length ? FILA_PERSONES : 0);
         const s = C.svg('svg', {
-            'class': 'tauler-svg gerres-svg',
+            'class': 'tauler-svg gerres-svg' + (d.liquid === 'llimonada' ? ' llimonada' : '') + (fila2.length ? ' amb-persones' : ''),
             'viewBox': `0 0 ${W} ${H}`,
             'role': opcions.estatic ? 'img' : 'group',
             'aria-label': opcions.etiqueta || d.noms.join(', '),
         });
         const defs = C.svg('defs', null, s);
         const recipients = [];
+        const lloc = {};
+        [fila1, fila2].forEach((fila, k) => {
+            const marge = (W - fila.length * COLG) / 2;
+            fila.forEach((i, j) => (lloc[i] = { cx: marge + COLG / 2 + j * COLG, base: BASE + k * FILA_PERSONES }));
+        });
         d.capacitats.forEach((cap, i) => {
-            const cx = COLG / 2 + i * COLG;
-            const w = d.formes[i] === 'gerra' ? 96 : 78;
-            const h = cap * QUART + 8;
-            const f = formaRecipient(d.formes[i], w, h);
+            const { cx, base } = lloc[i];
+            const persona = esPersona(d, i);
+            const forma = persona ? 'persona' : d.formes[i];
+            const w = forma === 'gerra' ? 96 : forma === 'barril' ? 112 : forma === 'persona' ? 86 : 78;
+            const capDibuix = persona ? d.escalaPersona || 6 : cap;
+            const h = persona ? ALT_PERSONA : cap * escala + 8;
+            const f = formaRecipient(forma, w, h);
             const id = `vi-${opcions.prefix || 'g'}-${i}`;
             const clip = C.svg('clipPath', { id }, defs);
             C.svg('path', { d: f.interior }, clip);
-            const g = C.svg('g', { 'class': 'recipient', 'data-i': i }, s);
-            g.style.transform = `translate(${cx}px, ${BASE}px)`;
-            C.svg('rect', { class: 'zona', x: -COLG / 2, y: -h - 30, width: COLG, height: h + 70 }, g);
+            const g = C.svg('g', { 'class': 'recipient' + (persona ? ' persona' : ''), 'data-i': i }, s);
+            g.style.transform = `translate(${cx}px, ${base}px)`;
+            const dalt = persona ? h + 50 : h + 30;
+            C.svg('rect', { class: 'zona', x: -COLG / 2, y: -dalt, width: COLG, height: dalt + 40 }, g);
             const dins = C.svg('g', { class: 'mou' }, g);
             C.svg('path', { class: 'vidre', d: f.interior }, dins);
             const vi = C.svg('g', { 'clip-path': `url(#${id})` }, dins);
-            const liquid = C.svg('rect', { class: 'vi', x: -w, y: -cap * QUART - 4, width: 2 * w, height: cap * QUART }, vi);
+            const liquid = C.svg('rect', { class: 'vi', x: -w, y: -h + 4, width: 2 * w, height: h - 4 }, vi);
+            if (!persona) liquid.setAttribute('y', -cap * escala - 4), liquid.setAttribute('height', cap * escala);
+            // L'estat inicial ja des del principi, perquè el líquid no s'animi en carregar la pàgina
+            liquid.style.transform = `scaleY(${Math.min(1, (d.inicial[i] || 0) / capDibuix)})`;
             C.svg('path', { class: 'contorn', d: f.contorn }, dins);
-            const quant = C.svg('text', { class: 'quantitat', x: 0, y: -Math.min(h / 2, 70) }, dins);
+            if (persona) {
+                // La cara: dos ulls i un somriure
+                const cy = -h - 25;
+                C.svg('circle', { class: 'ull', cx: -7, cy: cy - 3, r: 2.2 }, dins);
+                C.svg('circle', { class: 'ull', cx: 7, cy: cy - 3, r: 2.2 }, dins);
+                C.svg('path', { class: 'boca', d: `M-8 ${cy + 7} Q0 ${cy + 13} 8 ${cy + 7}` }, dins);
+            }
+            const quant = C.svg('text', { class: 'quantitat', x: 0, y: persona ? -h / 2 + 2 : -Math.min(h / 2, 70) }, dins);
             C.svg('text', { 'class': 'nom-recipient', 'x': 0, 'y': 26, 'text': d.noms[i] }, g);
-            C.svg('text', { 'class': 'num-recipient', 'x': 0, 'y': -h - 16, 'text': i + 1 }, g);
-            recipients.push({ g, liquid, quant, cap, h, cx });
+            C.svg('text', { 'class': 'num-recipient', 'x': persona ? 34 : 0, 'y': persona ? -h - 40 : -h - 16, 'text': i + 1 }, g);
+            recipients.push({ g, liquid, quant, cap: capDibuix, h: persona ? h + 50 : h, cx, base, persona });
         });
         const raig = C.svg('path', { class: 'raig', d: '' }, s);
         function posa(estat, tria) {
             estat.forEach((q, i) => {
                 const r = recipients[i];
-                r.liquid.style.transform = `scaleY(${q / r.cap})`;
+                r.liquid.style.transform = `scaleY(${Math.min(1, q / r.cap)})`;
                 r.quant.textContent = q;
                 r.quant.classList.toggle('buit', q === 0);
                 r.g.classList.toggle('triat', tria === i);
@@ -91,15 +145,29 @@
         function vessa(i, j) {
             const a = recipients[i],
                 b = recipients[j];
-            const x1 = a.cx + (j > i ? 30 : -30),
-                y1 = BASE - a.h - 6;
+            const x1 = a.cx + (b.cx >= a.cx ? 30 : -30),
+                y1 = a.base - a.h - 6;
             const x2 = b.cx,
-                y2 = BASE - b.h + 10;
+                y2 = b.persona ? b.base - ALT_PERSONA - 14 : b.base - b.h + 10;
             const my = Math.min(y1, y2) - 46;
-            raig.setAttribute('d', `M${x1} ${y1} Q${(x1 + x2) / 2} ${my} ${x2} ${y2}`);
+            const mx = b.persona ? x1 + (b.cx >= a.cx ? 70 : -70) : (x1 + x2) / 2;
+            raig.setAttribute('d', `M${x1} ${y1} Q${mx} ${b.persona ? y1 - 30 : my} ${x2} ${y2}`);
             C.anima(raig, 'vessant');
         }
-        return { svg: s, recipients, posa, vessa, W, H };
+        /** El recipient que hi ha sota el punt (x, y) del dibuix (per deixar-hi el que s'arrossega). */
+        function aPunt(x, y) {
+            let millor = 0,
+                dist = Infinity;
+            recipients.forEach((r, i) => {
+                const dd = Math.hypot(x - r.cx, (y - (r.base - r.h / 2)) * 0.6);
+                if (dd < dist) {
+                    dist = dd;
+                    millor = i;
+                }
+            });
+            return millor;
+        }
+        return { svg: s, recipients, posa, vessa, aPunt, W, H };
     }
 
     function figuraGerres(p, opcions = {}) {
@@ -110,6 +178,12 @@
 
     function creaGerres(lloc, p, ctx) {
         const d = p.dades;
+        const liquid = d.liquid || 'vi';
+        const art = i => (d.articles ? d.articles[i] : 'la') + (d.articles && d.articles[i].endsWith('’') ? '' : ' ') + d.noms[i];
+        const Art = i => {
+            const t = art(i);
+            return t.charAt(0).toUpperCase() + t.slice(1);
+        };
         let estat, abocades, tria, reproduccio;
         const hist = C.historial(x => ({ estat: x.estat.slice(), abocades: x.abocades }));
         const caixa = C.el('div', { class: 'tauler gerres' });
@@ -135,6 +209,7 @@
                 const g = e.target.closest('.recipient');
                 if (!g) return null;
                 atura();
+                if (esPersona(d, +g.dataset.i)) return null;
                 return { i: +g.dataset.i };
             },
             comenca: c => {
@@ -145,14 +220,14 @@
             mou: (c, e) => {
                 const q = C.coords(D.svg, e.clientX, e.clientY - (c.tactil ? 30 : 0));
                 const r = D.recipients[c.i];
-                r.g.querySelector('.mou').style.transform = `translate(${q.x - r.cx}px, ${q.y - (BASE - r.h / 2)}px)`;
+                r.g.querySelector('.mou').style.transform = `translate(${q.x - r.cx}px, ${q.y - (r.base - r.h / 2)}px)`;
             },
             deixa: (c, e) => {
                 const r = D.recipients[c.i];
                 r.g.classList.remove('arrossegat');
                 r.g.querySelector('.mou').style.transform = '';
                 const q = C.coords(D.svg, e.clientX, e.clientY - (c.tactil ? 30 : 0));
-                const j = Math.max(0, Math.min(d.capacitats.length - 1, Math.floor(q.x / COLG)));
+                const j = D.aPunt(q.x, q.y);
                 if (j !== c.i) prova(c.i, j);
             },
             cancela: c => {
@@ -186,18 +261,26 @@
         function pinta() {
             D.posa(estat, tria);
             D.recipients.forEach((r, i) => {
-                r.g.setAttribute('aria-label', `${d.noms[i]}: té ${estat[i]} ${d.unitat}${tria === i ? ', triada' : ''}`);
+                const te = esPersona(d, i) ? `ha begut ${estat[i]}` : `té ${estat[i]}`;
+                r.g.setAttribute('aria-label', `${d.noms[i]}: ${te} ${d.unitat}${tria === i ? ', triat' : ''}`);
                 r.g.classList.toggle('desti-possible', tria !== null && tria !== i);
             });
             D.svg.classList.toggle('amb-seleccio', tria !== null);
-            ctx.estat([C.el('span', null, 'Abocades: ', C.el('b', { text: abocades }))]);
+            ctx.estat([C.el('span', null, d.nomPassos ? d.nomPassos + ': ' : 'Abocades: ', C.el('b', { text: abocades }))]);
             ctx.desfes(hist.mida > 0);
         }
+        const avisPersona = i => {
+            ctx.missatge('error', `${Art(i)} no pot tornar el que s’ha begut`, [
+                'Primer toca el recipient d’on surt el líquid; després, qui l’ha de rebre.',
+            ]);
+            C.anima(D.recipients[i].g.querySelector('.mou'), 'sacseja');
+        };
         function toca(i) {
             atura();
             if (tria === null) {
+                if (esPersona(d, i)) return avisPersona(i);
                 if (!estat[i]) {
-                    ctx.missatge('error', `La ${d.noms[i]} és buida`, ['Tria un recipient que tingui vi.']);
+                    ctx.missatge('error', `${Art(i)} és buid${d.articles && d.articles[i] === 'el' ? '' : 'a'}`, [`Tria un recipient que tingui ${liquid}.`]);
                     C.anima(D.recipients[i].g.querySelector('.mou'), 'sacseja');
                     return;
                 }
@@ -214,13 +297,18 @@
         }
         function prova(i, j) {
             const motiu = M.gerres.motiu(estat, d.capacitats, i, j);
+            if (motiu === 'persona') {
+                avisPersona(i);
+                pinta();
+                return;
+            }
             if (motiu === 'buida') {
-                ctx.missatge('error', `La ${d.noms[i]} és buida`, ['No hi ha res per vessar.']);
+                ctx.missatge('error', `${Art(i)} és buid${d.articles && d.articles[i] === 'el' ? '' : 'a'}`, ['No hi ha res per vessar.']);
                 pinta();
                 return;
             }
             if (motiu === 'plena') {
-                ctx.missatge('error', `La ${d.noms[j]} ja és plena`, ['No hi cap ni una gota més.']);
+                ctx.missatge('error', `${Art(j)} ja és ple${d.articles && d.articles[j] === 'el' ? '' : 'na'}`, ['No hi cap ni una gota més.']);
                 C.anima(D.recipients[j].g.querySelector('.mou'), 'sacseja');
                 pinta();
                 return;
@@ -241,14 +329,13 @@
             afegeixFila(estat, [i, j]);
             pinta();
         }
+        const passos = k => (d.nomPassos ? `${k} ${d.nomPassos.toLowerCase()}` : `${k} abocades`);
         function revisa() {
             if (!M.gerres.resolt(estat, d.objectiu)) return;
             if (abocades === d.solucio.length)
-                ctx.resolt(`${abocades} abocades: el mínim!`, ['3 quarts a cada mesura, com volia l’home.']);
+                ctx.resolt(`${passos(abocades)}: el mínim!`, [d.textResolt || '3 quarts a cada mesura, com volia l’home.']);
             else
-                ctx.missatge('info', `Fet amb ${abocades} abocades`, [
-                    `Es pot fer amb ${d.solucio.length}. Ho tornes a provar?`,
-                ]);
+                ctx.missatge('info', `Fet amb ${passos(abocades)}`, [`Es pot fer amb ${d.solucio.length}. Ho tornes a provar?`]);
         }
         function tecla(e) {
             const n = d.capacitats.length;
@@ -294,11 +381,11 @@
         return {
             reinicia: inicia,
             desfes,
-            textSolucio: '▶ Mira-la al tauler (11 abocades)',
+            textSolucio: `▶ Mira-la al tauler (${passos(d.solucio.length)})`,
             solucio() {
                 inicia();
                 reproduccio = C.reprodueix(d.solucio, ([i, j]) => fesAbocada(i, j), C.movimentReduit() ? 350 : 900, () =>
-                    ctx.missatge('info', 'Així ho fa Dudeney', ['Onze abocades: el quadern és la seva taula.'])
+                    ctx.missatge('info', 'Així ho fa Dudeney', [d.textFinal || 'Onze abocades: el quadern és la seva taula.'])
                 );
                 return reproduccio;
             },

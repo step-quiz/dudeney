@@ -4,9 +4,11 @@
  * FITXER: js/camins/tauler.js
  * ROL: Els taulers de camins, sobre un mapa (graf) dibuixat com a les figures
  *   de Dudeney:
- *   - Taulers.carter (AM 242): l'inspector tria on comença i va d'estació en
- *     estació; els trams revisats es pinten (dos traços si s'ha passat dues
- *     vegades). Quan ha revisat les 17 línies, es diu si és el mínim (19).
+ *   - Taulers.carter (AM 242, AM 247): l'inspector tria on comença (o surt
+ *     de dades.inici) i va de punt en punt; els trams revisats es pinten (dos
+ *     traços si s'ha passat dues vegades). Quan els ha revisat tots, es diu si
+ *     és el mínim. dades.estil 'mina' dibuixa galeries; dades.textos canvia el
+ *     vocabulari (estació/línia/milles).
  *   - Taulers.hamilton (AM 243): la ruta surt de l'1 i no pot repetir cap
  *     ciutat; s'acaba en tornar a l'1 després de passar per totes.
  *   Es toquen els punts un darrere l'altre o s'arrossega el dit per sobre;
@@ -38,6 +40,10 @@
             'aria-label': opcions.etiqueta || 'Mapa',
         });
         if (estil === 'metro') C.svg('rect', { class: 'cartell', x: x0 + 6, y: y0 + 6, width: w - 12, height: h - 12, rx: 10 }, s);
+        if (estil === 'mina') {
+            // La roca: un rectangle de terra; les galeries són els camins buidats per sobre
+            C.svg('rect', { class: 'roca', x: x0 + 4, y: y0 + 4, width: w - 8, height: h - 8, rx: 6 }, s);
+        }
         const carreteres = C.svg('g', { class: 'carreteres' }, s);
         d.graf.arestes.forEach(a => {
             const p = pos[a[0]],
@@ -53,6 +59,7 @@
             g.style.transform = `translate(${x}px, ${y}px)`;
             C.svg('circle', { class: 'zona', r: 32 }, g);
             if (estil === 'metro') C.svg('rect', { class: 'marca', x: -19, y: -19, width: 38, height: 38, rx: 5 }, g);
+            else if (estil === 'mina') C.svg('circle', { class: 'marca', r: 15 }, g);
             else C.svg('circle', { class: 'marca', r: 19 }, g);
             C.svg('text', { 'class': 'nom-punt', 'x': 0, 'y': 1, 'text': v }, g);
             punts[v] = g;
@@ -108,13 +115,29 @@
         return typeof d.graf.vertexs[0] === 'number' ? +v : v;
     };
 
+    /** El vocabulari de cada mapa (es pot canviar amb dades.textos). */
+    const TEXTOS = {
+        metro: {
+            punt: 'Estació',
+            tram: 'línia',
+            trams: 'línies',
+            unitat: ['milla', 'milles'],
+            etiqueta: 'El plànol del metro: dotze estacions i disset línies',
+            final: '19 milles: D–G i F–I són els únics trams repetits.',
+            peu: 'Els trams D–G i F–I es fan dues vegades.',
+            comenca: 'Toca l’estació on vols començar.',
+            noVei: 'Només pots anar a una estació veïna, per una línia del plànol.',
+        },
+        ciutats: { punt: 'Ciutat', tram: 'carretera', trams: 'carreteres', etiqueta: 'Les setze ciutats i les carreteres' },
+    };
+    const textos = (d, estil) => Object.assign({}, TEXTOS[estil === 'ciutats' ? 'ciutats' : 'metro'], d.textos || {});
+
     function figuraMapa(estil) {
         return (p, opcions = {}) => {
-            const D = dibuixaMapa(p.dades, estil, {
-                estatic: true,
-                etiqueta: estil === 'metro' ? 'El plànol del metro: dotze estacions i disset línies' : 'Les setze ciutats i les carreteres',
-            });
+            const e = p.dades.estil || estil;
+            const D = dibuixaMapa(p.dades, e, { estatic: true, etiqueta: textos(p.dades, estil).etiqueta });
             if (opcions.solucio) D.pintaRuta(p.dades.solucio, estil === 'metro');
+            else if (opcions.inici && p.dades.inici !== undefined) D.pintaRuta([p.dades.inici], false);
             return D.svg;
         };
     }
@@ -124,10 +147,12 @@
         return (lloc, p, ctx) => {
             const d = p.dades;
             const hamilton = estil === 'ciutats';
+            const T = textos(d, estil);
+            const fixat = d.inici !== undefined;
             let ruta, acabat;
             const hist = C.historial(x => x.slice());
             const caixa = C.el('div', { class: 'tauler camins' });
-            const D = dibuixaMapa(d, estil);
+            const D = dibuixaMapa(d, d.estil || estil);
             const textRuta = C.el('p', { 'class': 'text-ruta', 'aria-live': 'polite' });
             caixa.append(D.svg, textRuta);
             lloc.appendChild(caixa);
@@ -188,14 +213,14 @@
             });
 
             function inicia() {
-                ruta = hamilton ? [d.inici] : [];
+                ruta = fixat ? [d.inici] : [];
                 acabat = false;
                 hist.buida();
                 canvi(true);
             }
             function toca(v, desdeToc) {
                 const darrer = ruta[ruta.length - 1];
-                if (desdeToc && ruta.length && v === darrer && (!hamilton || ruta.length > 1)) {
+                if (desdeToc && ruta.length && v === darrer && (!fixat || ruta.length > 1)) {
                     desfes();
                     return;
                 }
@@ -208,10 +233,10 @@
                 }
                 if (!G.hiHaAresta(d.graf, darrer, v)) {
                     if (desdeToc) {
-                        ctx.missatge('error', `De ${darrer} a ${v} no hi ha cap ${hamilton ? 'carretera' : 'línia'}`, [
+                        ctx.missatge('error', `De ${darrer} a ${v} no hi ha cap ${T.tram}`, [
                             hamilton
                                 ? 'Has d’anar recte de ciutat a ciutat, per una de les carreteres que surten de la ' + darrer + '.'
-                                : 'Només pots anar a una estació veïna, per una línia del plànol.',
+                                : T.noVei,
                         ]);
                         C.anima(D.punts[v], 'sacseja');
                     }
@@ -243,7 +268,7 @@
                     const veins = G.index(d.graf).veins[v].length;
                     g.setAttribute(
                         'aria-label',
-                        `${hamilton ? 'Ciutat' : 'Estació'} ${v}, ${C.plural(veins, hamilton ? 'carretera' : 'línia')}${ruta.includes(v) ? ', ja visitada' : ''}`
+                        `${T.punt} ${v}, ${C.plural(veins, T.tram, T.trams)}${ruta.includes(v) ? ', ' + (T.visitat || 'ja visitada') : ''}`
                     );
                 });
                 ctx.desfes(hist.mida > 0);
@@ -273,16 +298,16 @@
                 const r = G.recompte(d.graf, ruta);
                 const fetes = totalArestes - r.falten.length;
                 ctx.estat([
-                    C.el('span', null, 'Recorregut: ', C.el('b', { text: C.plural(r.longitud, 'milla', 'milles') })),
-                    C.el('span', null, 'Línies revisades: ', C.el('b', { text: `${fetes} de ${totalArestes}` })),
+                    C.el('span', null, 'Recorregut: ', C.el('b', { text: C.plural(r.longitud, T.unitat[0], T.unitat[1]) })),
+                    C.el('span', null, `${T.trams.charAt(0).toUpperCase() + T.trams.slice(1)} revisades: `, C.el('b', { text: `${fetes} de ${totalArestes}` })),
                 ]);
-                textRuta.textContent = ruta.length ? 'Ruta: ' + ruta.join(' ') : 'Toca l’estació on vols començar.';
+                textRuta.textContent = ruta.length > (fixat ? 1 : 0) ? 'Ruta: ' + ruta.join(' ') : T.comenca;
                 if (silenci || r.falten.length) return;
                 acabat = true;
                 if (r.longitud === d.minim)
-                    ctx.resolt(`${r.longitud} milles: el mínim!`, ['Totes les línies revisades, i cap milla de més.']);
+                    ctx.resolt(`${r.longitud} ${T.unitat[1]}: el mínim!`, [T.resolt || 'Totes les línies revisades, i cap milla de més.']);
                 else
-                    ctx.missatge('info', `Totes les línies revisades, en ${r.longitud} milles`, [
+                    ctx.missatge('info', `Totes les ${T.trams} revisades, en ${r.longitud} ${T.unitat[1]}`, [
                         `Es pot fer en ${d.minim}. Ho tornes a provar?`,
                     ]);
             }
@@ -292,11 +317,11 @@
                 desfes,
                 textSolucio: '▶ Mira-la al tauler',
                 solucio() {
-                    ruta = hamilton ? [d.inici] : [];
+                    ruta = fixat ? [d.inici] : [];
                     acabat = false;
                     hist.buida();
                     canvi(true);
-                    const passos = hamilton ? d.solucio.slice(1) : d.solucio;
+                    const passos = fixat ? d.solucio.slice(1) : d.solucio;
                     return C.reprodueix(
                         passos,
                         v => {
@@ -313,7 +338,7 @@
                                 'Així ho fa Dudeney',
                                 hamilton
                                     ? ['L’única ruta: les carreteres obligades porten a les altres.']
-                                    : ['19 milles: D–G i F–I són els únics trams repetits.']
+                                    : [T.final]
                             )
                     );
                 },
@@ -327,7 +352,7 @@
         figuraSolucio: p => {
             const svg = figuraMapa('metro')(p, { solucio: true });
             svg.classList.add('figura-estatica');
-            return C.el('figure', null, svg, C.el('figcaption', { text: 'Els trams D–G i F–I es fan dues vegades.' }));
+            return C.el('figure', null, svg, C.el('figcaption', { text: textos(p.dades, 'metro').peu }));
         },
     };
     window.Taulers.hamilton = {

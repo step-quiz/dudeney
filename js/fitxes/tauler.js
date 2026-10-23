@@ -329,15 +329,18 @@
     }
 
     // ════════════════════════════════════════════════════════════
-    // SALTS: les granotes
+    // SALTS: les granotes (AM 214: numerades, salten per sobre d'una;
+    // AM 216: blanques i negres sobre gots, salten per sobre de fins a dues)
+    // Opcions de dades: granotes (n), salt (quantes fitxes es poden saltar, 1 per defecte),
+    // inicial i objectiu (vectors amb 0 = forat; si hi ha colors, l'objectiu és de colors),
+    // colors ({ granota: 'blanca' | 'negra' }), minim, solucio ([[de, a], …] amb caselles 1…).
     // ════════════════════════════════════════════════════════════
     const CEL = 92;
 
-    /** Una granota vista des de dalt, amb el número a l'esquena. */
-    function granota(num, pare) {
-        const g = C.svg('g', { 'class': 'granota', 'data-g': num }, pare);
+    /** Una granota vista des de dalt, amb el número a l'esquena (o sense, si és de color). */
+    function granota(num, pare, color) {
+        const g = C.svg('g', { 'class': 'granota' + (color ? ' ' + color : ''), 'data-g': num }, pare);
         const salt = C.svg('g', { class: 'salt' }, g);
-        // potes de darrere i de davant
         C.svg(
             'path',
             {
@@ -351,13 +354,13 @@
         C.svg('circle', { class: 'ull', cx: 10, cy: -18, r: 7 }, salt);
         C.svg('circle', { class: 'nina', cx: -10, cy: -19, r: 3 }, salt);
         C.svg('circle', { class: 'nina', cx: 10, cy: -19, r: 3 }, salt);
-        C.svg('text', { 'class': 'num-granota', 'x': 0, 'y': 8, 'text': num }, salt);
+        if (!color) C.svg('text', { 'class': 'num-granota', 'x': 0, 'y': 8, 'text': num }, salt);
         return g;
     }
 
-    function dibuixaSalts(n, opcions = {}) {
+    function dibuixaSalts(d, n, opcions = {}) {
         const W = (n + 1) * CEL,
-            H = CEL + 12;
+            H = CEL + (d.colors ? 34 : 12);
         const s = C.svg('svg', {
             'class': 'tauler-svg salts-svg',
             'viewBox': `0 0 ${W} ${H}`,
@@ -367,27 +370,38 @@
         const caselles = [];
         for (let i = 0; i <= n; i++) {
             const g = C.svg('g', { 'class': 'casella', 'data-i': i }, s);
-            C.svg('rect', { class: i % 2 ? 'fons fosc' : 'fons', x: i * CEL + 3, y: 6, width: CEL - 6, height: CEL - 6, rx: 8 }, g);
+            if (d.colors) {
+                // un got de vidre cap per avall, amb el seu número a sota
+                C.svg('path', { class: 'got', d: `M${i * CEL + 14} ${CEL - 2} L${i * CEL + 20} 14 H${i * CEL + CEL - 20} L${i * CEL + CEL - 14} ${CEL - 2} Z` }, g);
+                C.svg('text', { 'class': 'num-got', 'x': i * CEL + CEL / 2, 'y': CEL + 24, 'text': i + 1 }, g);
+            } else C.svg('rect', { class: i % 2 ? 'fons fosc' : 'fons', x: i * CEL + 3, y: 6, width: CEL - 6, height: CEL - 6, rx: 8 }, g);
             caselles.push(g);
         }
         const capa = C.svg('g', { class: 'granotes' }, s);
         const granotes = [];
-        for (let k = 1; k <= n; k++) granotes[k] = granota(k, capa);
+        for (let k = 1; k <= n; k++) granotes[k] = granota(k, capa, d.colors && d.colors[k]);
         function posa(estat) {
             estat.forEach((k, i) => {
-                if (k) granotes[k].style.transform = `translate(${i * CEL + CEL / 2}px, ${CEL / 2 + 6}px)`;
+                if (k) granotes[k].style.transform = `translate(${i * CEL + CEL / 2}px, ${CEL / 2 + (d.colors ? -2 : 6)}px)`;
             });
         }
         return { svg: s, caselles, granotes, posa, W, H };
     }
 
-    const inicialSalts = n => [0].concat(Array.from({ length: n }, (_, i) => i + 1));
+    const inicialSalts = (d, n) => (d.inicial && n === d.granotes ? d.inicial.slice() : [0].concat(Array.from({ length: n }, (_, i) => i + 1)));
     const objectiuSalts = n => [0].concat(Array.from({ length: n }, (_, i) => n - i));
+    /** Ja s'ha arribat a l'objectiu? (Amb colors, només compten els colors.) */
+    function arribat(d, estat, n) {
+        if (d.colors) return estat.map(k => (k ? d.colors[k][0] : '_')).join('') === d.objectiu;
+        return M.salts.resolt(estat, objectiuSalts(n));
+    }
+    const minimSalts = (d, n) => (d.minim && n === d.granotes ? d.minim : M.granotesDudeney(n));
 
     function figuraSalts(p, opcions = {}) {
-        const n = opcions.n || p.dades.granotes;
-        const D = dibuixaSalts(n, { estatic: true, etiqueta: `Les granotes 1 a ${n}, amb la casella buida a l’esquerra` });
-        D.posa(opcions.estat || inicialSalts(n));
+        const d = p.dades;
+        const n = opcions.n || d.granotes;
+        const D = dibuixaSalts(d, n, { estatic: true, etiqueta: d.etiqueta || `Les granotes 1 a ${n}, amb la casella buida a l’esquerra` });
+        D.posa(opcions.estat || inicialSalts(d, n));
         return D.svg;
     }
 
@@ -398,9 +412,10 @@
         const hist = C.historial(x => ({ estat: x.estat.slice(), moviments: x.moviments, salts: x.salts }));
         const caixa = C.el('div', { class: 'tauler salts' });
         lloc.appendChild(caixa);
+        const nomGranota = k => (d.colors ? `La granota ${d.colors[k]} del got ${estat.indexOf(k) + 1}` : `La granota ${k}`);
 
         function munta() {
-            D = dibuixaSalts(n);
+            D = dibuixaSalts(d, n);
             caixa.replaceChildren(D.svg);
             for (let k = 1; k <= n; k++) {
                 const g = D.granotes[k];
@@ -440,7 +455,7 @@
         function inicia(nou) {
             atura();
             n = nou;
-            estat = inicialSalts(n);
+            estat = inicialSalts(d, n);
             moviments = 0;
             salts = 0;
             hist.buida();
@@ -452,9 +467,12 @@
             D.posa(estat);
             for (let k = 1; k <= n; k++) {
                 const i = estat.indexOf(k);
-                const pot = M.salts.desti(estat, i) >= 0;
+                const pot = M.salts.desti(estat, i, d.salt) >= 0;
                 D.granotes[k].classList.toggle('pot', pot);
-                D.granotes[k].setAttribute('aria-label', `Granota ${k}, a la casella ${i + 1}${pot ? ', es pot moure' : ''}`);
+                D.granotes[k].setAttribute(
+                    'aria-label',
+                    `${d.colors ? 'Granota ' + d.colors[k] : 'Granota ' + k}, a la casella ${i + 1}${pot ? ', es pot moure' : ''}`
+                );
             }
             ctx.estat([
                 C.el('span', null, 'Moviments: ', C.el('b', { text: moviments })),
@@ -466,32 +484,33 @@
         function toca(k) {
             atura();
             const i = estat.indexOf(k);
-            const f = M.salts.desti(estat, i);
+            const f = M.salts.desti(estat, i, d.salt);
             if (f < 0) {
-                ctx.missatge('error', `La granota ${k} no es pot moure`, [
-                    'Només pot anar a la casella buida si és al costat o just després d’una altra granota.',
+                ctx.missatge('error', `${nomGranota(k)} no es pot moure`, [
+                    d.salt === 2
+                        ? 'Només pot anar al got buit si és al costat o si entre mig hi ha una o dues granotes.'
+                        : 'Només pot anar a la casella buida si és al costat o just després d’una altra granota.',
                 ]);
                 C.anima(D.granotes[k].querySelector('.salt'), 'sacseja');
                 return;
             }
             hist.desa({ estat, moviments, salts });
             const esSalt = M.salts.esSalt(estat, i);
-            estat = M.salts.mou(estat, i);
+            estat = M.salts.mou(estat, i, d.salt);
             moviments++;
             if (esSalt) salts++;
             ctx.amaga();
-            const s = D.granotes[k].querySelector('.salt');
-            C.anima(s, esSalt ? 'saltant' : 'passant');
+            C.anima(D.granotes[k].querySelector('.salt'), esSalt ? 'saltant' : 'passant');
             pinta();
             revisa();
         }
 
         function revisa() {
-            if (!M.salts.resolt(estat, objectiuSalts(n))) return;
-            const minim = M.granotesDudeney(n);
+            if (!arribat(d, estat, n)) return;
+            const minim = minimSalts(d, n);
             if (moviments === minim) {
                 const extra =
-                    n < d.maxim
+                    d.maxim && n < d.maxim
                         ? C.el('button', {
                               type: 'button',
                               class: 'btn-sec boto-extra',
@@ -513,9 +532,11 @@
         }
 
         function tecla(e) {
-            if (/^[1-9]$/.test(e.key) && +e.key <= n) {
+            if (/^[1-9]$/.test(e.key) && +e.key <= (d.colors ? n + 1 : n)) {
                 e.preventDefault();
-                toca(+e.key);
+                // amb colors, la tecla és el número del got; si no, el de la granota
+                const k = d.colors ? estat[+e.key - 1] : +e.key;
+                if (k) toca(k);
             } else if (e.key === 'Enter' || e.key === ' ') {
                 const g = e.target.closest && e.target.closest('.granota');
                 if (g) {
@@ -545,25 +566,25 @@
         return {
             reinicia: () => inicia(d.granotes),
             desfes,
-            textSolucio: '▶ Mira-la al tauler (21 moviments)',
+            textSolucio: `▶ Mira-la al tauler (${minimSalts(d, d.granotes)} moviments)`,
             solucio() {
                 inicia(d.granotes);
+                // la solució: o bé caselles [de, a] (1…), o bé la seqüència de granotes de Dudeney
+                const passos = d.solucio ? d.solucio.map(([a]) => a - 1) : M.sequenciaGranotes(n).map(k => -k);
                 reproduccio = C.reprodueix(
-                    M.sequenciaGranotes(n),
-                    k => {
-                        const i = estat.indexOf(k);
+                    passos,
+                    x => {
+                        const i = x >= 0 ? x : estat.indexOf(-x);
+                        const k = estat[i];
                         const esSalt = M.salts.esSalt(estat, i);
-                        estat = M.salts.mou(estat, i);
+                        estat = M.salts.mou(estat, i, d.salt);
                         moviments++;
                         if (esSalt) salts++;
                         C.anima(D.granotes[k].querySelector('.salt'), esSalt ? 'saltant' : 'passant');
                         pinta();
                     },
                     C.movimentReduit() ? 300 : 620,
-                    () =>
-                        ctx.missatge('info', 'Així ho fa Dudeney', [
-                            '2, 4, 6, 5, 3, 1 tres vegades, i 2, 4, 6: 15 salts i 6 passos.',
-                        ])
+                    () => ctx.missatge('info', 'Així ho fa Dudeney', [d.resumSolucio || '2, 4, 6, 5, 3, 1 tres vegades, i 2, 4, 6: 15 salts i 6 passos.'])
                 );
                 return reproduccio;
             },

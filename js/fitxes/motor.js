@@ -131,24 +131,25 @@
         forat: function (estat) {
             return estat.indexOf(0);
         },
-        /** On aniria la fitxa de la casella i (el forat), o −1 si no es pot moure. */
-        desti: function (estat, i) {
+        /**
+         * On aniria la fitxa de la casella i (el forat), o −1 si no es pot moure. Pot anar a la casella del
+         * costat o saltar per sobre de fins a «maxim» fitxes (1 a l'AM 214, 2 a l'AM 216).
+         */
+        desti: function (estat, i, maxim) {
             if (!estat[i]) return -1;
             var f = estat.indexOf(0);
             var d = Math.abs(f - i);
-            if (d === 1) return f;
-            if (d === 2 && estat[(f + i) / 2]) return f;
-            return -1;
+            return d >= 1 && d <= (maxim || 1) + 1 ? f : -1;
         },
-        mou: function (estat, i) {
-            var f = salts.desti(estat, i);
+        mou: function (estat, i, maxim) {
+            var f = salts.desti(estat, i, maxim);
             var e = estat.slice();
             e[f] = e[i];
             e[i] = 0;
             return e;
         },
         esSalt: function (estat, i) {
-            return Math.abs(estat.indexOf(0) - i) === 2;
+            return Math.abs(estat.indexOf(0) - i) >= 2;
         },
         resolt: function (estat, objectiu) {
             return estat.join(',') === objectiu.join(',');
@@ -156,11 +157,20 @@
         clau: function (estat) {
             return estat.join(',');
         },
-        veins: function (estat) {
+        veins: function (estat, maxim) {
             var out = [];
             for (var i = 0; i < estat.length; i++)
-                if (salts.desti(estat, i) >= 0) out.push({ estat: salts.mou(estat, i), mov: estat[i] });
+                if (salts.desti(estat, i, maxim) >= 0) out.push({ estat: salts.mou(estat, i, maxim), mov: estat[i] });
             return out;
+        },
+        /** Els veïns quan les fitxes només es distingeixen pel color (colors[fitxa]); per a la cerca. */
+        veinsColor: function (maxim) {
+            return function (estat) {
+                var out = [];
+                for (var i = 0; i < estat.length; i++)
+                    if (salts.desti(estat, i, maxim) >= 0) out.push({ estat: salts.mou(estat, i, maxim), mov: [i, estat.indexOf(0)] });
+                return out;
+            };
         },
     };
 

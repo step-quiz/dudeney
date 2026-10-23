@@ -166,13 +166,16 @@
         const e = $('resum-progres');
         e.textContent =
             n === 0
-                ? `Una primera mostra: ${LLISTA.length} enigmes, dos de cada tipus.`
+                ? `${LLISTA.length} enigmes de set tipus diferents. Tria’n un i comença!`
                 : n === LLISTA.length
                   ? `Els has resolt tots, els ${LLISTA.length}! Quin enginy.`
-                  : `Una primera mostra de ${LLISTA.length} enigmes. N’has resolt ${n}.`;
+                  : `N’has resolt ${n} de ${LLISTA.length}.`;
     }
 
     capitols();
+    // Les solucions (fitxes i PDF) només s'enllacen amb ?sol=1
+    document.querySelectorAll('.nomes-amb-solucions').forEach(e => (e.hidden = !C.ambSolucions()));
+    C.propagaSolucions();
     pintaFiltres();
     aplica();
     resum();

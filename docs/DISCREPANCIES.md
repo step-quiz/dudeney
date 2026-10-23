@@ -1,6 +1,6 @@
-# Discrepàncies amb Dudeney (mostra de 14)
+# Discrepàncies amb Dudeney
 
-Tot el que afirma Dudeney als 14 enigmes s'ha tornat a calcular (`tests/motors.test.js`). Coincideix en tot,
+Tot el que afirma Dudeney als enigmes publicats s'ha tornat a calcular (`tests/motors.test.js`). Coincideix en tot,
 llevat d'aquests detalls, que també s'expliquen a la «nota del matemàtic» de cada enigma:
 
 | Enigma | Què diu Dudeney | Què hem trobat | Què fa el web |
@@ -11,3 +11,10 @@ llevat d'aquests detalls, que també s'expliquen a la «nota del matemàtic» de
 | Les sis granotes (AM 214) | Fórmula per a n senar: (n² + 3n)/2 − 4 | Per a n = 1 dona −2 | Només de 6 a 8 granotes |
 | El número estripat (AM 113) | Solució general | El text de Project Gutenberg havia perdut els exponents (10ⁿ − 1, 37¹, 3³…) | Exponents restituïts a la traducció |
 | Els quadrats de brocat (AM 174) | «Només hi ha una solució» | No ho hem comprovat per ordinador | Es diu a la nota |
+
+**Tanda 1** (AM 216, 362, 297, 298, 317 i 247): tot el que diu Dudeney s'ha confirmat (10 salts, 11 manipulacions,
+8 i 10 alfils, els 16 peons i 36 furlongs). Una precisió d'interpretació, no un error:
+
+| Enigma | Què diu Dudeney | Què hem trobat | Què fa el web |
+|---|---|---|---|
+| Alfils (AM 297 i 298) | No diu si un alfil ataca a través d'una altra peça | Els mínims (8 i 10) i les seves figures valen tant si les peces tapen el camí com si no | Les peces tapen el camí, com en una partida (s'avisa a l'enunciat) |

@@ -25,6 +25,9 @@ DEPENDÈNCIES: css/tokens.css
     --aigua: #8ec5e8;
     --vidre: #f3f7fa;
     --vermell-carta: #c62f3b;
+    --llimonada: #e2b21c;
+    --llimonada-clar: #f0cf5c;
+    --llimonada-text: #4a3500;
 }
 @media (prefers-color-scheme: dark) {
     :root {
@@ -41,6 +44,9 @@ DEPENDÈNCIES: css/tokens.css
         --aigua: #3c7fae;
         --vidre: #25303a;
         --vermell-carta: #ff7b84;
+        --llimonada: #d9a91b;
+        --llimonada-clar: #f2cd55;
+        --llimonada-text: #2e2100;
     }
 }
 
@@ -337,6 +343,32 @@ DEPENDÈNCIES: css/tokens.css
     stroke: var(--tema);
     animation: batec 1.1s ease-in-out infinite;
 }
+.llimonada .recipient .vi {
+    fill: var(--llimonada);
+}
+.llimonada .recipient .quantitat {
+    fill: var(--llimonada-text);
+    stroke: var(--llimonada-clar);
+}
+.llimonada .recipient .quantitat.buit {
+    fill: var(--tinta-suau);
+    stroke: none;
+}
+.llimonada .raig {
+    stroke: var(--llimonada);
+}
+.recipient.persona .ull {
+    fill: var(--tinta);
+}
+.recipient.persona .boca {
+    fill: none;
+    stroke: var(--tinta);
+    stroke-width: 2.2;
+    stroke-linecap: round;
+}
+.gerres-svg.amb-persones {
+    max-width: 480px;
+}
 .raig {
     fill: none;
     stroke: var(--vi-clar);
@@ -584,6 +616,9 @@ DEPENDÈNCIES: css/tokens.css
     stroke-width: 1.6;
     stroke-linecap: round;
 }
+.peca.fixa .silueta {
+    fill: var(--tinta);
+}
 .peca.triada .silueta {
     fill: var(--tema-mig);
     stroke: var(--tema);
@@ -636,6 +671,28 @@ DEPENDÈNCIES: css/tokens.css
 }
 .mapa-svg.ciutats {
     max-width: 680px;
+}
+.mapa-svg.mina {
+    max-width: 520px;
+}
+.mapa-svg .roca {
+    fill: var(--fusta);
+    stroke: var(--fusta-vora);
+    stroke-width: 3;
+}
+.mina .carretera {
+    stroke: var(--panell);
+    stroke-width: 26;
+    stroke-linecap: square;
+}
+.mina .tram {
+    stroke-width: 7;
+}
+.mina .tram.repetit {
+    stroke-width: 5;
+}
+.mina .nom-punt {
+    font: 700 16px var(--sans);
 }
 .mapa-svg .cartell {
     fill: var(--panell-2);
@@ -1616,4 +1673,31 @@ DEPENDÈNCIES: css/tokens.css
     flex-direction: column;
     align-items: center;
     width: min(330px, 100%);
+}
+
+/* Les granotes blanques i negres sobre gots (AM 216) */
+.casella .got {
+    fill: var(--vidre);
+    stroke: var(--tinta-suau);
+    stroke-width: 2;
+    stroke-linejoin: round;
+}
+.num-got {
+    font: 700 16px var(--serif);
+    fill: var(--tinta);
+    text-anchor: middle;
+}
+.granota.blanca .cos {
+    fill: #f4f1e6;
+    stroke: var(--tinta);
+}
+.granota.blanca .potes {
+    stroke: var(--tinta);
+}
+.granota.negra .cos {
+    fill: #2c3138;
+    stroke: #000;
+}
+.granota.negra .potes {
+    stroke: #000;
 }

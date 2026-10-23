@@ -42,6 +42,9 @@ DEPENDÈNCIES: css/fonts.css, css/tokens.css, css/taulers.css
     --granota-vora: #000;
     --vi: #555;
     --vi-clar: #555;
+    --llimonada: #555;
+    --llimonada-clar: #000;
+    --llimonada-text: #fff;
     --aigua: #fff;
     --vidre: #fff;
     --vermell-carta: #000;
@@ -238,20 +241,20 @@ body {
 /* ---- Portada ---- */
 .portada-full h1 {
     font-size: 34pt;
-    margin-top: 30mm;
+    margin-top: 14mm;
 }
 .portada-full .entrada {
     font-size: 13pt;
     max-width: 150mm;
 }
 .index-enigmes {
-    margin: 8mm 0;
+    margin: 6mm 0;
     border-collapse: collapse;
     width: 100%;
-    font-size: 11pt;
+    font-size: 10.5pt;
 }
 .index-enigmes td {
-    padding: 1.6mm 2mm;
+    padding: 1.1mm 2mm;
     border-bottom: 0.25mm solid #777;
 }
 .index-enigmes td:first-child {
@@ -414,4 +417,20 @@ body {
 .full .quadrat-cartes.estatic {
     --carta-w: 24mm;
     --carta-h: 32mm;
+}
+.granota.negra .cos {
+    fill: #333;
+}
+.granota.blanca .cos {
+    fill: #fff;
+}
+.mapa-svg .roca {
+    fill: #d6d6d6;
+    stroke: #000;
+}
+.mina .carretera {
+    stroke: #fff;
+}
+.punt.visitat .nom-punt {
+    fill: #000;
 }

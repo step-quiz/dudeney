@@ -147,15 +147,20 @@
         actualitzaBotoPista();
         els.solucio.open = false;
         els.nota.open = false;
-        pintaSolucio(p);
-        els.textNota.innerHTML = p.notaMatematic.join('');
-        C.unitats(els.textNota);
+        // La solució i la nota només es veuen amb ?sol=1 a l'adreça
+        els.solucio.hidden = !C.ambSolucions();
+        els.nota.hidden = !C.ambSolucions();
+        if (C.ambSolucions()) {
+            pintaSolucio(p);
+            els.textNota.innerHTML = p.notaMatematic.join('');
+            C.unitats(els.textNota);
+        }
 
         // Adreça i progrés
         progres.dades.darrer = p.id;
         progres.desa();
         try {
-            history.replaceState(null, '', '?p=' + p.id);
+            history.replaceState(null, '', '?p=' + p.id + (C.ambSolucions() ? '&sol=1' : ''));
         } catch (e) {
             /* file:// en alguns navegadors */
         }
@@ -350,5 +355,6 @@
         const darrer = LLISTA.findIndex(q => q.id === progres.dades.darrer);
         return darrer >= 0 ? darrer : 0;
     }
+    C.propagaSolucions();
     carrega(inicial());
 })();

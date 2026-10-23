@@ -3,8 +3,12 @@
 Trencaclosques de **Henry E. Dudeney** (1857–1930), traduïts al català i fets interactius, per jugar a la pantalla
 o en paper. Web: <https://dudeney.step-quiz.net>.
 
-**Mostra (v0):** 14 enigmes, dos de cada tipus (dissecció, fitxes, mesures i travesses, escacs, camins, quadrats
-màgics i aritmètica). La selecció completa de 50 és a [`docs/SELECCIO.md`](docs/SELECCIO.md).
+**Ara:** 20 enigmes (la mostra de 14, dos de cada tipus, i la primera tanda de 6) de dissecció, fitxes, mesures i
+travesses, escacs, camins, quadrats màgics i aritmètica. La selecció completa de 50 és a
+[`docs/SELECCIO.md`](docs/SELECCIO.md); l'estat de la feina, a [`docs/STATE.md`](docs/STATE.md).
+
+Les solucions de Dudeney i les notes del matemàtic només es veuen al web amb `?sol=1` a l'adreça
+(per exemple, `index.html?sol=1`).
 
 ## Què hi ha
 

@@ -126,4 +126,73 @@
             '<p>Els problemes de gerres són molt antics. Un dels més coneguts, repartir 8 mesures de vi en dues parts iguals amb gerres de 5 i de 3, se sol atribuir a Niccolò Tartaglia, al segle XVI.</p>',
         ],
     },
+    {
+        id: 'bol',
+        ordre: 3,
+        font: { llibre: 'am', numero: 362, titolOriginal: 'The Wassail Bowl' },
+        titol: 'El bol de la festa',
+        tipus: 'mesures',
+        tauler: 'gerres',
+        dificultat: 2,
+        enunciat: [
+            '<p>Una nit de Nadal, tres rodamons es van trobar amb un autèntic bol de festa: un barriló amb exactament 12 <span class="unitat" data-nota="1 pinta anglesa ≈ 0,57 litres: 12 pintes són uns 6,8 litres">pintes</span> de llimonada. Un d’ells tenia una gerra de 5 pintes, i un altre, una de 3. El problema era repartir-se la llimonada a parts iguals sense malbaratar-ne ni una gota. És clar que no poden fer servir cap altre recipient ni cap altra mesura.</p>',
+            '<p>Si trobes com fer-ho, intenta trobar la manera que necessita menys manipulacions. Cada vegada que es vessa d’un recipient a un altre, o directament a la boca d’un dels rodamons, compta com una manipulació.</p>',
+            '<p class="pantalla">Els tres rodamons es diuen X, Y i Z. Per donar beure a un d’ells, toca el recipient i després el rodamón: es beu tot el que li toca. I el que s’ha begut, ja no ho pot tornar!</p>',
+        ],
+        regla: 'Que cada rodamón (X, Y i Z) begui exactament <strong>4 pintes</strong>, amb el mínim de manipulacions.',
+        comEsJuga: [
+            'Toca el recipient d’on vols vessar i després el que l’ha de rebre (una gerra o un rodamón). També pots arrossegar un recipient fins a l’altre.',
+            'Entre recipients, la llimonada passa fins que el primer queda buit o el segon queda ple. Un rodamón es beu tot el que li dones.',
+        ],
+        tecles: '<kbd>1</kbd>…<kbd>6</kbd> trien el recipient o el rodamón (primer el que vessa, després el que rep); <kbd>Esc</kbd> desfà la tria; <kbd>⌫</kbd> desfà la darrera manipulació.',
+        dades: {
+            capacitats: [12, 5, 3, Infinity, Infinity, Infinity],
+            inicial: [12, 0, 0, 0, 0, 0],
+            objectiu: { 3: 4, 4: 4, 5: 4 },
+            noms: ['barril', 'gerra de 5', 'gerra de 3', 'X', 'Y', 'Z'],
+            articles: ['el', 'la', 'la', 'en', 'en', 'en'],
+            formes: ['barril', 'gerra', 'mesura', 'persona', 'persona', 'persona'],
+            unitat: 'pintes',
+            liquid: 'llimonada',
+            escala: 18,
+            escalaPersona: 6,
+            nomPassos: 'Manipulacions',
+            textResolt: 'Quatre pintes per a cada rodamón, i no s’ha perdut ni una gota.',
+            textFinal: 'Onze manipulacions: el quadern és la taula de Dudeney.',
+            // La taula de Dudeney, com a manipulacions [de, a] (3, 4 i 5 són X, Y i Z)
+            solucio: [[0, 1], [1, 2], [1, 3], [2, 1], [0, 2], [0, 4], [2, 1], [2, 5], [1, 2], [1, 3], [2, 5]],
+        },
+        figuraEnunciat: { peu: 'El barril, les dues gerres i els tres rodamons.', despres: 1 },
+        pistes: [
+            'No es pot llençar res: entre el barril, les gerres i el que s’han begut, sempre hi ha 12 pintes. I el que un rodamón s’ha begut ja no torna.',
+            'Amb les dues gerres pots fer 2 pintes: omple la de 5 i, amb ella, omple la de 3. A la de 5 en queden 2.',
+            'Un rodamón també pot beure directament del barril: si al barril només hi queden 4 pintes, se les pot beure d’un sol cop.',
+            'Els tres primers passos de Dudeney: omple la gerra de 5 amb el barril; amb la de 5, omple la de 3; i les 2 pintes que queden a la de 5, per a en X.',
+        ],
+        solucioDudeney: [
+            '<p>El repartiment de les dotze pintes es pot fer en onze manipulacions, com a la taula. Les sis columnes mostren d’un cop d’ull quanta llimonada hi ha al barril, a la gerra de 5 pintes i a la de 3, i quanta se n’han begut els rodamons X, Y i Z després de cada manipulació (al principi, el barril és ple i tota la resta, buida).</p>',
+            '<table class="taula-dudeney"><thead><tr><th>barril</th><th>gerra de 5</th><th>gerra de 3</th><th>X</th><th>Y</th><th>Z</th></tr></thead><tbody>' +
+                [
+                    [7, 5, 0, 0, 0, 0],
+                    [7, 2, 3, 0, 0, 0],
+                    [7, 0, 3, 2, 0, 0],
+                    [7, 3, 0, 2, 0, 0],
+                    [4, 3, 3, 2, 0, 0],
+                    [0, 3, 3, 2, 4, 0],
+                    [0, 5, 1, 2, 4, 0],
+                    [0, 5, 0, 2, 4, 1],
+                    [0, 2, 3, 2, 4, 1],
+                    [0, 0, 3, 4, 4, 1],
+                    [0, 0, 0, 4, 4, 4],
+                ]
+                    .map(f => '<tr>' + f.map(x => '<td>' + x + '</td>').join('') + '</tr>')
+                    .join('') +
+                '</tbody></table>',
+            '<p>I cada rodamón s’ha begut les seves quatre pintes.</p>',
+        ],
+        notaMatematic: [
+            '<p><strong>Les persones són recipients diferents.</strong> Un rodamón és com una gerra enorme que mai no es buida: hi pots vessar tant com vulguis, però no en pots treure res. Per això no es pot fer servir per guardar llimonada «de pas», com es fa amb les gerres, i el problema és més difícil del que sembla.</p>',
+            '<p><strong>Comprovat per ordinador.</strong> Una cerca en amplada per totes les situacions possibles (quanta llimonada hi ha al barril i a cada gerra, i quanta se n’ha begut cada rodamón) confirma que 11 manipulacions és el mínim i que la taula de Dudeney és correcta pas a pas. Hi ha 72 maneres de fer-ho en 11 manipulacions; si no importa quin rodamón és quin, en queden 12.</p>',
+        ],
+    },
 ]);

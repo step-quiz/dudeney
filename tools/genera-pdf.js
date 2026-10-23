@@ -27,7 +27,10 @@ async function main() {
         const pagina = await navegador.newPage();
         const errors = [];
         pagina.on('pageerror', e => errors.push(e.message));
-        await pagina.goto('file://' + path.join(arrel, 'imprimir', nom + '.html'), { waitUntil: 'load' });
+        // les solucions només es dibuixen amb ?sol=1
+        await pagina.goto('file://' + path.join(arrel, 'imprimir', nom + '.html') + (nom === 'solucions' ? '?sol=1' : ''), {
+            waitUntil: 'load',
+        });
         await pagina.evaluate(() => document.fonts.ready);
         await pagina.emulateMedia({ media: 'print' });
         if (errors.length) throw new Error(errors.join('\n'));

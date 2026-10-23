@@ -310,6 +310,23 @@ window.Comu = (() => {
     }
 
     // ============================================================
+    // MODE «AMB SOLUCIONS» (?sol=1)
+    // Les solucions de Dudeney i les notes només es mostren si l'adreça porta ?sol=1.
+    // El mode passa d'una pàgina a una altra: s'afegeix sol=1 als enllaços interns.
+    // ============================================================
+    const ambSolucions = () => new URLSearchParams(location.search).get('sol') === '1';
+    function propagaSolucions(arrel) {
+        if (!ambSolucions()) return;
+        (arrel || document).querySelectorAll('a[href]').forEach(a => {
+            const h = a.getAttribute('href');
+            if (/^(https?:|mailto:|#)/.test(h) || !/\.html(\?|#|$)/.test(h)) return;
+            if (/[?&]sol=1/.test(h)) return;
+            const [base, hash] = h.split('#');
+            a.setAttribute('href', base + (base.includes('?') ? '&' : '?') + 'sol=1' + (hash ? '#' + hash : ''));
+        });
+    }
+
+    // ============================================================
     // TEXT
     // ============================================================
     /** «3025», «10 000» (amb espai fi a partir de cinc xifres), «−3» */
@@ -342,6 +359,8 @@ window.Comu = (() => {
         NOM_DIFICULTAT,
         LLIBRES,
         progres,
+        ambSolucions,
+        propagaSolucions,
         missatge,
         amagaMissatge,
         anima,

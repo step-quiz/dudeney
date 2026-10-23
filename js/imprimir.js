@@ -26,13 +26,19 @@
         brocat: { regla: 'Retalla els dos quadrats només per les línies de la quadrícula, en quatre peces en total, i munta un quadrat de 10 × 10 amb les flors ben alternades. Dues peces han de tenir la mateixa àrea.' },
         mercer: { regla: 'Aquí tens les quatre peces de Dudeney: retalla-les i fes-ne un quadrat, sense girar-ne cap del revés. (Repte complet: dibuixa un triangle equilàter i busca tu els talls.)', figura: { peces: true } },
         granotes: { regla: 'Fes-ho amb sis monedes o papers numerats. Apunta l’ordre en què mous les granotes i compta els moviments.' },
+        'granotes-gots': { regla: 'Fes-ho amb tres monedes d’un tipus i tres d’un altre sobre set llocs numerats. Apunta cada salt (d’on i cap on) i compta’ls: en calen deu.', linia: 'Els salts:' },
         formatges: { regla: 'Fes-ho amb vuit monedes de mides diferents (o vuit papers numerats) i quatre llocs. Compta els moviments: quants en calen, com a mínim?' },
         rierol: { regla: 'Escriu cada travessia: qui va a la barca i cap a on. La barca no pot portar més de 150 lliures, i el gos (que en pesa 30) no sap remar.', taula: ['Travessia', 'A la barca', 'Cap a'], files: 12 },
         gerres: { regla: 'Escriu, després de cada abocada, quant vi hi ha a cada recipient. Cada vegada que vesses, el vi passa fins que l’un queda buit o l’altre ple.', taula: ['', 'gerra de 10', 'gerra de 10', 'mesura de 5', 'mesura de 4'], files: 12, primera: ['inici', '10', '10', '0', '0'] },
+        bol: { regla: 'Escriu, després de cada manipulació, quanta llimonada hi ha al barril i a cada gerra, i quanta se n’ha begut cada rodamón. El que un rodamón s’ha begut ja no torna.', taula: ['', 'barril', 'gerra de 5', 'gerra de 3', 'X', 'Y', 'Z'], files: 12, primera: ['inici', '12', '0', '0', '0', '0', '0'] },
+        alfils: { regla: 'Dibuixa alfils (punts o creus) perquè totes les caselles quedin ocupades o atacades. Recorda que un alfil no ataca a través d’una altra peça. Quants en calen, com a mínim?', figura: { cavalls: 'buit' } },
+        'alfils-protegits': { regla: 'Dibuixa alfils perquè totes les caselles quedin ocupades o atacades i cada alfil estigui protegit per un altre. Quants en calen, com a mínim?', figura: { cavalls: 'buit' } },
+        peons: { regla: 'Dibuixa els catorze peons que falten (setze amb els de d4 i e5): a cada fila i a cada columna n’hi ha d’haver dos, i mai tres en línia recta en cap direcció.' },
         reines: { regla: 'Busca una col·locació de vuit reines sense atacs i sense tres reines en línia en cap direcció. Dibuixa-la al tauler buit.', extra: 'tauler' },
         cavalls: { regla: 'Posa cavalls (punts o monedes) perquè totes les caselles quedin ocupades o atacades i cada cavall estigui protegit per un altre. Quants en calen, com a mínim?', figura: { cavalls: 'buit' } },
         ciutats: { regla: 'Dibuixa la ruta sobre el mapa: surt de l’1, passa una sola vegada per cada ciutat i torna a l’1. Quantes rutes hi ha?' },
         metro: { regla: 'Dibuixa la ruta sobre el plànol i escriu-la amb les lletres de les estacions. Quantes milles fa, com a mínim?', linia: 'Ruta:' },
+        mina: { regla: 'Dibuixa la ruta sobre el plànol, sortint de la A, i escriu-la amb les lletres de les cruïlles. Quants furlongs fa, com a mínim?', linia: 'Ruta:' },
         vuit: { regla: 'Escriu nou nombres diferents perquè totes les files, columnes i diagonals sumin 15, amb el 8 al lloc on és.' },
         bachet: { regla: 'Escriu les setze cartes al quadrat (A, K, Q, J i ♦ ♠ ♥ ♣): cap fila, columna ni diagonal llarga pot repetir pal ni valor. De quantes maneres es pot fer?', figura: { cartes: new Array(16).fill(null) } },
         estripat: { regla: 'Busca un altre número de quatre xifres diferents que faci (primera meitat + segona meitat)² = el número.', linia: 'El número:' },
@@ -57,7 +63,7 @@
     function fullPortada(titol, entrada) {
         const s = C.el('section', { class: 'full portada-full' });
         s.append(
-            C.el('div', { class: 'cap-full' }, C.el('span', { text: 'Step Quiz · dudeney.step-quiz.net' }), C.el('span', { text: 'Mostra de 14 enigmes' })),
+            C.el('div', { class: 'cap-full' }, C.el('span', { text: 'Step Quiz · dudeney.step-quiz.net' }), C.el('span', { text: `${LLISTA.length} enigmes` })),
             C.el('h1', { text: titol }),
             C.el('p', { class: 'entrada', text: entrada })
         );
@@ -118,7 +124,13 @@
         const T = window.Taulers[p.tauler];
         let fig = null;
         if (T.figuraSolucio) fig = T.figuraSolucio(p);
-        else if (p.tauler === 'salts') fig = C.el('figure', null, T.figura(p, { estat: [0, 6, 5, 4, 3, 2, 1] }), C.el('figcaption', { text: 'Al final: 6, 5, 4, 3, 2, 1.' }));
+        else if (p.tauler === 'salts')
+            fig = C.el(
+                'figure',
+                null,
+                T.figura(p, { estat: p.dades.final || [0, 6, 5, 4, 3, 2, 1] }),
+                C.el('figcaption', { text: p.dades.peuFinal || 'Al final: 6, 5, 4, 3, 2, 1.' })
+            );
         if (fig) t.insertBefore(fig, t.children[p.posicioFiguraSolucio || 1] || null);
         s.appendChild(t);
         s.append(C.el('h2', { text: 'Nota del matemàtic' }), C.el('div', { class: 'text', html: p.notaMatematic.join('') }));
@@ -127,8 +139,15 @@
     }
 
     const cos = document.body;
+    document.querySelectorAll('.nomes-amb-solucions').forEach(e => (e.hidden = !C.ambSolucions()));
+    C.propagaSolucions();
+    // Les solucions només es mostren amb ?sol=1 (el PDF les genera amb aquest paràmetre)
+    if (cos.dataset.full === 'solucions' && !C.ambSolucions()) {
+        cos.appendChild(C.el('section', { class: 'solucio-full' }, C.el('h1', { text: 'Les solucions no són públiques' }), C.el('p', { text: 'Demana-les al teu professor o professora.' })));
+        return;
+    }
     if (cos.dataset.full === 'enigmes') {
-        cos.appendChild(fullPortada('Els enigmes de Dudeney', 'Catorze trencaclosques de Henry E. Dudeney, el gran inventor d’enigmes anglès, traduïts al català: dos de cada tipus. Un enigma per full, amb espai per pensar-hi. Les solucions són en un altre document. A la pantalla s’hi pot jugar a dudeney.step-quiz.net.'));
+        cos.appendChild(fullPortada('Els enigmes de Dudeney', `${LLISTA.length} trencaclosques de Henry E. Dudeney, el gran inventor d’enigmes anglès, traduïts al català, de set tipus diferents. Un enigma per full, amb espai per pensar-hi. Les solucions són en un altre document. A la pantalla s’hi pot jugar a dudeney.step-quiz.net.`));
         LLISTA.forEach((p, i) => cos.appendChild(fullEnigma(p, i)));
     } else {
         LLISTA.forEach((p, i) => cos.appendChild(fullSolucio(p, i)));

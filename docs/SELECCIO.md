@@ -128,4 +128,5 @@ Knights’ Tours), CP 3 (The Miller’s Puzzle), CP 13 (The Man of Law’s Puzzl
 | Proposta | 2026-10-23 |
 | Aprovada per l’usuari | 2026-10-23 |
 | Mostra (14, dos per tipus) | feta: cp-26, am-174, cp-1, am-214, am-365, am-373, am-300, am-319, am-242, am-243, am-399, am-304, am-113, cp-75 |
-| La resta (36) | pendent que l’usuari aprovi la mostra |
+| Tanda 1 (6) | feta: am-216, am-362, am-297, am-298, am-317, am-247 |
+| La resta (30) | pendent, per tandes de 6–8 |

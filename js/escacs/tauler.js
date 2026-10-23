@@ -3,13 +3,15 @@
  * PROJECTE: dudeney (Step Quiz, vanilla JS)
  * FITXER: js/escacs/tauler.js
  * ROL: Els taulers d'escacs:
- *   - Taulers.reines (AM 300): comença amb la figura de Dudeney; les reines
- *     s'arrosseguen, o es toquen i es deixen en una altra casella. Amb vuit
- *     reines es marquen les que s'ataquen (línia contínua) i els trios en
- *     línia (línia de punts, com a la figura del llibre).
- *   - Taulers.cavalls (AM 319): es posen i es treuen cavalls tocant les
- *     caselles; les atacades porten un punt. Quan no en queda cap de lliure,
- *     es marquen els cavalls sense protecció.
+ *   - Taulers.reines (AM 300, AM 317): comença amb la figura de Dudeney (o amb
+ *     les peces fixes de l'enunciat); les peces s'arrosseguen, o es toquen i es
+ *     deixen en una altra casella. Amb totes les peces es marquen les reines
+ *     que s'ataquen (línia contínua) i els trios en línia (línia de punts, com
+ *     a la figura del llibre). dades.peca 'peo' + atacs:false = només trios.
+ *   - Taulers.cavalls (AM 319, AM 297, AM 298): es posen i es treuen peces
+ *     (dades.peca 'cavall' | 'alfil') tocant les caselles; les atacades porten
+ *     un punt. Quan no en queda cap de lliure, es marquen les peces sense
+ *     protecció (si dades.protegits no és false).
  *   Teclat: cursor amb les fletxes (una sola casella amb tabindex 0).
  * ARQUITECTURA: window.Taulers.reines / .cavalls = { crea(lloc, p, ctx), figura(p, o) }.
  *   Caselles [fila, columna], fila 0 a dalt. Les regles són a js/escacs/motor.js.
@@ -31,6 +33,13 @@
     const CAVALL =
         'M11 16 L-12 16 Q-13 7 -4 1 Q-8 -1 -13 0 Q-18 -1 -16 -6 L-7 -14 Q-3 -18 1 -17 L3 -22 L6 -15 Q13 -10 13 0 Q13 9 11 16 Z';
 
+    const ALFIL = 'M-10 11 Q-13 1 -7 -6 Q-3 -11 0 -14 Q3 -11 7 -6 Q13 1 10 11 Z';
+    const PEO = 'M-11 12 Q-10 2 -5 -1 L5 -1 Q10 2 11 12 Z';
+    /** Noms de les peces: [singular, plural]. */
+    const NOMS = { reina: ['reina', 'reines'], cavall: ['cavall', 'cavalls'], alfil: ['alfil', 'alfils'], peo: ['peó', 'peons'] };
+    const nomPeca = (tipus, k) => NOMS[tipus][k === 1 ? 0 : 1];
+    const Majuscula = t => t.charAt(0).toUpperCase() + t.slice(1);
+
     function peca(tipus, pare) {
         const g = C.svg('g', { class: 'peca ' + tipus }, pare);
         if (tipus === 'reina') {
@@ -43,6 +52,15 @@
                 [8, -14],
                 [16, -10],
             ].forEach(p => C.svg('circle', { class: 'silueta', cx: p[0], cy: p[1], r: 2.6 }, g));
+        } else if (tipus === 'alfil') {
+            C.svg('path', { class: 'silueta', d: ALFIL }, g);
+            C.svg('rect', { class: 'silueta', x: -13, y: 11, width: 26, height: 6, rx: 2 }, g);
+            C.svg('circle', { class: 'silueta', cx: 0, cy: -17, r: 3 }, g);
+            C.svg('path', { class: 'crinera', d: 'M3 -8 L-3 -1' }, g);
+        } else if (tipus === 'peo') {
+            C.svg('path', { class: 'silueta', d: PEO }, g);
+            C.svg('rect', { class: 'silueta', x: -13, y: 11, width: 26, height: 6, rx: 2 }, g);
+            C.svg('circle', { class: 'silueta', cx: 0, cy: -8, r: 7 }, g);
         } else {
             C.svg('path', { class: 'silueta', d: CAVALL }, g);
             C.svg('circle', { class: 'ull-cavall', cx: -6.5, cy: -8.5, r: 1.5 }, g);
@@ -156,56 +174,73 @@
     // ════════════════════════════════════════════════════════════
     // REINES
     // ════════════════════════════════════════════════════════════
-    function dibuixaLinies(T, reines) {
+    /** Les dades d'una figura de reines (o de peons): «inicial» i «solucio» són columnes per fila (reines) o caselles. */
+    const pecaReines = d => d.peca || 'reina';
+    const casellesDe = (d, x) => (pecaReines(d) === 'reina' ? E.aCaselles(x) : x.map(q => q.slice()));
+    const ambAtacs = d => d.atacs !== false;
+
+    function dibuixaLinies(T, peces, d) {
         T.linies.replaceChildren();
-        if (reines.length !== T.n) return { atacs: [], trios: [] };
-        const atacs = E.conflictes(reines);
+        if (peces.length !== (d.nombre || T.n)) return { atacs: [], trios: [] };
+        const atacs = ambAtacs(d) ? E.conflictes(peces) : [];
         atacs.forEach(([i, j]) => {
-            const [x1, y1] = centre(reines[i]),
-                [x2, y2] = centre(reines[j]);
+            const [x1, y1] = centre(peces[i]),
+                [x2, y2] = centre(peces[j]);
             C.svg('line', { class: 'atac', x1, y1, x2, y2 }, T.linies);
         });
         // Els trios que no són ja un atac (en files, columnes o diagonals, ja surten com a atac)
-        const trios = E.tresEnLinia(reines).filter(t => !E.reinesAtaquen(reines[t[0]], reines[t[1]]));
+        const trios = E.tresEnLinia(peces).filter(t => !ambAtacs(d) || !E.reinesAtaquen(peces[t[0]], peces[t[1]]));
         trios.forEach(t => {
-            const punts = t.map(i => reines[i]).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+            const punts = t.map(i => peces[i]).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
             const [x1, y1] = centre(punts[0]),
                 [x2, y2] = centre(punts[2]);
             const dx = x2 - x1,
                 dy = y2 - y1,
                 l = Math.hypot(dx, dy);
-            const k = 18 / l; // una mica més enllà de les dues reines dels extrems
+            const k = 18 / l; // una mica més enllà de les dues peces dels extrems
             C.svg('line', { class: 'trio', x1: x1 - dx * k, y1: y1 - dy * k, x2: x2 + dx * k, y2: y2 + dy * k }, T.linies);
         });
         return { atacs, trios };
     }
 
+    const esFixa = (d, q) => (d.fixes || []).some(r => r[0] === q[0] && r[1] === q[1]);
+
     function figuraReines(p, opcions = {}) {
-        const n = p.dades.mida;
-        const cols = opcions.solucio ? p.dades.solucio : p.dades.inicial;
+        const d = p.dades;
+        const n = d.mida;
+        const tipus = pecaReines(d);
+        const peces = opcions.solucio ? casellesDe(d, d.solucio) : d.inicial ? casellesDe(d, d.inicial) : (d.fixes || []).map(q => q.slice());
         const T = dibuixaTauler(n, {
             estatic: true,
             prefix: 'f' + (opcions.solucio ? 's' : 'i'),
-            etiqueta: opcions.solucio ? 'La solució de Dudeney' : 'La figura de Dudeney, amb dos trios de reines en línia',
+            etiqueta: opcions.solucio
+                ? 'La solució de Dudeney'
+                : (d.etiquetaFigura || 'La figura de Dudeney, amb dos trios de reines en línia'),
         });
-        const reines = E.aCaselles(cols);
-        reines.forEach(q => posaPeca(T.peces, 'reina', q));
-        if (!opcions.senseLinies) dibuixaLinies(T, reines);
+        peces.forEach(q => posaPeca(T.peces, tipus, q, esFixa(d, q) ? 'fixa' : null));
+        if (!opcions.senseLinies) dibuixaLinies(T, peces, d);
         return T.svg;
     }
 
     function creaReines(lloc, p, ctx) {
         const d = p.dades;
         const n = d.mida;
+        const tipus = pecaReines(d);
+        const total = d.nombre || n;
+        const [sing, plur] = NOMS[tipus];
+        const una = tipus === 'reina' ? 'una' : 'un';
         let reines, triada, elsPeces;
         const caixa = C.el('div', { class: 'tauler escacs' });
         const T = dibuixaTauler(n, { prefix: 'joc' });
         caixa.appendChild(T.svg);
         lloc.appendChild(caixa);
+        const avisFixa = () =>
+            ctx.missatge('info', `Aquest ${sing} no es mou`, [`L’enunciat el posa en aquesta casella. Mou els altres.`]);
         const kb = teclat(T, toca, (e, q) => {
             if (e.key === 'Delete' || e.key === 'Backspace') {
                 const i = index(q);
-                if (i >= 0) {
+                if (i >= 0 && esFixa(d, q)) avisFixa();
+                else if (i >= 0) {
                     reines.splice(i, 1);
                     triada = null;
                     canvi();
@@ -226,7 +261,7 @@
             inici: e => {
                 const q = casellaDe(T, e, false);
                 const i = q ? index(q) : -1;
-                return i >= 0 ? { i } : null;
+                return i >= 0 && !esFixa(d, q) ? { i } : null;
             },
             comenca: c => {
                 triada = null;
@@ -249,15 +284,21 @@
         const index = q => reines.findIndex(r => r[0] === q[0] && r[1] === q[1]);
 
         function inicia() {
-            reines = E.aCaselles(d.inicial);
+            reines = d.inicial ? casellesDe(d, d.inicial) : (d.fixes || []).map(q => q.slice());
             triada = null;
             canvi();
         }
         function toca(q) {
             const i = index(q);
+            if (i >= 0 && esFixa(d, q)) {
+                triada = null;
+                pinta();
+                avisFixa();
+                return;
+            }
             if (triada !== null) {
                 if (i === triada) {
-                    reines.splice(i, 1); // segon toc a la mateixa reina: es treu
+                    reines.splice(i, 1); // segon toc a la mateixa peça: es treu
                     triada = null;
                 } else if (i >= 0) triada = i;
                 else {
@@ -272,33 +313,40 @@
                 pinta();
                 return;
             }
-            if (reines.length < n) {
+            if (reines.length < total) {
                 reines.push(q);
                 canvi();
             } else {
-                ctx.missatge('info', 'Ja hi ha vuit reines', ['Toca una reina per moure-la, o arrossega-la.']);
+                ctx.missatge('info', `Ja hi ha ${C.nombre(total)} ${plur}`, [
+                    `Toca ${una} ${sing} per ${tipus === 'reina' ? 'moure-la' : 'moure’l'}, o ${tipus === 'reina' ? 'arrossega-la' : 'arrossega’l'}.`,
+                ]);
             }
         }
         function pinta() {
             T.peces.replaceChildren();
-            elsPeces = reines.map((q, i) => posaPeca(T.peces, 'reina', q, i === triada ? 'triada' : null));
+            elsPeces = reines.map((q, i) =>
+                posaPeca(T.peces, tipus, q, i === triada ? 'triada' : esFixa(d, q) ? 'fixa' : null)
+            );
             T.svg.classList.toggle('amb-seleccio', triada !== null);
             T.caselles.forEach((fila, f) =>
                 fila.forEach((g, c) => {
                     const hi = index([f, c]) >= 0;
-                    g.setAttribute('aria-label', `${nomCasella(f, c, n)}${hi ? ', reina' : ''}`);
+                    g.setAttribute('aria-label', `${nomCasella(f, c, n)}${hi ? ', ' + sing + (esFixa(d, [f, c]) ? ' fix' : '') : ''}`);
                 })
             );
-            return dibuixaLinies(T, reines);
+            return dibuixaLinies(T, reines, d);
         }
+        const recompte = k => [C.el('span', null, Majuscula(plur) + ': ', C.el('b', { text: `${k} de ${total}` }))];
         function canvi() {
             ctx.amaga();
             const { atacs, trios } = pinta();
-            ctx.estat([C.el('span', null, 'Reines: ', C.el('b', { text: `${reines.length} de ${n}` }))]);
-            if (reines.length !== n) return;
+            ctx.estat(recompte(reines.length));
+            if (reines.length !== total) return;
             if (!atacs.length && !trios.length) {
                 ctx.resolt('Ho has aconseguit!', [
-                    'Cap reina no n’ataca cap altra, i no n’hi ha tres en línia en cap direcció.',
+                    ambAtacs(d)
+                        ? 'Cap reina no n’ataca cap altra, i no n’hi ha tres en línia en cap direcció.'
+                        : `No hi ha tres ${plur} en línia recta en cap direcció.`,
                 ]);
                 return;
             }
@@ -312,8 +360,8 @@
             if (trios.length)
                 frases.push(
                     trios.length === 1
-                        ? 'Hi ha tres reines en línia recta (la línia de punts).'
-                        : `Hi ha ${trios.length} trios de reines en línia recta (les línies de punts).`
+                        ? `Hi ha tres ${plur} en línia recta (la línia de punts).`
+                        : `Hi ha ${trios.length} trios de ${plur} en línia recta (les línies de punts).`
                 );
             ctx.missatge(atacs.length ? 'error' : 'info', 'Encara no', frases);
         }
@@ -322,12 +370,14 @@
             reinicia: inicia,
             textSolucio: '▶ Posa-la al tauler',
             solucio() {
-                reines = E.aCaselles(d.solucio);
+                reines = casellesDe(d, d.solucio);
                 triada = null;
                 ctx.amaga();
                 pinta();
-                ctx.estat([C.el('span', null, 'Reines: ', C.el('b', { text: `${n} de ${n}` }))]);
-                ctx.missatge('info', 'La solució de Dudeney', ['Cap atac i cap trio en línia.']);
+                ctx.estat(recompte(total));
+                ctx.missatge('info', 'La solució de Dudeney', [
+                    ambAtacs(d) ? 'Cap atac i cap trio en línia.' : `Cap trio de ${plur} en línia.`,
+                ]);
             },
         };
     }
@@ -335,8 +385,11 @@
     // ════════════════════════════════════════════════════════════
     // CAVALLS
     // ════════════════════════════════════════════════════════════
-    function pintaCavalls(T, cavalls, opcions = {}) {
-        const est = E.estatCavalls(cavalls, T.n);
+    const pecaCobrir = d => d.peca || 'cavall';
+    const ambProteccio = d => d.protegits !== false;
+
+    function pintaCavalls(T, cavalls, tipus, opcions = {}) {
+        const est = E.estatPeces(cavalls, T.n, tipus);
         T.marques.replaceChildren();
         T.peces.replaceChildren();
         const ocupat = {};
@@ -358,45 +411,59 @@
             const [x, y] = centre(q);
             if (marcaSense && sensePro[k]) C.svg('circle', { class: 'sense-proteccio', cx: x, cy: y, r: 26 }, T.marques);
             if (opcions.protegits && !sensePro[k]) C.svg('circle', { class: 'protegit', cx: x, cy: y, r: 26 }, T.marques);
-            posaPeca(T.peces, 'cavall', q);
+            posaPeca(T.peces, tipus, q);
         });
         return est;
     }
 
     function figuraCavalls(p, opcions = {}) {
         const d = p.dades;
-        const llista = opcions.cavalls === 'exemple' ? d.exemple : opcions.cavalls === 'buit' ? [] : d.solucio;
+        // Sense exemple de Dudeney (els alfils), la vinyeta és una peça sola amb les caselles que ataca
+        const vinyeta = opcions.cavalls === 'exemple' && !d.exemple;
+        const llista = vinyeta ? d.vinyeta || [] : opcions.cavalls === 'exemple' ? d.exemple : opcions.cavalls === 'buit' ? [] : d.solucio;
+        const et = d.etiquetes || {
+            exemple: 'Els 12 cavalls de Dudeney: només 4 estan protegits',
+            solucio: 'Una de les tres solucions de 14 cavalls',
+        };
         const T = dibuixaTauler(d.mida, {
             estatic: true,
             prefix: 'fc' + (opcions.cavalls || 's'),
-            etiqueta:
-                opcions.cavalls === 'exemple'
-                    ? 'Els 12 cavalls de Dudeney: només 4 estan protegits'
-                    : 'Una de les tres solucions de 14 cavalls',
+            etiqueta: vinyeta
+                ? et.vinyeta || 'Un tauler d’escacs'
+                : opcions.cavalls === 'exemple'
+                  ? et.exemple
+                  : opcions.cavalls === 'buit'
+                    ? 'Tauler d’escacs buit'
+                    : et.solucio,
         });
-        pintaCavalls(T, llista, { punts: false, protegits: opcions.cavalls === 'exemple' });
+        pintaCavalls(T, llista, pecaCobrir(d), { punts: vinyeta, protegits: opcions.cavalls === 'exemple' && !vinyeta });
         return T.svg;
     }
 
     function creaCavalls(lloc, p, ctx) {
         const d = p.dades;
         const n = d.mida;
+        const tipus = pecaCobrir(d);
+        const [sing, plur] = NOMS[tipus];
         let cavalls;
         const hist = C.historial(x => x.map(q => q.slice()));
         const caixa = C.el('div', { class: 'tauler escacs' });
         const T = dibuixaTauler(n, { prefix: 'joc' });
-        const exemple = C.el('button', { type: 'button', class: 'btn-sec', text: 'Comença amb els 12 cavalls de Dudeney' });
-        caixa.append(T.svg, C.el('div', { class: 'eines-tauler' }, exemple));
+        caixa.appendChild(T.svg);
+        if (d.exemple) {
+            const exemple = C.el('button', { type: 'button', class: 'btn-sec', text: d.textExemple || 'Comença amb els 12 cavalls de Dudeney' });
+            caixa.appendChild(C.el('div', { class: 'eines-tauler' }, exemple));
+            exemple.addEventListener('click', () => {
+                hist.desa(cavalls);
+                cavalls = d.exemple.map(q => q.slice());
+                canvi();
+            });
+        }
         lloc.appendChild(caixa);
         teclat(T, toca);
         T.svg.addEventListener('click', e => {
             const q = casellaDe(T, e, false);
             if (q) toca(q);
-        });
-        exemple.addEventListener('click', () => {
-            hist.desa(cavalls);
-            cavalls = d.exemple.map(q => q.slice());
-            canvi();
         });
         const index = q => cavalls.findIndex(r => r[0] === q[0] && r[1] === q[1]);
 
@@ -414,40 +481,40 @@
         }
         function canvi() {
             ctx.amaga();
-            const est0 = E.estatCavalls(cavalls, n);
+            const est0 = E.estatPeces(cavalls, n, tipus);
             const complet = cavalls.length > 0 && est0.lliures.length === 0;
-            const est = pintaCavalls(T, cavalls, { marcaSense: complet });
+            const est = pintaCavalls(T, cavalls, tipus, { marcaSense: complet && ambProteccio(d) });
             T.caselles.forEach((fila, f) =>
                 fila.forEach((g, c) => {
                     const k = f + ',' + c;
                     const hi = index([f, c]) >= 0;
                     g.setAttribute(
                         'aria-label',
-                        `${nomCasella(f, c, n)}${hi ? ', cavall' : est.atacat[k] ? ', atacada' : ', lliure'}`
+                        `${nomCasella(f, c, n)}${hi ? ', ' + sing : est.atacat[k] ? ', atacada' : ', lliure'}`
                     );
                 })
             );
             ctx.estat([
-                C.el('span', null, 'Cavalls: ', C.el('b', { text: cavalls.length })),
+                C.el('span', null, Majuscula(plur) + ': ', C.el('b', { text: cavalls.length })),
                 C.el('span', null, 'Caselles lliures: ', C.el('b', { text: est.lliures.length })),
             ]);
             ctx.desfes(hist.mida > 0);
             if (!complet) return;
-            if (est.sensePro.length) {
+            if (ambProteccio(d) && est.sensePro.length) {
                 ctx.missatge('error', 'Totes les caselles estan cobertes, però…', [
                     est.sensePro.length === 1
-                        ? 'Hi ha un cavall que no està protegit per cap altre (el del cercle de punts).'
-                        : `Hi ha ${est.sensePro.length} cavalls que no estan protegits per cap altre (els dels cercles de punts).`,
+                        ? `Hi ha un ${sing} que no està protegit per cap altre (el del cercle de punts).`
+                        : `Hi ha ${est.sensePro.length} ${plur} que no estan protegits per cap altre (els dels cercles de punts).`,
                 ]);
                 return;
             }
-            if (cavalls.length === d.minim)
-                ctx.resolt(`${cavalls.length} cavalls: el mínim!`, [
-                    'Totes les caselles ocupades o atacades, i cada cavall protegit per un altre.',
-                ]);
+            const frase = ambProteccio(d)
+                ? `Totes les caselles ocupades o atacades, i cada ${sing} protegit per un altre.`
+                : 'Totes les caselles ocupades o atacades.';
+            if (cavalls.length === d.minim) ctx.resolt(`${cavalls.length} ${plur}: el mínim!`, [frase]);
             else
-                ctx.missatge('info', `Fet amb ${cavalls.length} cavalls`, [
-                    'Totes les caselles cobertes i tots els cavalls protegits. Es pot fer amb menys cavalls!',
+                ctx.missatge('info', `Fet amb ${cavalls.length} ${plur}`, [
+                    frase.replace(/\.$/, '') + `. Es pot fer amb menys ${plur}!`,
                 ]);
         }
         inicia();
@@ -466,7 +533,7 @@
                 cavalls = d.solucio.map(q => q.slice());
                 canvi();
                 ctx.amaga();
-                ctx.missatge('info', 'Una solució de Dudeney', ['14 cavalls: set a cada color.']);
+                ctx.missatge('info', d.titolSolucio || 'Una solució de Dudeney', [d.resumSolucio || '14 cavalls: set a cada color.']);
             },
         };
     }

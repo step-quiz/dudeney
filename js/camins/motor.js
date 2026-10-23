@@ -118,6 +118,64 @@
         return { longitud: null, ruta: null };
     }
 
+    /** Distàncies (nombre d'arestes, longitud 1) d'un vèrtex a tots els altres. */
+    function distanciesDe(graf, v) {
+        var idx = index(graf),
+            d = {},
+            cua = [v];
+        d[v] = 0;
+        for (var i = 0; i < cua.length; i++)
+            idx.veins[cua[i]].forEach(function (w) {
+                if (d[w] === undefined) {
+                    d[w] = d[cua[i]] + 1;
+                    cua.push(w);
+                }
+            });
+        return d;
+    }
+    /**
+     * El recorregut més curt que passa per totes les arestes (longitud 1), començant a «inici» i acabant on
+     * sigui (el carter xinès). Es fa per aparellament: els vèrtexs senars (canviats per l'inici i el final)
+     * s'aparellen amb el mínim de camins repetits. Retorna { longitud, final, repetides }.
+     */
+    function carterDes(graf, inici) {
+        var idx = index(graf);
+        var senarsG = graf.vertexs.filter(function (v) {
+            return idx.veins[v].length % 2 === 1;
+        });
+        var dist = {};
+        graf.vertexs.forEach(function (v) {
+            dist[v] = distanciesDe(graf, v);
+        });
+        var millor = { longitud: Infinity };
+        graf.vertexs.forEach(function (fi) {
+            // T = senars Δ {inici, fi}
+            var T = senarsG.slice();
+            [inici, fi].forEach(function (v) {
+                if (inici === fi) return;
+                var k = T.indexOf(v);
+                if (k >= 0) T.splice(k, 1);
+                else T.push(v);
+            });
+            var n = T.length,
+                memo = {};
+            var aparella = function (m) {
+                if (m === (1 << n) - 1) return 0;
+                if (memo[m] !== undefined) return memo[m];
+                var i = 0;
+                while (m & (1 << i)) i++;
+                var r = Infinity;
+                for (var j = i + 1; j < n; j++)
+                    if (!(m & (1 << j))) r = Math.min(r, dist[T[i]][T[j]] + aparella(m | (1 << i) | (1 << j)));
+                return (memo[m] = r);
+            };
+            var extra = aparella(0);
+            if (graf.arestes.length + extra < millor.longitud)
+                millor = { longitud: graf.arestes.length + extra, final: fi, repetides: extra };
+        });
+        return millor;
+    }
+
     /** Els vèrtexs de grau senar (n'hi ha d'haver 0 o 2 perquè es pugui fer d'un sol traç). */
     function senars(graf) {
         var idx = index(graf);
@@ -180,6 +238,8 @@
         recompte: recompte,
         pasDolent: pasDolent,
         carterMinim: carterMinim,
+        carterDes: carterDes,
+        distanciesDe: distanciesDe,
         senars: senars,
         cicles: cicles,
         motiuHamilton: motiuHamilton,

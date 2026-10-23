@@ -247,7 +247,79 @@
         return { mida: null, conjunts: [] };
     }
 
+    // ── Alfils (amb les peces que tapen el camí) ─────────────────────────────
+    function atacsAlfil(f, c, n, ocupat) {
+        var out = [];
+        [[1, 1], [1, -1], [-1, 1], [-1, -1]].forEach(function (d) {
+            var g = f + d[0],
+                h = c + d[1];
+            while (g >= 0 && g < n && h >= 0 && h < n) {
+                out.push([g, h]);
+                if (ocupat && ocupat[g + ',' + h]) break;
+                g += d[0];
+                h += d[1];
+            }
+        });
+        return out;
+    }
+    /** Com està el tauler amb aquestes peces ('cavall' o 'alfil'): lliures, sense protecció, atacades. */
+    function estatPeces(peces, n, tipus) {
+        if (tipus !== 'alfil') return estatCavalls(peces, n);
+        var ocupat = {},
+            atacat = {};
+        peces.forEach(function (x) {
+            ocupat[clau(x)] = true;
+        });
+        peces.forEach(function (x) {
+            atacsAlfil(x[0], x[1], n, ocupat).forEach(function (y) {
+                atacat[clau(y)] = true;
+            });
+        });
+        var lliures = [];
+        for (var f = 0; f < n; f++)
+            for (var c = 0; c < n; c++) if (!ocupat[f + ',' + c] && !atacat[f + ',' + c]) lliures.push([f, c]);
+        return {
+            lliures: lliures,
+            sensePro: peces.filter(function (x) {
+                return !atacat[clau(x)];
+            }),
+            atacat: atacat,
+        };
+    }
+    /**
+     * El mínim d'alfils en caselles d'un color perquè totes les caselles d'aquell color quedin ocupades o
+     * atacades (i, si protegits, que cada alfil estigui atacat per un altre). Cerca exhaustiva per mides.
+     */
+    function minimAlfils(n, color, protegits, maxMida) {
+        var caselles = [];
+        for (var f = 0; f < n; f++) for (var c = 0; c < n; c++) if ((f + c) % 2 === color) caselles.push([f, c]);
+        for (var mida = 1; mida <= maxMida; mida++) {
+            var trobats = [],
+                tria = [];
+            (function cerca(desde) {
+                if (tria.length === mida) {
+                    var e = estatPeces(tria, n, 'alfil');
+                    var cobert = e.lliures.every(function (q) {
+                        return (q[0] + q[1]) % 2 !== color;
+                    });
+                    if (cobert && (!protegits || !e.sensePro.length)) trobats.push(tria.slice());
+                    return;
+                }
+                for (var k = desde; k < caselles.length; k++) {
+                    tria.push(caselles[k]);
+                    cerca(k + 1);
+                    tria.pop();
+                }
+            })(0);
+            if (trobats.length) return { mida: mida, solucions: trobats.length };
+        }
+        return { mida: null, solucions: 0 };
+    }
+
     return {
+        atacsAlfil: atacsAlfil,
+        estatPeces: estatPeces,
+        minimAlfils: minimAlfils,
         clau: clau,
         simetries: simetries,
         canonica: canonica,
