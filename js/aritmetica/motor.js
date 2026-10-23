@@ -17,6 +17,10 @@
  *   - les nou xifres (AM 90, AM 83): 100 com a nombre mixt i dos productes
  *     iguals, fent servir les xifres de l'1 al 9 una sola vegada.
  *   - els cinc bandolers (AM 133): els repartiments de 200 doblons.
+ *   - teoria de nombres (tanda 5): els nombres curiosos (AM 114: n + 1 i n/2 + 1
+ *     quadrats), les galetes dels rodamons (CP 114: la nit, pas a pas), les
+ *     maneres d'escriure un nombre com a suma de dos quadrats (AM 136) i
+ *     l'equació de Pell x² = D·y² + 1 amb BigInt i fraccions contínues (AM 129).
  * ARQUITECTURA: Pur, sense DOM (també el fan servir els tests de Node).
  *   Sala: x al llarg (0…llarg), y d'una paret llarga a l'altra (0…ample),
  *   z cap amunt (0…alt). Cares: 'A' (x = 0, la de l'aranya), 'B' (x = llarg,
@@ -375,7 +379,148 @@
         return { total: n, perA: perA };
     }
 
+    // ── Teoria de nombres (tanda 5) ───────────────────────────────────────
+    /** L'arrel quadrada entera d'un BigInt (el més gran r amb r² ≤ n). */
+    function arrelBig(n) {
+        n = BigInt(n);
+        if (n < 2n) return n;
+        var x = BigInt(Math.floor(Math.sqrt(Number(n))));
+        while (x * x > n) x--;
+        while ((x + 1n) * (x + 1n) <= n) x++;
+        return x;
+    }
+    /** L'arrel si n és un quadrat perfecte (com a BigInt), o null. Accepta Number o BigInt. */
+    function arrelExacta(n) {
+        n = BigInt(n);
+        if (n < 0n) return null;
+        var r = arrelBig(n);
+        return r * r === n ? r : null;
+    }
+    /** AM 114: n és «curiós» si n + 1 i n/2 + 1 són quadrats. Retorna { a, b } (n + 1 = a², n/2 + 1 = b²) o null. */
+    function curios(n) {
+        if (n < 1 || n % 2) return null;
+        var a = arrelExacta(n + 1),
+            b = arrelExacta(n / 2 + 1);
+        return a !== null && b !== null ? { a: Number(a), b: Number(b) } : null;
+    }
+    /** Els nombres curiosos fins a «fins», provant-los tots. */
+    function curiososFins(fins) {
+        var out = [];
+        for (var n = 2; n <= fins; n += 2) if (curios(n)) out.push(n);
+        return out;
+    }
+    /** Els k primers nombres curiosos per la recurrència: a² − 2b² = −1, (a, b) → (3a + 4b, 2a + 3b). */
+    function curiososPell(k) {
+        var a = 1,
+            b = 1,
+            out = [];
+        for (var i = 0; i < k; i++) {
+            var a2 = 3 * a + 4 * b;
+            b = 2 * a + 3 * b;
+            a = a2;
+            out.push(a * a - 1);
+        }
+        return out;
+    }
+    /**
+     * CP 114: la nit dels rodamons. Cada un, per torn, troba b galetes, en dona 1 al gos i se’n menja la quarta part
+     * de la resta; al matí es reparteixen el que queda i en sobra 1 per al gos. Retorna { passos: [{ troba, gos,
+     * menja, queda }], mati: { troba, cadascu }, motiu } (motiu null si tot va bé, o l'índex del pas que falla).
+     */
+    function galetes(n, homes) {
+        homes = homes || 4;
+        var b = n,
+            passos = [];
+        for (var i = 0; i < homes; i++) {
+            if (b < 1 || (b - 1) % homes) return { passos: passos, mati: null, motiu: i, troba: b };
+            var q = (b - 1) / homes;
+            passos.push({ troba: b, gos: 1, menja: q, queda: b - 1 - q });
+            b = b - 1 - q;
+        }
+        if (b < 1 || (b - 1) % homes || b - 1 === 0) return { passos: passos, mati: null, motiu: homes, troba: b };
+        return { passos: passos, mati: { troba: b, cadascu: (b - 1) / homes }, motiu: null };
+    }
+    function galetesValides(fins, homes) {
+        var out = [];
+        for (var n = 1; n <= fins; n++) if (!galetes(n, homes).motiu && galetes(n, homes).mati) out.push(n);
+        return out;
+    }
+    /** AM 136: les maneres d'escriure n com a suma de dos quadrats, a² + b² amb a ≥ b ≥ 1 (com compta Dudeney). */
+    function dosQuadrats(n) {
+        var out = [];
+        for (var b = 1; 2 * b * b <= n; b++) {
+            var a = arrelExacta(n - b * b);
+            if (a !== null) out.push([Number(a), b]);
+        }
+        return out.sort(function (x, y) {
+            return y[0] - x[0];
+        });
+    }
+    /** El nombre més petit que es pot escriure exactament de k maneres (cerca fins a «fins»). */
+    function minimManeres(k, fins) {
+        for (var n = 1; n <= fins; n++) if (dosQuadrats(n).length === k) return n;
+        return null;
+    }
+    /** La fracció contínua de √D: [a0; a1, a2, …] (el període acaba quan a = 2·a0). */
+    function fraccioArrel(D) {
+        D = BigInt(D);
+        var a0 = arrelBig(D);
+        if (a0 * a0 === D) return [a0];
+        var m = 0n,
+            d = 1n,
+            a = a0,
+            out = [a0];
+        do {
+            m = d * a - m;
+            d = (D - m * m) / d;
+            a = (a0 + m) / d;
+            out.push(a);
+        } while (a !== 2n * a0);
+        return out;
+    }
+    /**
+     * Les reduïdes p/q de √D (BigInt) fins a la solució mínima de x² − D·y² = 1, amb el valor de p² − D·q² de
+     * cada una. Retorna { reduides: [{ p, q, valor }], x, y }.
+     */
+    function pell(D) {
+        D = BigInt(D);
+        var a0 = arrelBig(D);
+        if (a0 * a0 === D) return null;
+        var m = 0n,
+            d = 1n,
+            a = a0;
+        var p0 = 1n,
+            p1 = a0,
+            q0 = 0n,
+            q1 = 1n;
+        var reduides = [{ p: p1, q: q1, valor: p1 * p1 - D * q1 * q1 }];
+        while (p1 * p1 - D * q1 * q1 !== 1n) {
+            m = d * a - m;
+            d = (D - m * m) / d;
+            a = (a0 + m) / d;
+            var p2 = a * p1 + p0,
+                q2 = a * q1 + q0;
+            p0 = p1;
+            p1 = p2;
+            q0 = q1;
+            q1 = q2;
+            reduides.push({ p: p1, q: q1, valor: p1 * p1 - D * q1 * q1 });
+        }
+        return { reduides: reduides, x: p1, y: q1 };
+    }
+
     return {
+        arrelBig: arrelBig,
+        arrelExacta: arrelExacta,
+        curios: curios,
+        curiososFins: curiososFins,
+        curiososPell: curiososPell,
+        galetes: galetes,
+        galetesValides: galetesValides,
+        dosQuadrats: dosQuadrats,
+        minimManeres: minimManeres,
+        fraccioArrel: fraccioArrel,
+        pell: pell,
         sumaXifres: sumaXifres,
         parteix: parteix,
         esCent: esCent,

@@ -23,6 +23,13 @@
 
     // El que cal fer en paper, i les opcions de la figura de cada enigma
     const PAPER = {
+        amazones: { regla: 'Canvia de lloc tres reines (les pots posar a qualsevol casella) perquè quedin onze caselles que no ataqui cap reina. Marca amb un punt les caselles lliures.', extra: 'tauler' },
+        presos: { regla: 'Fes-ho amb vuit papers numerats sobre una quadrícula de 3 × 3. Apunta el número de cada pres que mous. Quin pres no es mou mai?', linia: 'Els moviments:' },
+        solitari: { regla: 'Fes-ho amb 32 fitxes o monedes sobre el dibuix ampliat. Apunta cada salt com Dudeney (per exemple, 19-17), amb parèntesis per als salts seguits de la mateixa fitxa.', linia: 'Els moviments:' },
+        'nombres-curiosos': { regla: 'Busca els tres nombres més petits, després del 48, que fan que el nombre més 1 i la seva meitat més 1 siguin tots dos quadrats. Pots fer servir la calculadora.', linia: 'Els tres nombres:' },
+        galetes: { regla: 'Escriu quantes galetes troba cada rodamón, quantes se’n menja i quantes en deixa. Quin és el nombre més petit de galetes que fa que tot surti exacte?', taula: ['Qui', 'troba', 'al gos', 'se’n menja', 'en deixa'], files: 5 },
+        solda: { regla: 'Quin és el nombre més petit de soldats que es pot formar en dos quadrats de 12 maneres diferents? (Cada quadrat amb almenys un soldat; 81 + 49 i 49 + 81 són la mateixa manera.)', linia: 'Soldats:' },
+        hastings: { regla: 'Busca el nombre y més petit tal que 61 · y² + 1 sigui un quadrat. (Una pista: la fracció contínua de √61 és [7; 1, 4, 3, 1, 2, 2, 1, 3, 4, 1, 14].)', linia: 'y = … i el total d’homes:' },
         trapezi: { regla: 'Retalla la figura en quatre peces exactament iguals: de la mateixa mida i de la mateixa forma.' },
         'cinc-triangles': { regla: 'Retalla cinc triangles com aquests (mig rectangle de 2 × 1) i fes-ne un quadrat. N’has de tallar un en dues peces; els altres, sencers.', figura: { paper: true } },
         fuster: { regla: 'Talla la fusta en el mínim de peces possible per fer el tauler quadrat, sense que en sobri gens. Quantes peces calen?', figura: { paper: true } },

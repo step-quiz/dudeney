@@ -93,3 +93,16 @@ bombolla), **modernitzar** (canviar-ho al text), **treure**.
 | Els cinc bandolers | «Bandolers espanyols» i un botí d'un assalt | Estereotip nacional; robatori | Mantenir (és el problema clàssic de Tartaglia), o canviar per «cinc pirates» si es prefereix |
 | La mitra | Una mitra de bisbe; mesures en polzades | Objecte poc conegut | Mantenir (la figura ho aclareix; polzades amb nota) |
 | Les prunes | El fruiter, les cistelles i els nens | S'entén | Mantenir |
+
+## Tanda 5
+
+| Enigma | Què | Per què pot estranyar | Proposta |
+|---|---|---|---|
+| Vuit presos i un quadrat màgic | El pres «esquerp i tossut, gens digne dels seus alegres companys», «el bèstia», «estúpidament tossut» | Insults gratuïts | **Ja canviat:** «un dels presos no tenia gens de ganes de jocs» |
+| Vuit presos i un quadrat màgic | Una presó i un rei que promet regals per Nadal | Situació estranya, però és un joc | Mantenir |
+| Els rodamons i les galetes | Quatre *tramps* (rodamons) que van «comprar, manllevar, trobar o aconseguir d'alguna altra manera» les galetes; galetes al gos per subornar-lo | To irònic sobre el robatori | Mantenir (la gràcia del text), o «quatre excursionistes» |
+| L'exèrcit del soldà | Un soldà que envia un exèrcit a la batalla | Context guerrer i «oriental» de postal | Mantenir, o «un general» |
+| La batalla de Hastings | La batalla de 1066, destrals de guerra, crits de guerra («Ut!», «Olicrosse!», «Godemitè!») | Violència d'època; noms que no diuen res | Mantenir (és història; el problema és aritmètic) |
+| La batalla de Hastings | «Tres trilions d'homes», polzades i peus quadrats | Escala llarga (1 trilió = 10¹⁸) i unitats angleses | Explicar (bombolla per a les unitats) |
+| El solitari central | «Les nostres àvies», una sala d'estar de barri, una fonda del camí | Ambient de 1917 | Mantenir |
+| Les amazones | El títol: les reines com a «amazones» | Referència mitològica | Mantenir (és el títol de Dudeney) |

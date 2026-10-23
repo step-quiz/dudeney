@@ -1,7 +1,7 @@
 # STATE — dudeney (handover for a cold-start agent)
 
 Static vanilla-JS site with Henry E. Dudeney's puzzles translated into Catalan, playable on screen and printable
-in B/W. Target: 50 puzzles (`docs/SELECCIO.md`); the user approved the selection on 2026-10-23. Delivered so far:
+in B/W. Target: 50 puzzles (`docs/SELECCIO.md`); the user approved the selection on 2026-10-23. Delivered so far (all 50 after batch 5):
 sample v1 with 14 puzzles (2 per type), shipped as `dudeney-mostra-v1.zip`; batch 1 (6 puzzles, 20 in total),
 shipped as `dudeney-tanda1.zip`; batch 2 (7 puzzles, 27 in total), merged as PR #1; batch 3 (8 puzzles, 35 in
 total), shipped as a pull request to `main`. Work now
@@ -9,8 +9,9 @@ proceeds in batches of 6–8 puzzles; each batch ends with a delivery (see §1) 
 
 ## 0. Cold start (do this first)
 
-1. **Batch 5 (the last one): read `docs/TANDA5.md` first — it has the exact plan.** Clone `step-quiz/dudeney` and check that this file lists batch 4 as merged and that
-   `node tests/motors.test.js` reports 174 checks, 0 errors (~15 s). If not, the batch 4 pull request has not been
+1. **All 50 puzzles are done (batch 5 delivered; `docs/TANDA5.md` kept as a record).** Further work is maintenance or the
+   `docs/update.md` decisions. Clone `step-quiz/dudeney` and check that this file lists batch 5 as delivered and that
+   `node tests/motors.test.js` reports 203 checks, 0 errors (~25 s). If not, the batch 5 delivery has not been
    merged yet: ask the user to merge it (or to upload the ZIP, see §1). If the designated branch's previous PR is
    already merged, restart the branch from `origin/main` before working.
 2. Get the source books (public domain; never commit them, `src/` is git-ignored). Download the **EPUB with
@@ -183,6 +184,8 @@ proceeds in batches of 6–8 puzzles; each batch ends with a delivery (see §1) 
 - Print: any fixed colour (not a token), even a near-black like `#1d232c`, fails `comprova-pdf.py`; add a print
   override in `css/imprimir.css`. `genera-pdf.js` does not catch every overflow: look at the new pages.
 - Do not repeat the board as a `figuraEnunciat` (it is shown right above the board); print uses `figura()` anyway.
+- Batch 5: answer-only puzzles must not reveal the answer in a helper tool (the √61 convergents table stops at the
+  first ±1 row); boards reused with a flag (`reines.lliures`, `blocs.magica`) keep their old behaviour by default.
 
 ## 4. Status
 
@@ -193,8 +196,8 @@ proceeds in batches of 6–8 puzzles; each batch ends with a delivery (see §1) 
 | Batch 2 | am-217 `twickenham`, am-219 `lletres`, am-341 `quatre-granotes`, am-375 `entrenadors` (jealous husbands → football coaches and their stars), am-377 `tresor`, am-249 `mariner`, am-320 `torre` | merged (PR #1) |
 | Batch 3 | am-146 `trapezi`, am-147 `cinc-triangles`, am-151 `fuster`, am-221 `locomotores`, am-245 `octaedre`, am-406 `domino`, am-347 `rectangles`, cp-38 `amulet` | merged (PR #2) |
 | Batch 4 | am-143 `creus`, am-150 `mitra`, am-90 `cent`, am-83 `multiplicacio`, am-133 `bandolers`, am-409 `prunes`, am-411 `compostos`, cp-102 `reversible` (peces board gained `fixes`/`encaix:'solucio'`; new `xifres` and `bandolers` boards; magic board generalised to n = 4, free constant and `condicio`) | merged (PR #3) |
-| Batch 5 | proposal: am-227, am-401, am-316, am-114, am-129, am-136, cp-114 — plan in `docs/TANDA5.md` | next — confirm the list with the user first |
-| Remaining | see `docs/SELECCIO.md` | pending |
+| Batch 5 | am-114 `nombres-curiosos`, cp-114 `galetes`, am-136 `solda`, am-129 `hastings` (new `entrada` board, aritmetica: type a number; BigInt Pell + continued fractions), am-316 `amazones` (`reines` + `lliures`/`mogudes`/`caselles`), am-401 `presos` (`blocs` + `figura:'pres'`, `magica`), am-227 `solitari` (new `solitari` board, fitxes) | delivered as ZIP (this session could not push) |
+| Remaining | none: the 50 puzzles of `docs/SELECCIO.md` are done | — |
 
 Known open points: `tests/motors.test.js` takes ~15 s (exhaustive bishop searches); the count of 16-move rook tours
 (16) takes ~14 s in JS, so the test only checks that there are none of 10–14 moves (the 16 was counted with a C

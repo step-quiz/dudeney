@@ -21,7 +21,7 @@ const dades = {};
 );
 
 suite('Dades');
-eq('43 enigmes', Object.keys(dades).length, 43);
+eq('50 enigmes', Object.keys(dades).length, 50);
 Object.values(dades).forEach(p =>
     ok(`${p.id}: camps complets`, p.titol && p.enunciat.length && p.pistes.length === 4 && p.solucioDudeney.length && p.notaMatematic.length)
 );
@@ -472,4 +472,59 @@ const eqJ = (et, rebut, esperat) => eq(et, JSON.stringify(rebut), JSON.stringify
     const mt = dades.mitra.dades;
     ok('mitra: la mitra i el quadrat fan 3', Math.abs(Di.area(mt.paper[0]) - 3) < 1e-9 && Math.abs(Di.area(mt.objectiu) - 3) < 1e-5);
 }
+suite('Tanda 5');
+{
+    // AM 114: nombres curiosos
+    const nc = dades['nombres-curiosos'].dades;
+    eqJ('curiosos: fins a 2 milions, 48 i els tres de Dudeney', Ar.curiososFins(2e6), [48].concat(nc.objectiu));
+    eqJ('curiosos: la recurrència de Pell dona els mateixos', Ar.curiososPell(5), [48, 1680, 57120, 1940448, 65918160]);
+    // CP 114: galetes
+    const ga = dades.galetes.dades;
+    eqJ('galetes: els que funcionen fins a 5000 són 1021 + 1024·k', Ar.galetesValides(5000, 4), [1021, 2045, 3069, 4093]);
+    const g1 = Ar.galetes(1021, 4);
+    eqJ('galetes: 255, 191, 143, 107 i 80 per cap al matí', [g1.passos.map(x => x.menja), g1.mati.cadascu], [[255, 191, 143, 107], 80]);
+    eq('galetes: el mínim és el de les dades', ga.minim, Ar.galetesValides(5000, 4)[0]);
+    const formula = [2, 3, 4, 5].map(nh => {
+        let n = 1;
+        while (!(Ar.galetes(n, nh).mati || (nh === 2 && Ar.galetes(n, nh).motiu === 2 && Ar.galetes(n, nh).troba === 1))) n++;
+        return n;
+    });
+    eqJ('galetes: la fórmula n^(n+1) − (n − 1) per a 2–5 rodamons', formula, [2, 3, 4, 5].map(nh => Math.pow(nh, nh + 1) - (nh - 1)));
+    // AM 136: l'exèrcit del soldà
+    const so = dades.solda.dades;
+    eq('soldà: el més petit amb 12 maneres és 160 225', Ar.minimManeres(12, 200000), so.minim);
+    eqJ('soldà: les dotze parelles de Dudeney', Ar.dosQuadrats(160225).map(x => x.join('-')), ['400-15', '399-32', '393-76', '392-81', '384-113', '375-140', '360-175', '356-183', '337-216', '329-228', '311-252', '300-265']);
+    eqJ('soldà: els exemples del text', [130, 50, 25, 125, 625, 3125, 45, 65, 1105, 32045, 15, 135].map(n => Ar.dosQuadrats(n).length), [2, 2, 1, 2, 2, 3, 1, 2, 4, 8, 0, 0]);
+    // AM 129: Hastings (BigInt)
+    const pl = Ar.pell(61);
+    eqJ('Hastings: x² − 61y² = 1', [String(pl.x), String(pl.y)], ['1766319049', '226153980']);
+    const y = 226153980n;
+    eqJ('Hastings: les xifres de Dudeney', [String(y * y), String(61n * y * y), String(61n * y * y + 1n === 1766319049n * 1766319049n)], ['51145622669840400', '3119882982860264400', 'true']);
+    eqJ('Hastings: el 97, el 60 i el 62', [97, 60, 62].map(D => String(Ar.pell(D).y)), ['6377352', '4', '8']);
+    eqJ('Hastings: la fracció contínua de √61', Ar.fraccioArrel(61).map(String), ['7', '1', '4', '3', '1', '2', '2', '1', '3', '4', '1', '14']);
+    // AM 316: les amazones
+    const am = dades.amazones.dades;
+    eq('amazones: la figura no deixa cap casella lliure', Es.noAtacades(am.inicial, 8).length, 0);
+    eqJ('amazones: la solució deixa 11 (amb bloqueig i sense)', [Es.noAtacades(am.solucio, 8).length, Es.noAtacades(am.solucio, 8, false).length], [11, 11]);
+    eq('amazones: només 3 reines canviades de lloc', am.solucio.filter(q => !am.inicial.some(r => r[0] === q[0] && r[1] === q[1])).length, 3);
+    // AM 401: vuit presos (BFS)
+    const pr5 = dades.presos.dades;
+    const ini5 = pr5.inicial.split('').map(x => (x === '_' ? '' : x));
+    const magic5 = e => [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]].every(l => l.reduce((a, i) => a + (+e[i] || 0), 0) === 12);
+    eq('presos: 19 moviments fins a un quadrat màgic', bfs(ini5, Fx.blocs.veins(3), Fx.blocs.clau, magic5), 19);
+    let e5 = ini5;
+    pr5.solucio.split('').forEach(x => (e5 = Fx.blocs.mou(e5, e5.indexOf(x), 3)));
+    ok('presos: la segona seqüència de Dudeney fa un quadrat màgic sense moure el 3', magic5(e5) && !pr5.solucio.includes('3') && e5.map(x => x || '_').join('') === pr5.final);
+    let e6 = ini5;
+    '5325764157641648327'.split('').forEach(x => (e6 = Fx.blocs.mou(e6, e6.indexOf(x), 3)));
+    ok('presos: la primera també, però s’hi mouen tots', magic5(e6) && [1, 2, 3, 4, 5, 6, 7, 8].every(k => '5325764157641648327'.includes(String(k))));
+    // AM 227: el solitari
+    const sl = dades.solitari.dades, S5 = Fx.solitari;
+    const jd = S5.juga(S5.llegeix(sl.solucio)), jb = S5.juga(S5.llegeix(sl.bergholt));
+    eqJ('solitari: Dudeney, 19 moviments i una bola al 17', [jd.error, jd.moviments, jd.salts, S5.boles(jd.estat), jd.estat[17]], [null, 19, 31, 1, true]);
+    eqJ('solitari: Bergholt, 18 moviments i una bola al 17', [jb.error, jb.moviments, jb.salts, S5.boles(jb.estat), jb.estat[17]], [null, 18, 31, 1, true]);
+    const je = S5.juga(S5.llegeix('5-17, 12-10, 26-12, 24-26, (13-11, 11-25), 9-11, (26-24, 24-10, 10-12)'));
+    eq('solitari: el començament d’exemple és legal', je.error, null);
+}
+
 finish('Motors');

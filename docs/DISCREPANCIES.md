@@ -51,3 +51,15 @@ bandolers (no 6639), el bloc 114–122 de compostos i el quadrat reversible de 1
 | Les prunes (AM 409) | El diagrama A és «de nombres primers» | Hi ha l'1, que avui no és primer | S'explica a la nota (⚠); el parany de Dudeney el descarta igualment |
 | El problema del cent (AM 90) | Nombres mixtos | Project Gutenberg havia perdut el format (91 5742/638 sortia com «915742/638») | Format restituït |
 | Dues creus d'una (AM 143) | «la forma d'esvàstica que fan els talls» | Símbol amb càrrega nazi | Es diu «forma de molinet» |
+
+**Tanda 5** (AM 114, CP 114, AM 136, AM 129, AM 316, AM 401, AM 227): confirmat per ordinador: els nombres curiosos
+(48, 1680, 57 120, 1 940 448), les 1021 galetes (1021 + 1024·k), els 160 225 soldats i les seves dotze parelles,
+la solució de Pell del 61 xifra per xifra (BigInt), l'única solució de les amazones, els 19 moviments i el pres 3
+(BFS) i la solució de 19 moviments del solitari.
+
+| Enigma | Què diu Dudeney | Què hem trobat | Què fa el web |
+|---|---|---|---|
+| El solitari central (AM 227) | «No crec que es pugui reduir el nombre de moviments» (19) | Bergholt ho va fer en 18 el 1912, i Beasley va demostrar el 1964 que 18 és el mínim. La solució de 18 s'ha comprovat jugant-la; la minimalitat es cita, no s'ha calculat | Accepta 18 com a mínim; nota amb ⚠ |
+| Les amazones (AM 316) | Conjectura que 8 reines no poden deixar més d'11 caselles sense atacar; «almenys cinc» maneres d'arribar a 11 | Certa: cerca exhaustiva de les 4 426 165 368 col·locacions (amb bloqueig i sense): el màxim és 11, amb 48 col·locacions, 7 de fonamentalment diferents | Nota amb ⚠ |
+| La batalla de Hastings (AM 129) | 60 × 4² + 1 = 31² | Project Gutenberg havia perdut els exponents («60 × 42 + 1 = 312») | Exponents restituïts |
+| Els rodamons i les galetes (CP 114) | Fórmula general *m*·*n*^(*n*+1) − (*n* − 1) | Project Gutenberg la dona com «m (nn+1)»; amb 2 rodamons i *m* = 1 cadascú rep 0 galetes al matí (Dudeney ja ho avisa) | Exponents restituïts |

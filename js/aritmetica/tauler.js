@@ -18,7 +18,7 @@
  *     mixt que faci 100, o dos productes iguals), amb el compte al moment.
  *   - Taulers.bandolers (AM 133): els doblons de cada bandoler, amb les dues
  *     sumes; es compten els repartiments trobats i s'escriu quants n'hi ha.
- * ARQUITECTURA: window.Taulers.estripat / .caixa / .rectangles / .amulet / .xifres / .bandolers =
+ * ARQUITECTURA: window.Taulers.estripat / .caixa / .rectangles / .amulet / .xifres / .bandolers / .entrada =
  *   { crea(lloc, p, ctx), figura(p, o),
  *   figuraSolucio(p) }. La geometria (desplegar, la recta, tornar a plegar)
  *   és a js/aritmetica/motor.js.
@@ -1108,6 +1108,245 @@
         };
     }
 
+    // ════════════════════════════════════════════════════════════
+    // ENTRADA: s'escriu un nombre i el tauler en fa els comptes (tanda 5)
+    // dades.mode: 'curiosos' (AM 114), 'galetes' (CP 114), 'solda' (AM 136), 'hastings' (AM 129).
+    // ════════════════════════════════════════════════════════════
+    const llegeixNombre = t => {
+        const net = String(t).replace(/[\s.  ]/g, '');
+        return /^\d{1,30}$/.test(net) ? BigInt(net) : null;
+    };
+    /** Un BigInt amb espais fins cada tres xifres (Comu.nombre només val per a Number). */
+    function grups(x) {
+        const s = String(x);
+        return s.length <= 4 ? s : s.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    }
+    const linia = (...fills) => C.el('p', { class: 'linia-compte' }, ...fills);
+    const veredicte = (be, text) => C.el('span', { class: 'veredicte ' + (be ? 'be' : 'malament'), text });
+    function factors(n) {
+        const out = [];
+        for (let p = 2; p * p <= n; p++)
+            while (n % p === 0) {
+                out.push(p);
+                n /= p;
+            }
+        if (n > 1) out.push(n);
+        return out;
+    }
+
+    const MODES = {
+        curiosos: {
+            etiqueta: 'El nombre',
+            prova(n, d, estat) {
+                const nodes = [];
+                if (n % 2n) return { nodes: [linia(veredicte(false, `${grups(n)} és senar: la meitat no seria un nombre enter.`))] };
+                const a = A.arrelExacta(n + 1n),
+                    b = A.arrelExacta(n / 2n + 1n);
+                nodes.push(linia(`${grups(n)} + 1 = `, C.el('b', { text: grups(n + 1n) }), veredicte(a !== null, a !== null ? ` = ${grups(a)}² ✓` : ' no és un quadrat')));
+                nodes.push(linia(`${grups(n / 2n)} + 1 = `, C.el('b', { text: grups(n / 2n + 1n) }), veredicte(b !== null, b !== null ? ` = ${grups(b)}² ✓` : ' no és un quadrat')));
+                if (a === null || b === null) return { nodes };
+                const num = Number(n);
+                if (num === 48) return { nodes, info: ['Aquest és el de Dudeney', ['49 = 7² i 25 = 5². Busca’n tres més!']] };
+                estat.trobats.add(num);
+                const falten = d.objectiu.filter(x => !estat.trobats.has(x));
+                if (!d.objectiu.includes(num))
+                    return { nodes, info: [`${grups(n)} també és curiós!`, ['Però no és dels tres més petits que segueixen el 48: n’hi ha de més petits.']] };
+                if (!falten.length) return { nodes, resolt: ['Els tres més petits!', [`${d.objectiu.map(x => C.nombre(x)).join(', ')}: cap altre nombre més petit no ho fa.`]] };
+                return { nodes, info: [`${grups(n)}: un nombre curiós!`, [falten.length === 1 ? 'En falta un.' : `En falten ${falten.length}.`]] };
+            },
+            estat: (estat, d) => [C.el('span', null, 'Trobats: ', C.el('b', { text: [48].concat([...estat.trobats].sort((x, y) => x - y)).map(x => C.nombre(x)).join(', ') }))],
+        },
+        galetes: {
+            etiqueta: 'Galetes a la capsa',
+            prova(n, d) {
+                const num = Number(n);
+                if (num > 1e9) return { nodes: [linia(veredicte(false, 'Són massa galetes! Prova amb un nombre més petit.'))] };
+                const r = A.galetes(num, d.homes);
+                const t = C.el('table', { class: 'taula-galetes' });
+                t.appendChild(C.el('tr', null, ['', 'troba', 'al gos', 'se’n menja', 'en deixa'].map(x => C.el('th', { text: x }))));
+                r.passos.forEach((s, i) =>
+                    t.appendChild(C.el('tr', null, C.el('th', { text: `Rodamón ${i + 1}` }), [s.troba, s.gos, s.menja, s.queda].map(x => C.el('td', { text: C.nombre(x) }))))
+                );
+                if (r.mati)
+                    t.appendChild(
+                        C.el('tr', { class: 'mati' }, C.el('th', { text: 'Al matí' }), C.el('td', { text: C.nombre(r.mati.troba) }), C.el('td', { text: '1' }), C.el('td', { text: `${C.nombre(r.mati.cadascu)} cadascú` }), C.el('td', { text: '0' }))
+                    );
+                const nodes = [t];
+                if (r.motiu !== null) {
+                    const qui = r.motiu < d.homes ? `El rodamón ${r.motiu + 1}` : 'Al matí, la colla';
+                    const b = r.troba;
+                    nodes.push(
+                        linia(
+                            veredicte(
+                                false,
+                                b < 1
+                                    ? `${qui} no troba cap galeta.`
+                                    : b === 1
+                                      ? `${qui} només troba 1 galeta: la del gos, i res per repartir.`
+                                      : `${qui} troba ${C.nombre(b)} galetes; si en dona 1 al gos, les ${C.nombre(b - 1)} que queden no es poden partir en ${d.homes}.`
+                            )
+                        )
+                    );
+                    return { nodes };
+                }
+                if (num === d.minim) return { nodes, resolt: [`${C.nombre(num)} galetes: el mínim!`, [`Al matí en queden ${C.nombre(r.mati.troba)}: ${C.nombre(r.mati.cadascu)} per a cadascú i 1 per al gos.`]] };
+                return { nodes, info: ['Funciona!', [`Amb ${C.nombre(num)} galetes surt bé, però n’hi podia haver menys.`]] };
+            },
+        },
+        solda: {
+            etiqueta: 'Soldats',
+            prova(n, d) {
+                const num = Number(n);
+                if (num > 1e10) return { nodes: [linia(veredicte(false, 'És un exèrcit massa gran per comptar-lo aquí.'))] };
+                const m = A.dosQuadrats(num);
+                const f = factors(num);
+                const nodes = [linia(`${C.nombre(num)} = ${f.join(' × ')}`)];
+                nodes.push(linia(C.el('b', { text: C.plural(m.length, 'manera', 'maneres') }), ' de fer-ne dos quadrats'));
+                if (m.length) nodes.push(C.el('ul', { class: 'llista-quadrats' }, m.map(([a, b]) => C.el('li', { text: `${C.nombre(a * a)} + ${C.nombre(b * b)} = ${a}² + ${b}²` }))));
+                if (m.length !== d.maneres) return { nodes };
+                if (num === d.minim) return { nodes, resolt: [`${C.nombre(num)} soldats!`, [`De ${d.maneres} maneres, i cap exèrcit més petit no ho permet.`]] };
+                return { nodes, info: [`De ${d.maneres} maneres!`, ['Però el soldà podria tenir un exèrcit més petit.']] };
+            },
+        },
+        hastings: {
+            etiqueta: 'Soldats per costat de cada quadrat petit',
+            prova(y, d) {
+                const D = BigInt(d.D);
+                const v = D * y * y + 1n;
+                const x = A.arrelExacta(v);
+                const nodes = [
+                    linia(`${d.D} × ${grups(y)}² + 1 = `),
+                    linia(C.el('b', { class: 'nombre-llarg', text: grups(v) })),
+                    linia(veredicte(x !== null, x !== null ? `= ${grups(x)}² ✓` : 'no és un quadrat')),
+                ];
+                if (x === null || y === 0n) return { nodes };
+                if (y === BigInt(d.y)) return { nodes, resolt: ['L’exèrcit d’Harold!', [`${grups(y)} soldats per costat a cada un dels ${d.D} quadrats; amb Harold, un gran quadrat de ${grups(x)} per costat.`]] };
+                return { nodes, info: ['Funciona!', ['Però no és la solució més petita.']] };
+            },
+        },
+    };
+
+    /** La figura de cada mode, petita i decorativa (també per a les plaques de la portada i el paper). */
+    function figuraEntrada(p) {
+        const d = p.dades;
+        const s = C.svg('svg', { 'class': 'tauler-svg entrada-svg', 'viewBox': '0 0 320 150', 'role': 'img', 'aria-label': d.etiquetaFigura || p.titol });
+        const quadrat = (x, y, k, r, cls) => {
+            for (let i = 0; i < k; i++) for (let j = 0; j < k; j++) C.svg('circle', { class: cls || 'soldat', cx: x + j * r * 2.4, cy: y + i * r * 2.4, r }, s);
+        };
+        if (d.mode === 'curiosos') {
+            C.svg('text', { 'class': 'nombre-figura', 'x': 160, 'y': 52, 'text': '48 + 1 = 49 = 7²' }, s);
+            C.svg('text', { 'class': 'nombre-figura', 'x': 160, 'y': 104, 'text': '24 + 1 = 25 = 5²' }, s);
+        } else if (d.mode === 'galetes') {
+            C.svg('path', { class: 'capsa-galetes', d: 'M250 40 L280 18 V108 L250 130 Z' }, s);
+            C.svg('rect', { class: 'capsa-galetes', x: 70, y: 40, width: 180, height: 90, rx: 4 }, s);
+            C.svg('path', { class: 'tapa-galetes', d: 'M70 40 L100 18 H280 L250 40 Z' }, s);
+            [[105, 70], [145, 62], [185, 74], [225, 64], [125, 104], [170, 100], [212, 106]].forEach(([x, y]) => {
+                C.svg('circle', { class: 'galeta', cx: x, cy: y, r: 15 }, s);
+                C.svg('circle', { class: 'forat-galeta', cx: x - 4, cy: y - 3, r: 1.8 }, s);
+                C.svg('circle', { class: 'forat-galeta', cx: x + 5, cy: y + 3, r: 1.8 }, s);
+            });
+        } else if (d.mode === 'solda') {
+            // 130 = 81 + 49: dos quadrats de soldats
+            quadrat(30, 22, 9, 6);
+            C.svg('text', { 'class': 'signe-figura', 'x': 172, 'y': 90, 'text': '+' }, s);
+            quadrat(198, 40, 7, 6);
+            s.setAttribute('viewBox', '0 0 320 160');
+        } else {
+            // 61 quadrats iguals… i l'Harold
+            for (let k = 0; k < 14; k++) quadrat(14 + (k % 7) * 42, 18 + Math.floor(k / 7) * 46, 3, 4.2);
+            C.svg('text', { 'class': 'signe-figura petit', 'x': 160, 'y': 132, 'text': '… 61 quadrats, i Harold: + 1' }, s);
+        }
+        return s;
+    }
+
+    function creaEntrada(lloc, p, ctx) {
+        const d = p.dades;
+        const M = MODES[d.mode];
+        const estat = { trobats: new Set(), proves: 0 };
+        const caixa = C.el('div', { class: 'tauler tauler-entrada' });
+        const id = 'entrada-' + Math.random().toString(36).slice(2, 6);
+        const input = C.el('input', { 'id': id, 'type': 'text', 'inputmode': 'numeric', 'autocomplete': 'off', 'spellcheck': 'false' });
+        const form = C.el('form', { class: 'resposta-recompte' }, C.el('label', { for: id }, C.el('span', { text: M.etiqueta }), input), C.el('button', { type: 'submit', class: 'btn-sec', text: 'Prova' }));
+        const compte = C.el('div', { 'class': 'compte compte-entrada', 'aria-live': 'polite' });
+        caixa.append(form, compte);
+        // Hastings: la fracció contínua de √61, una reduïda cada vegada
+        let reduides = null,
+            mostrades = 0,
+            taulaR = null,
+            botoR = null;
+        if (d.mode === 'hastings') {
+            // Només fins a la primera reduïda amb p² − D·q² = ±1: la resta l'ha de deduir qui juga
+            const totes = A.pell(d.D).reduides;
+            reduides = totes.slice(0, totes.findIndex(r => r.valor === 1n || r.valor === -1n) + 1);
+            taulaR = C.el('table', { class: 'taula-reduides' });
+            botoR = C.el('button', { type: 'button', class: 'btn-sec', text: `Fracció contínua de √${d.D}: una reduïda més` });
+            botoR.addEventListener('click', () => {
+                mostrades = Math.min(reduides.length, mostrades + 1);
+                pintaReduides();
+            });
+            caixa.append(C.el('details', { class: 'ajuda-reduides' }, C.el('summary', { text: 'Una eina: les reduïdes de √' + d.D }), C.el('p', { class: 'nota-reduides', html: d.textReduides }), botoR, taulaR));
+        }
+        lloc.appendChild(caixa);
+        function pintaReduides() {
+            taulaR.replaceChildren(C.el('tr', null, ['', 'p', 'q', `p² − ${d.D}·q²`].map(x => C.el('th', { text: x }))));
+            reduides.slice(0, mostrades).forEach((r, i) =>
+                taulaR.appendChild(C.el('tr', { class: r.valor === 1n || r.valor === -1n ? 'destacada' : '' }, C.el('th', { text: i + 1 }), [r.p, r.q, r.valor].map(x => C.el('td', { text: x < 0n ? '−' + grups(-x) : grups(x) }))))
+            );
+            botoR.disabled = mostrades >= reduides.length;
+            if (mostrades >= reduides.length)
+                taulaR.appendChild(C.el('tr', null, C.el('td', { colspan: 4, class: 'fi-reduides', text: 'Fins aquí: ara ja tens una pista molt bona.' })));
+        }
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            prova(input.value);
+        });
+        function prova(text) {
+            ctx.amaga();
+            const n = llegeixNombre(text);
+            if (n === null) {
+                compte.replaceChildren();
+                ctx.missatge('error', 'Escriu un nombre enter positiu', ['Només xifres (pots posar espais entre els grups).']);
+                return;
+            }
+            estat.proves++;
+            const r = M.prova(n, d, estat);
+            compte.replaceChildren(...r.nodes);
+            pintaEstat();
+            if (r.resolt) ctx.resolt(r.resolt[0], r.resolt[1]);
+            else if (r.info) ctx.missatge('info', r.info[0], r.info[1]);
+        }
+        function pintaEstat() {
+            const extra = M.estat ? M.estat(estat, d) : [];
+            ctx.estat([C.el('span', null, 'Proves: ', C.el('b', { text: estat.proves }))].concat(extra));
+        }
+        function inicia() {
+            estat.trobats.clear();
+            estat.proves = 0;
+            input.value = '';
+            compte.replaceChildren(C.el('p', { class: 'pista-entrada', text: d.textInici }));
+            if (reduides) {
+                mostrades = 0;
+                pintaReduides();
+            }
+            ctx.amaga();
+            pintaEstat();
+        }
+        inicia();
+        return {
+            reinicia: inicia,
+            textSolucio: '▶ Prova-la al tauler',
+            solucio() {
+                const v = d.mode === 'curiosos' ? d.objectiu : [d.mode === 'hastings' ? d.y : d.minim];
+                v.forEach(x => {
+                    input.value = String(x);
+                    prova(String(x));
+                });
+                ctx.amaga();
+                ctx.missatge('info', 'La solució de Dudeney', [d.resumSolucio]);
+            },
+        };
+    }
+
     window.Taulers.estripat = {
         crea: creaEstripat,
         figura: figuraEtiqueta,
@@ -1121,6 +1360,7 @@
     window.Taulers.rectangles = { crea: creaRectangles, figura: figuraRectangles };
     window.Taulers.xifres = { crea: creaXifres, figura: figuraXifres };
     window.Taulers.bandolers = { crea: creaBandolers, figura: figuraBandolers };
+    window.Taulers.entrada = { crea: creaEntrada, figura: figuraEntrada };
     window.Taulers.amulet = {
         crea: creaAmulet,
         figura: figuraAmulet,

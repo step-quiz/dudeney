@@ -546,3 +546,15 @@ body {
 .bandolers-svg .inicial-bandoler {
     fill: #000;
 }
+.entrada-svg .soldat {
+    fill: #000;
+}
+.forat-sol .brill-sol {
+    display: none;
+}
+.forat-sol.triat .num-sol {
+    fill: #000;
+}
+.forat-sol.ple .vidre-sol {
+    fill: #bbb;
+}

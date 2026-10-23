@@ -11,6 +11,8 @@
  *   - cercle: fitxes de dos colors en un cercle amb un forat; cada color va en
  *     un sol sentit i només pot saltar una fitxa de l'altre color (AM 217).
  *   - blocs: blocs que llisquen dins una capsa cap al forat (AM 219, el «15»).
+ *   - solitari: el solitari anglès de 33 forats (AM 227); un moviment és una
+ *     cadena de salts de la mateixa bola.
  *   - xarxa: fitxes sobre punts units per línies; una fitxa va per una línia a
  *     un punt buit (AM 341, les quatre granotes de Guarini).
  *   Per a cada model: moviments legals, aplicar-los, saber si està resolt, i els
@@ -262,6 +264,106 @@
         },
     };
 
+    // ── Solitari (AM 227: el solitari central, tauler anglès de 33 forats) ──
+    // Forats numerats com Dudeney, d'esquerra a dreta i de dalt a baix: 1–3, 4–6, 7–13, 14–20, 21–27, 28–30, 31–33.
+    // estat = [null, bool × 33] (estat[n] = hi ha bola al forat n).
+    var solitari = (function () {
+        var files = [[2, 3, 4], [2, 3, 4], [0, 1, 2, 3, 4, 5, 6], [0, 1, 2, 3, 4, 5, 6], [0, 1, 2, 3, 4, 5, 6], [2, 3, 4], [2, 3, 4]];
+        var pos = [null],
+            num = {};
+        files.forEach(function (cs, f) {
+            cs.forEach(function (c) {
+                num[f + ',' + c] = pos.length;
+                pos.push([f, c]);
+            });
+        });
+        var api = {
+            pos: pos,
+            num: function (f, c) {
+                return num[f + ',' + c] || 0;
+            },
+            /** Totes les bolles menys la del forat buit (17 per defecte). */
+            inicial: function (buit) {
+                var e = [null];
+                for (var n = 1; n <= 33; n++) e.push(n !== (buit || 17));
+                return e;
+            },
+            /** El forat del mig si de a es pot saltar a c (en línia, a dues caselles); si no, 0. */
+            entre: function (a, c) {
+                var p = pos[a],
+                    q = pos[c];
+                if (!p || !q) return 0;
+                var df = q[0] - p[0],
+                    dc = q[1] - p[1];
+                if (!((df === 0 && Math.abs(dc) === 2) || (dc === 0 && Math.abs(df) === 2))) return 0;
+                return api.num(p[0] + df / 2, p[1] + dc / 2);
+            },
+            /** null si el salt de a a c és legal; si no, el motiu: 'buit' (a), 'ple' (c), 'lluny', 'sense' (no hi ha bola al mig). */
+            motiu: function (estat, a, c) {
+                if (!estat[a]) return 'buit';
+                if (estat[c]) return 'ple';
+                var m = api.entre(a, c);
+                if (!m) return 'lluny';
+                if (!estat[m]) return 'sense';
+                return null;
+            },
+            salta: function (estat, a, c) {
+                var e = estat.slice();
+                e[a] = false;
+                e[api.entre(a, c)] = false;
+                e[c] = true;
+                return e;
+            },
+            /** Els salts possibles [a, c]. */
+            salts: function (estat) {
+                var out = [];
+                for (var a = 1; a <= 33; a++)
+                    if (estat[a])
+                        [[0, 2], [0, -2], [2, 0], [-2, 0]].forEach(function (d) {
+                            var c = api.num(pos[a][0] + d[0], pos[a][1] + d[1]);
+                            if (c && !api.motiu(estat, a, c)) out.push([a, c]);
+                        });
+                return out;
+            },
+            boles: function (estat) {
+                var n = 0;
+                for (var i = 1; i <= 33; i++) if (estat[i]) n++;
+                return n;
+            },
+            /**
+             * Juga una llista de moviments (cada un, la cadena de forats d'una mateixa bola: [a, b, c, …]). Retorna
+             * { estat, salts, moviments, error } (error = el primer salt il·legal, [a, c], o null).
+             */
+            juga: function (moviments, buit) {
+                var e = api.inicial(buit),
+                    salts = 0;
+                for (var i = 0; i < moviments.length; i++)
+                    for (var j = 1; j < moviments[i].length; j++) {
+                        var a = moviments[i][j - 1],
+                            c = moviments[i][j];
+                        if (api.motiu(e, a, c)) return { estat: e, salts: salts, moviments: i, error: [a, c] };
+                        e = api.salta(e, a, c);
+                        salts++;
+                    }
+                return { estat: e, salts: salts, moviments: moviments.length, error: null };
+            },
+            /** «19-17, (29-17, 17-19), …» → [[19, 17], [29, 17, 19], …] (la notació de Dudeney). */
+            llegeix: function (text) {
+                return text.match(/\([^)]*\)|\d+-\d+/g).map(function (g) {
+                    var parts = g.replace(/[()]/g, '').split(',').map(function (x) {
+                        return x.trim().split('-').map(Number);
+                    });
+                    var cadena = [parts[0][0]];
+                    parts.forEach(function (p) {
+                        cadena.push(p[1]);
+                    });
+                    return cadena;
+                });
+            },
+        };
+        return api;
+    })();
+
     // ── Xarxa (AM 341: les quatre granotes) ────────────────────────────────
     var xarxa = {
         uneix: function (arestes, i, j) {
@@ -362,6 +464,7 @@
         salts: salts,
         cercle: cercle,
         blocs: blocs,
+        solitari: solitari,
         xarxa: xarxa,
         frameStewart: frameStewart,
         particio: particio,

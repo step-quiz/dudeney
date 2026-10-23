@@ -2683,3 +2683,236 @@ DEPENDÈNCIES: css/tokens.css
 .fila-diagrames .quadrat-magic.estatic:not(.de4) .cel {
     font-size: 1.25rem;
 }
+
+/* ══════════════════════════════════════════════
+   ENTRADA: s'escriu un nombre (tanda 5: AM 114, CP 114, AM 136, AM 129)
+══════════════════════════════════════════════ */
+.tauler-entrada {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+.tauler-entrada .resposta-recompte input {
+    width: 14em;
+    max-width: 70vw;
+}
+.compte-entrada {
+    font-size: 1.15rem;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+}
+.compte-entrada .pista-entrada {
+    font: 0.95rem var(--sans);
+    color: var(--tinta-suau);
+}
+.compte-entrada .nombre-llarg {
+    word-break: break-all;
+}
+.llista-quadrats {
+    list-style: none;
+    margin: 6px 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(15em, 1fr));
+    gap: 2px 18px;
+    font: 0.95rem var(--sans);
+    text-align: left;
+}
+.taula-galetes,
+.taula-reduides {
+    border-collapse: collapse;
+    font: 0.95rem var(--sans);
+    margin: 0 auto;
+}
+.taula-galetes th,
+.taula-galetes td,
+.taula-reduides th,
+.taula-reduides td {
+    padding: 3px 8px;
+    border-bottom: 1px solid var(--linia);
+    text-align: right;
+}
+.taula-galetes th:first-child {
+    text-align: left;
+}
+.taula-galetes tr.mati {
+    font-weight: 700;
+}
+.taula-reduides tr.destacada td {
+    font-weight: 700;
+    color: var(--tema-fort);
+}
+.ajuda-reduides {
+    width: 100%;
+    max-width: 560px;
+    font: 0.95rem var(--sans);
+    overflow-x: auto;
+}
+.ajuda-reduides summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--tema-fort);
+}
+.ajuda-reduides .btn-sec {
+    margin: 6px 0;
+}
+.entrada-svg {
+    max-width: 340px;
+}
+.entrada-svg .nombre-figura {
+    font: 700 30px var(--serif);
+    fill: var(--tinta);
+    text-anchor: middle;
+}
+.entrada-svg .signe-figura {
+    font: 700 34px var(--sans);
+    fill: var(--tinta);
+    text-anchor: middle;
+}
+.entrada-svg .signe-figura.petit {
+    font: 600 15px var(--sans);
+}
+.entrada-svg .soldat {
+    fill: var(--tema);
+}
+.entrada-svg .capsa-galetes {
+    fill: var(--fusta);
+    stroke: var(--fusta-vora);
+    stroke-width: 2.5;
+    stroke-linejoin: round;
+}
+.entrada-svg .tapa-galetes {
+    fill: var(--fusta-vora);
+    stroke: var(--fusta-vora);
+    stroke-width: 2.5;
+    stroke-linejoin: round;
+    opacity: 0.35;
+}
+.entrada-svg .galeta {
+    fill: var(--formatge);
+    stroke: var(--formatge-vora);
+    stroke-width: 2;
+}
+.entrada-svg .forat-galeta {
+    fill: var(--formatge-vora);
+}
+
+/* Vuit presos i un quadrat màgic (AM 401): el tauler de blocs amb figura 'pres' */
+.preso-svg .fons-capsa {
+    fill: var(--panell);
+}
+.preso-svg .paret-preso {
+    stroke: var(--fusta-vora);
+    stroke-width: 7;
+    stroke-linecap: round;
+    fill: none;
+}
+.bloc.pres .zona-pres {
+    fill: transparent;
+    stroke: none;
+}
+.bloc.pres .cos-pres {
+    fill: var(--fusta);
+    stroke: var(--tinta);
+    stroke-width: 2.5;
+    stroke-linejoin: round;
+}
+.bloc.pres.pot .cos-pres {
+    stroke: var(--tema);
+    stroke-width: 3.5;
+}
+.bloc.pres:focus-visible .zona-pres {
+    stroke: var(--tema);
+    stroke-width: 4;
+}
+.num-pres {
+    font: 700 28px var(--serif);
+    fill: var(--tinta);
+    text-anchor: middle;
+    dominant-baseline: central;
+}
+.dos-quadrats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    justify-content: center;
+}
+
+/* El solitari central (AM 227) */
+.solitari-svg {
+    max-width: 520px;
+    touch-action: none;
+}
+.solitari-svg .taulell-sol {
+    fill: var(--fusta);
+    stroke: var(--fusta-vora);
+    stroke-width: 4;
+}
+.solitari-svg .vora-sol {
+    fill: none;
+    stroke: var(--fusta-vora);
+    stroke-width: 2;
+}
+.solitari-svg .linies-sol line {
+    stroke: var(--fusta-vora);
+    stroke-width: 3;
+}
+.forat-sol {
+    cursor: pointer;
+}
+.forat-sol .zona-sol {
+    fill: transparent;
+}
+.forat-sol .clot-sol {
+    fill: var(--panell);
+    stroke: var(--fusta-vora);
+    stroke-width: 2.5;
+}
+.forat-sol .bola-sol {
+    display: none;
+}
+.forat-sol.ple .bola-sol {
+    display: inline;
+}
+.forat-sol .vidre-sol {
+    fill: var(--aigua);
+    stroke: var(--tinta);
+    stroke-width: 2;
+}
+.forat-sol .brill-sol {
+    fill: #fff;
+    opacity: 0.7;
+}
+.forat-sol .num-sol {
+    font: 600 15px var(--sans);
+    fill: var(--tinta);
+    text-anchor: middle;
+    dominant-baseline: central;
+    pointer-events: none;
+}
+.forat-sol.triat .vidre-sol {
+    fill: var(--tema);
+    stroke: var(--tema-fort);
+    stroke-width: 3;
+}
+.forat-sol.triat .num-sol {
+    fill: #fff;
+}
+.forat-sol.desti .clot-sol {
+    stroke: var(--tema);
+    stroke-width: 4;
+    stroke-dasharray: 5 4;
+}
+.forat-sol:focus-visible .clot-sol {
+    stroke: var(--tema);
+    stroke-width: 5;
+}
+.forat-sol.arrossegada .bola-sol {
+    filter: drop-shadow(0 5px 4px rgba(0, 0, 0, 0.3));
+}
+.marques .no-atacada {
+    fill: var(--tinta);
+    pointer-events: none;
+}

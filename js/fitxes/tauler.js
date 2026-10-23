@@ -829,8 +829,9 @@
     }
 
     // ════════════════════════════════════════════════════════════
-    // BLOCS: blocs que llisquen dins una capsa (AM 219)
+    // BLOCS: blocs que llisquen dins una capsa (AM 219), o presos que es mouen per les cel·les (AM 401)
     // dades: cols, inicial i objectiu (text, '_' = el forat), minim, solucio (les lletres per ordre).
+    // AM 401: figura 'pres', magica (la suma: qualsevol quadrat màgic val, en lloc d'objectiu), textFinal.
     // ════════════════════════════════════════════════════════════
     const BL = 100,
         VORA = 14;
@@ -847,16 +848,42 @@
             'role': opcions.estatic ? 'img' : 'group',
             'aria-label': opcions.etiqueta || d.etiqueta,
         });
+        const pres = d.figura === 'pres';
+        if (pres) s.classList.add('preso-svg');
         C.svg('rect', { class: 'capsa-blocs', x: 0, y: 0, width: W, height: H, rx: 6 }, s);
         C.svg('rect', { class: 'fons-capsa', x: VORA, y: VORA, width: cols * BL, height: files * BL }, s);
+        if (pres) {
+            // El plànol de la presó: parets entre les cel·les, cadascuna amb una porta al mig
+            const P = 34;
+            for (let k = 1; k < cols; k++)
+                for (let f = 0; f < files; f++) {
+                    const x = VORA + k * BL,
+                        y = VORA + f * BL;
+                    C.svg('path', { class: 'paret-preso', d: `M${x} ${y} V${y + (BL - P) / 2} M${x} ${y + (BL + P) / 2} V${y + BL}` }, s);
+                }
+            for (let k = 1; k < files; k++)
+                for (let c = 0; c < cols; c++) {
+                    const x = VORA + c * BL,
+                        y = VORA + k * BL;
+                    C.svg('path', { class: 'paret-preso', d: `M${x} ${y} H${x + (BL - P) / 2} M${x + (BL + P) / 2} ${y} H${x + BL}` }, s);
+                }
+        }
         const capa = C.svg('g', { class: 'blocs' }, s);
         const blocs = {};
         llegeixBlocs(d.inicial).forEach(x => {
             if (!x) return;
-            const g = C.svg('g', { 'class': 'bloc', 'data-l': x }, capa);
+            const g = C.svg('g', { 'class': 'bloc' + (pres ? ' pres' : ''), 'data-l': x }, capa);
             const dins = C.svg('g', { class: 'dins-bloc' }, g);
-            C.svg('rect', { class: 'cara-bloc', x: 3, y: 3, width: BL - 6, height: BL - 6, rx: 6 }, dins);
-            C.svg('text', { 'class': 'lletra-bloc', 'x': BL / 2, 'y': BL / 2 + 2, 'text': x }, dins);
+            if (pres) {
+                // Un pres d'esquena, amb el número a l'esquena
+                C.svg('rect', { class: 'zona-pres', x: 6, y: 6, width: BL - 12, height: BL - 12, rx: 8 }, dins);
+                C.svg('path', { class: 'cos-pres', d: 'M26 88 L28 52 Q30 38 44 36 L56 36 Q70 38 72 52 L74 88 Z' }, dins);
+                C.svg('circle', { class: 'cos-pres', cx: 50, cy: 24, r: 12 }, dins);
+                C.svg('text', { 'class': 'num-pres', 'x': 50, 'y': 64, 'text': x }, dins);
+            } else {
+                C.svg('rect', { class: 'cara-bloc', x: 3, y: 3, width: BL - 6, height: BL - 6, rx: 6 }, dins);
+                C.svg('text', { 'class': 'lletra-bloc', 'x': BL / 2, 'y': BL / 2 + 2, 'text': x }, dins);
+            }
             blocs[x] = g;
         });
         const lloc = i => [VORA + (i % cols) * BL, VORA + Math.floor(i / cols) * BL];
@@ -961,9 +988,9 @@
                 if (!x) return;
                 const pot = M.blocs.desti(estat, i, cols) >= 0;
                 D.blocs[x].classList.toggle('pot', pot);
-                D.blocs[x].setAttribute('aria-label', `Bloc ${x}${pot ? ', tocant al forat' : ''}`);
+                D.blocs[x].setAttribute('aria-label', d.figura === 'pres' ? `Pres ${x}${pot ? ', al costat de la cel·la buida' : ''}` : `Bloc ${x}${pot ? ', tocant al forat' : ''}`);
             });
-            textRuta.textContent = ruta.length ? 'Moviments: ' + ruta.join(', ') : 'Toca un bloc que toqui el forat.';
+            textRuta.textContent = ruta.length ? 'Moviments: ' + ruta.join(', ') : d.figura === 'pres' ? 'Toca un pres que sigui al costat de la cel·la buida.' : 'Toca un bloc que toqui el forat.';
             ctx.estat([C.el('span', null, 'Moviments: ', C.el('b', { text: moviments }))]);
             ctx.desfes(hist.mida > 0);
         }
@@ -972,7 +999,8 @@
             atura();
             const i = estat.indexOf(x);
             if (M.blocs.desti(estat, i, cols) < 0) {
-                ctx.missatge('error', `El bloc ${x} no es pot moure`, ['Només pot lliscar un bloc que toqui el forat per un costat (no en diagonal).']);
+                if (d.figura === 'pres') ctx.missatge('error', `El pres ${x} no es pot moure`, ['Només pot passar a la cel·la buida si hi és al costat: per una porta, mai en diagonal.']);
+                else ctx.missatge('error', `El bloc ${x} no es pot moure`, ['Només pot lliscar un bloc que toqui el forat per un costat (no en diagonal).']);
                 C.anima(D.blocs[x].querySelector('.dins-bloc'), 'sacseja');
                 return;
             }
@@ -984,11 +1012,31 @@
             pinta();
             revisa();
         }
+        /** Els que no s'han mogut mai en aquesta partida. */
+        const quiets = () => Object.keys(D.blocs).filter(x => !ruta.includes(x)).sort();
         function revisa() {
+            if (d.magica) return revisaMagica();
             if (estat.map(x => x || '_').join('') !== d.objectiu) return;
             if (moviments === d.minim) ctx.resolt(`${moviments} moviments: el mínim!`, ['És el mínim possible, i només hi ha una manera de fer-ho en tan pocs moviments.']);
             else if (moviments < d.minim) ctx.resolt(`Fet en ${moviments} moviments!`, []);
             else ctx.missatge('info', `Fet en ${moviments} moviments`, ['Es pot fer amb menys moviments. Ho tornes a provar?']);
+        }
+        // AM 401: l'objectiu és qualsevol quadrat màgic (el forat compta com a 0) i, en el mínim de moviments,
+        // que algú no s'hagi mogut mai de la seva cel·la.
+        function revisaMagica() {
+            const v = estat.map(x => (x ? +x : 0));
+            const linies = [];
+            for (let k = 0; k < cols; k++) {
+                linies.push([0, 1, 2].map(j => v[k * cols + j]), [0, 1, 2].map(j => v[j * cols + k]));
+            }
+            linies.push([v[0], v[4], v[8]], [v[2], v[4], v[6]]);
+            if (!linies.every(l => l[0] + l[1] + l[2] === d.magica)) return;
+            const q = quiets();
+            const quadre = `Totes les files, columnes i diagonals sumen ${d.magica} (la cel·la buida compta com a 0).`;
+            if (moviments > d.minim) return ctx.missatge('info', `Quadrat màgic en ${moviments} moviments`, [quadre, `Es pot fer en ${d.minim}. Ho tornes a provar?`]);
+            if (!q.length)
+                return ctx.missatge('info', `Quadrat màgic en ${moviments} moviments!`, [quadre, 'Però s’han mogut tots, i un dels presos no es vol moure de la seva cel·la. Hi ha una altra manera en el mínim de moviments.']);
+            ctx.resolt(`${moviments} moviments: el mínim!`, [quadre, `${q.length === 1 ? 'El pres ' + q[0] + ' no s’ha mogut' : 'Els presos ' + C.llista(q) + ' no s’han mogut'} de la seva cel·la.`]);
         }
         function desfes() {
             atura();
@@ -1018,7 +1066,7 @@
                         pinta();
                     },
                     C.movimentReduit() ? 260 : 520,
-                    () => ctx.missatge('info', 'Així ho fa Dudeney', ['Vint-i-tres moviments, el mínim.'])
+                    () => ctx.missatge('info', 'Així ho fa Dudeney', [d.textFinal || 'Vint-i-tres moviments, el mínim.'])
                 );
                 return reproduccio;
             },
@@ -1414,7 +1462,267 @@
         };
     }
 
+    // ════════════════════════════════════════════════════════════
+    // SOLITARI: el solitari anglès de 33 forats (AM 227)
+    // dades: buit (17), final (17), solucio (la notació de Dudeney: «19-17, (29-17, 17-19), …»), minim (18,
+    // el de Bergholt), dudeney (19). Una bola salta per sobre d'una altra a un forat buit, i la saltada se’n va;
+    // els salts seguits de la mateixa bola compten com un sol moviment.
+    // ════════════════════════════════════════════════════════════
+    const SP = 62,
+        SC = SP * 3 + 60; // el centre del tauler (forat 17)
+    const solXY = n => {
+        const [f, c] = M.solitari.pos[n];
+        return [60 + c * SP, 60 + f * SP];
+    };
+    function dibuixaSolitari(opcions = {}) {
+        const W = 2 * SC;
+        const s = C.svg('svg', { 'class': 'tauler-svg solitari-svg', 'viewBox': `0 0 ${W} ${W}`, 'role': opcions.estatic ? 'img' : 'group', 'aria-label': opcions.etiqueta || 'El tauler del solitari: 33 forats en forma de creu' });
+        C.svg('circle', { class: 'taulell-sol', cx: SC, cy: SC, r: SC - 6 }, s);
+        C.svg('circle', { class: 'vora-sol', cx: SC, cy: SC, r: SC - 22 }, s);
+        // Les línies entre forats veïns, com a la figura de Dudeney
+        const linies = C.svg('g', { class: 'linies-sol' }, s);
+        for (let n = 1; n <= 33; n++) {
+            const [f, c] = M.solitari.pos[n];
+            [[0, 1], [1, 0]].forEach(([df, dc]) => {
+                const m = M.solitari.num(f + df, c + dc);
+                if (!m) return;
+                const [x1, y1] = solXY(n),
+                    [x2, y2] = solXY(m);
+                C.svg('line', { x1, y1, x2, y2 }, linies);
+            });
+        }
+        const forats = [null],
+            boles = [null];
+        const capa = C.svg('g', { class: 'forats-sol' }, s);
+        for (let n = 1; n <= 33; n++) {
+            const [x, y] = solXY(n);
+            const g = C.svg('g', { 'class': 'forat-sol', 'data-n': n }, capa);
+            g.style.transform = `translate(${x}px, ${y}px)`;
+            C.svg('circle', { class: 'zona-sol', r: SP / 2 }, g);
+            C.svg('circle', { class: 'clot-sol', r: 21 }, g);
+            const b = C.svg('g', { class: 'bola-sol' }, g);
+            C.svg('circle', { class: 'vidre-sol', r: 19 }, b);
+            C.svg('circle', { class: 'brill-sol', cx: -6, cy: -7, r: 5 }, b);
+            C.svg('text', { 'class': 'num-sol', 'x': 0, 'y': 1, 'text': n }, g);
+            forats.push(g);
+            boles.push(b);
+        }
+        function posa(estat, tria, desti) {
+            for (let n = 1; n <= 33; n++) {
+                forats[n].classList.toggle('ple', !!estat[n]);
+                forats[n].classList.toggle('triat', tria === n);
+                forats[n].classList.toggle('desti', !!(desti && desti.includes(n)));
+            }
+        }
+        return { svg: s, forats, boles, posa };
+    }
+    function figuraSolitari(p) {
+        const D = dibuixaSolitari({ estatic: true, etiqueta: 'El tauler del solitari, amb els forats numerats de l’1 al 33: tots plens menys el 17, al centre' });
+        D.posa(M.solitari.inicial(p.dades.buit));
+        return D.svg;
+    }
+
+    function creaSolitari(lloc, p, ctx) {
+        const d = p.dades;
+        const S = M.solitari;
+        let estat, tria, moviments, darrer, reproduccio;
+        const hist = C.historial(x => ({ estat: x.estat.slice(), moviments: x.moviments.map(m => m.slice()), darrer: x.darrer }));
+        const caixa = C.el('div', { class: 'tauler solitari' });
+        const D = dibuixaSolitari();
+        const textRuta = C.el('p', { 'class': 'text-ruta', 'aria-live': 'polite' });
+        caixa.append(D.svg, textRuta);
+        lloc.appendChild(caixa);
+
+        const destins = a => S.salts(estat).filter(s => s[0] === a).map(s => s[1]);
+        for (let n = 1; n <= 33; n++) {
+            const g = D.forats[n];
+            g.setAttribute('tabindex', '0');
+            g.setAttribute('role', 'button');
+            g.addEventListener('click', () => {
+                if (!C.acabaDeArrossegar()) toca(n);
+            });
+            g.addEventListener('keydown', e => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toca(n);
+                }
+            });
+        }
+        caixa.addEventListener('keydown', e => {
+            if (e.key === 'Backspace') {
+                e.preventDefault();
+                desfes();
+            } else if (e.key === 'Escape') {
+                tria = null;
+                pinta();
+            }
+        });
+        const foratA = e => {
+            const q = C.coords(D.svg, e.clientX, e.clientY);
+            let millor = 0,
+                dist = SP * 0.6;
+            for (let n = 1; n <= 33; n++) {
+                const [x, y] = solXY(n);
+                const dd = Math.hypot(q.x - x, q.y - y);
+                if (dd < dist) {
+                    dist = dd;
+                    millor = n;
+                }
+            }
+            return millor;
+        };
+        C.arrossega(D.svg, {
+            inici: e => {
+                const n = foratA(e);
+                if (!n || !estat[n]) return null;
+                atura();
+                return { n };
+            },
+            comenca: c => {
+                tria = c.n;
+                pinta();
+                D.forats[c.n].classList.add('arrossegada');
+            },
+            mou: (c, e) => {
+                const q = C.coords(D.svg, e.clientX, e.clientY - (c.tactil ? 30 : 0));
+                const [x, y] = solXY(c.n);
+                D.boles[c.n].style.transform = `translate(${q.x - x}px, ${q.y - y}px)`;
+            },
+            deixa: (c, e) => {
+                D.forats[c.n].classList.remove('arrossegada');
+                D.boles[c.n].style.transform = '';
+                const n = foratA({ clientX: e.clientX, clientY: e.clientY - (c.tactil ? 30 : 0) });
+                if (n && n !== c.n) salta(c.n, n);
+                else pinta();
+            },
+            cancela: c => {
+                D.forats[c.n].classList.remove('arrossegada');
+                D.boles[c.n].style.transform = '';
+                pinta();
+            },
+        });
+
+        function inicia() {
+            atura();
+            estat = S.inicial(d.buit);
+            tria = null;
+            moviments = [];
+            darrer = 0;
+            hist.buida();
+            pinta();
+            ctx.amaga();
+        }
+        function toca(n) {
+            atura();
+            if (estat[n]) {
+                tria = tria === n ? null : n;
+                pinta();
+                return;
+            }
+            if (tria === null) {
+                ctx.missatge('info', `El forat ${n} és buit`, ['Primer toca la bola que ha de saltar, i després el forat buit on ha d’anar.']);
+                return;
+            }
+            salta(tria, n);
+        }
+        function salta(a, c) {
+            const motiu = S.motiu(estat, a, c);
+            if (motiu) {
+                const m = S.entre(a, c);
+                ctx.missatge('error', `De ${a} a ${c} no es pot saltar`, [
+                    motiu === 'ple'
+                        ? `El forat ${c} no és buit.`
+                        : motiu === 'sense'
+                          ? `Entre el ${a} i el ${c} hi ha el forat ${m}, i és buit: cal saltar per sobre d’una bola.`
+                          : 'Una bola salta per sobre de la bola del costat fins al forat següent, en línia recta (mai en diagonal).',
+                ]);
+                tria = a;
+                pinta();
+                return;
+            }
+            hist.desa({ estat, moviments, darrer });
+            estat = S.salta(estat, a, c);
+            // Si la mateixa bola continua saltant, és el mateix moviment
+            if (darrer === a && moviments.length) moviments = moviments.slice(0, -1).concat([moviments[moviments.length - 1].concat([c])]);
+            else moviments = moviments.concat([[a, c]]);
+            darrer = c;
+            tria = destins(c).length ? c : null;
+            ctx.amaga();
+            pinta();
+            revisa();
+        }
+        function textMoviments() {
+            return moviments.map(m => (m.length > 2 ? '(' + m.slice(1).map((x, i) => `${m[i]}-${x}`).join(', ') + ')' : `${m[0]}-${m[1]}`)).join(', ');
+        }
+        function pinta() {
+            D.posa(estat, tria, tria ? destins(tria) : null);
+            for (let n = 1; n <= 33; n++)
+                D.forats[n].setAttribute('aria-label', `Forat ${n}${estat[n] ? ', amb bola' : ', buit'}${tria === n ? ', triada' : ''}`);
+            D.svg.classList.toggle('amb-seleccio', tria !== null);
+            textRuta.textContent = moviments.length ? textMoviments() : 'Toca una bola i després el forat on ha de saltar.';
+            const salts = 32 - S.boles(estat);
+            ctx.estat([
+                C.el('span', null, 'Moviments: ', C.el('b', { text: moviments.length })),
+                C.el('span', null, 'Salts: ', C.el('b', { text: salts })),
+                C.el('span', null, 'Boles: ', C.el('b', { text: S.boles(estat) })),
+            ]);
+            ctx.desfes(hist.mida > 0);
+        }
+        function revisa() {
+            const queden = S.boles(estat);
+            if (queden === 1) {
+                const n = moviments.length;
+                if (!estat[d.final]) return ctx.missatge('info', 'Una sola bola…', [`…però no és al forat ${d.final}, el del centre. Ho tornes a provar?`]);
+                if (n <= d.minim) return ctx.resolt(`${n} moviments: el mínim!`, [`Com Ernest Bergholt el 1912. John Beasley va demostrar el 1964 que no es pot fer amb menys.`]);
+                if (n === d.dudeney) return ctx.resolt('19 moviments, com Dudeney!', ['Ell creia que no es podia fer amb menys… però es pot fer en 18.']);
+                return ctx.missatge('info', `Fet en ${n} moviments`, ['Una sola bola, al centre. Dudeney ho va fer en 19, i encara es pot fer amb menys.']);
+            }
+            if (!S.salts(estat).length)
+                ctx.missatge('info', 'No queda cap salt possible', [`Queden ${queden} boles. Desfés uns quants moviments o torna a començar.`]);
+        }
+        function desfes() {
+            atura();
+            const ant = hist.desfes();
+            if (!ant) return;
+            ({ estat, moviments, darrer } = ant);
+            tria = null;
+            ctx.amaga();
+            pinta();
+        }
+        function atura() {
+            if (reproduccio) reproduccio.atura();
+            reproduccio = null;
+        }
+        inicia();
+        return {
+            reinicia: inicia,
+            desfes,
+            textSolucio: '▶ Mira-la al tauler (19 moviments)',
+            solucio() {
+                inicia();
+                const passos = [];
+                S.llegeix(d.solucio).forEach(m => m.slice(1).forEach((c, i) => passos.push([m[i], c])));
+                reproduccio = C.reprodueix(
+                    passos,
+                    ([a, c]) => {
+                        hist.desa({ estat, moviments, darrer });
+                        estat = S.salta(estat, a, c);
+                        if (darrer === a && moviments.length) moviments = moviments.slice(0, -1).concat([moviments[moviments.length - 1].concat([c])]);
+                        else moviments = moviments.concat([[a, c]]);
+                        darrer = c;
+                        tria = null;
+                        pinta();
+                    },
+                    C.movimentReduit() ? 220 : 480,
+                    () => ctx.missatge('info', 'Així ho fa Dudeney', ['Dinou moviments i una sola bola, al centre.'])
+                );
+                return reproduccio;
+            },
+        };
+    }
+
     window.Taulers.piles = { crea: creaPiles, figura: figuraPiles };
+    window.Taulers.solitari = { crea: creaSolitari, figura: figuraSolitari };
     window.Taulers.salts = { crea: creaSalts, figura: figuraSalts };
     window.Taulers.cercle = {
         crea: creaCercle,
@@ -1429,9 +1737,9 @@
         crea: creaBlocs,
         figura: figuraBlocs,
         figuraSolucio: p => {
-            const svg = figuraBlocs(p, { estat: p.dades.objectiu });
+            const svg = figuraBlocs(p, { estat: p.dades.final || p.dades.objectiu });
             svg.classList.add('figura-estatica');
-            return C.el('figure', null, svg, C.el('figcaption', { text: 'Al final, després de 23 moviments.' }));
+            return C.el('figure', null, svg, C.el('figcaption', { text: p.dades.peuFinal || 'Al final, després de 23 moviments.' }));
         },
     };
     window.Taulers.xarxa = {

@@ -180,11 +180,21 @@
     // ════════════════════════════════════════════════════════════
     /** Les dades d'una figura de reines (o de peons): «inicial» i «solucio» són columnes per fila (reines) o caselles. */
     const pecaReines = d => d.peca || 'reina';
-    const casellesDe = (d, x) => (pecaReines(d) === 'reina' ? E.aCaselles(x) : x.map(q => q.slice()));
+    const casellesDe = (d, x) => (pecaReines(d) === 'reina' && !d.caselles ? E.aCaselles(x) : x.map(q => q.slice()));
     const ambAtacs = d => d.atacs !== false;
 
     function dibuixaLinies(T, peces, d) {
         T.linies.replaceChildren();
+        if (d.lliures) {
+            // AM 316: un punt a cada casella que no ataca cap reina
+            T.marques.replaceChildren();
+            const lliures = E.noAtacades(peces, T.n);
+            lliures.forEach(q => {
+                const [x, y] = centre(q);
+                C.svg('circle', { class: 'no-atacada', cx: x, cy: y, r: 9 }, T.marques);
+            });
+            return { atacs: [], trios: [], lliures };
+        }
         if (peces.length !== (d.nombre || T.n)) return { atacs: [], trios: [] };
         const atacs = ambAtacs(d) ? E.conflictes(peces) : [];
         atacs.forEach(([i, j]) => {
@@ -238,6 +248,12 @@
         const T = dibuixaTauler(n, { prefix: 'joc' });
         caixa.appendChild(T.svg);
         lloc.appendChild(caixa);
+        // AM 316: només es poden canviar de lloc d.mogudes reines (les altres es queden a la casella inicial)
+        const originals = d.lliures ? casellesDe(d, d.inicial) : [];
+        const esOriginal = q => originals.some(r => r[0] === q[0] && r[1] === q[1]);
+        const mogudesSi = (i, q) => reines.filter((r, j) => !esOriginal(j === i ? q : r)).length;
+        const avisMogudes = () =>
+            ctx.missatge('error', `Només pots canviar de lloc ${d.mogudes} reines`, ['Mou una de les que ja has canviat, o torna una reina al seu lloc.']);
         const avisFixa = () =>
             ctx.missatge('info', `Aquest ${sing} no es mou`, [`L’enunciat el posa en aquesta casella. Mou els altres.`]);
         const kb = teclat(T, toca, (e, q) => {
@@ -277,7 +293,12 @@
             },
             deixa: (c, e) => {
                 const q = casellaDe(T, e, c.tactil);
-                if (!q) reines.splice(c.i, 1);
+                if (d.lliures) {
+                    if (q && index(q) < 0) {
+                        if (mogudesSi(c.i, q) > d.mogudes) avisMogudes();
+                        else reines[c.i] = q;
+                    }
+                } else if (!q) reines.splice(c.i, 1);
                 else if (index(q) < 0) reines[c.i] = q;
                 kb.posa(q || reines[0] || [0, 0]);
                 canvi();
@@ -302,10 +323,13 @@
             }
             if (triada !== null) {
                 if (i === triada) {
-                    reines.splice(i, 1); // segon toc a la mateixa peça: es treu
+                    if (!d.lliures) reines.splice(i, 1); // segon toc a la mateixa peça: es treu
                     triada = null;
                 } else if (i >= 0) triada = i;
-                else {
+                else if (d.lliures && mogudesSi(triada, q) > d.mogudes) {
+                    avisMogudes();
+                    return;
+                } else {
                     reines[triada] = q;
                     triada = null;
                 }
@@ -317,7 +341,9 @@
                 pinta();
                 return;
             }
-            if (reines.length < total) {
+            if (d.lliures) {
+                ctx.missatge('info', 'Toca primer una reina', ['Després toca la casella on la vols posar (pot ser qualsevol, no cal que hi arribi movent-se com als escacs).']);
+            } else if (reines.length < total) {
                 reines.push(q);
                 canvi();
             } else {
@@ -343,6 +369,7 @@
         const recompte = k => [C.el('span', null, Majuscula(plur) + ': ', C.el('b', { text: `${k} de ${total}` }))];
         function canvi() {
             ctx.amaga();
+            if (d.lliures) return canviLliures();
             const { atacs, trios } = pinta();
             ctx.estat(recompte(reines.length));
             if (reines.length !== total) return;
@@ -369,6 +396,19 @@
                 );
             ctx.missatge(atacs.length ? 'error' : 'info', 'Encara no', frases);
         }
+        function canviLliures() {
+            const { lliures } = pinta();
+            const mogudes = reines.filter(r => !esOriginal(r)).length;
+            ctx.estat([
+                C.el('span', null, 'Reines canviades de lloc: ', C.el('b', { text: `${mogudes} de ${d.mogudes}` })),
+                C.el('span', null, 'Caselles sense atacar: ', C.el('b', { text: lliures.length })),
+            ]);
+            if (mogudes < d.mogudes) return;
+            if (lliures.length >= d.lliures)
+                ctx.resolt(`${lliures.length} caselles sense atacar!`, [`Amb només ${d.mogudes} reines canviades de lloc. És l’única manera de fer-ho.`]);
+            else
+                ctx.missatge('info', `${C.plural(lliures.length, 'casella', 'caselles')} sense atacar`, [`Amb ${d.mogudes} reines canviades de lloc se’n poden deixar ${d.lliures}. Prova de moure’n unes altres.`]);
+        }
         inicia();
         return {
             reinicia: inicia,
@@ -377,6 +417,12 @@
                 reines = casellesDe(d, d.solucio);
                 triada = null;
                 ctx.amaga();
+                if (d.lliures) {
+                    canviLliures();
+                    ctx.amaga();
+                    ctx.missatge('info', 'La solució de Dudeney', [d.resumSolucio]);
+                    return;
+                }
                 pinta();
                 ctx.estat(recompte(total));
                 ctx.missatge('info', 'La solució de Dudeney', [

@@ -80,6 +80,32 @@
     function reinesAtaquen(a, b) {
         return a[0] === b[0] || a[1] === b[1] || Math.abs(a[0] - b[0]) === Math.abs(a[1] - b[1]);
     }
+    /**
+     * Les caselles que no ataca cap reina ni ocupa cap reina (AM 316). Amb bloqueig (com en una partida: una reina
+     * no ataca a través d'una altra peça) si bloqueig no és false.
+     */
+    function noAtacades(reines, n, bloqueig) {
+        var oc = {},
+            at = {};
+        reines.forEach(function (q) {
+            oc[clau(q)] = true;
+        });
+        reines.forEach(function (q) {
+            [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]].forEach(function (dd) {
+                var f = q[0] + dd[0],
+                    c = q[1] + dd[1];
+                while (f >= 0 && f < n && c >= 0 && c < n) {
+                    at[f + ',' + c] = true;
+                    if (bloqueig !== false && oc[f + ',' + c]) break;
+                    f += dd[0];
+                    c += dd[1];
+                }
+            });
+        });
+        var out = [];
+        for (var f = 0; f < n; f++) for (var c = 0; c < n; c++) if (!oc[f + ',' + c] && !at[f + ',' + c]) out.push([f, c]);
+        return out;
+    }
     /** Els parells de reines que s'ataquen. */
     function conflictes(reines) {
         var out = [];
@@ -325,6 +351,7 @@
         canonica: canonica,
         reinesAtaquen: reinesAtaquen,
         conflictes: conflictes,
+        noAtacades: noAtacades,
         tresEnLinia: tresEnLinia,
         solucionsReines: solucionsReines,
         aCaselles: aCaselles,
