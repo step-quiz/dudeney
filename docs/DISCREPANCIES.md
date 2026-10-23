@@ -40,3 +40,14 @@ cap de les solucions de 17, encara que no se'n prohibeixi cap.
 | Comptant els rectangles (AM 347) | Fórmules generals | El text de Project Gutenberg havia perdut els exponents («n2») | Exponents restituïts |
 | Les divuit fitxes de dòmino (AM 406) | La solució té les fitxes ajagudes | És el mateix quadrat que el de l'enunciat girat; les sumes no canvien | Es mostra amb les fitxes de peu, com a l'enunciat |
 | El problema del fuster (AM 151) | Tres peces és el mínim | No ho hem comprovat per ordinador | No es diu a la nota |
+
+**Tanda 4** (AM 143, 150, 90, 83, 133, 409, 411, CP 102): confirmat per ordinador: les dues creus (àrees 2,5 i
+0,625), el quadrat de √3 de la mitra, les onze maneres del cent (una sola amb una xifra), els 6627 repartiments dels
+bandolers (no 6639), el bloc 114–122 de compostos i el quadrat reversible de 179.
+
+| Enigma | Què diu Dudeney | Què hem trobat | Què fa el web |
+|---|---|---|---|
+| Multiplicació amb les nou xifres (AM 83) | La suma de xifres més gran és 27 (9 × 654 = 18 × 327 = 5886) | 7 × 984 = 56 × 123 = 6888 fa 30; la de Dudeney és la segona | Es valida la màxima real i s'explica a la nota (⚠) |
+| Les prunes (AM 409) | El diagrama A és «de nombres primers» | Hi ha l'1, que avui no és primer | S'explica a la nota (⚠); el parany de Dudeney el descarta igualment |
+| El problema del cent (AM 90) | Nombres mixtos | Project Gutenberg havia perdut el format (91 5742/638 sortia com «915742/638») | Format restituït |
+| Dues creus d'una (AM 143) | «la forma d'esvàstica que fan els talls» | Símbol amb càrrega nazi | Es diu «forma de molinet» |

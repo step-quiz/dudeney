@@ -84,3 +84,12 @@ bombolla), **modernitzar** (canviar-ho al text), **treure**.
 | Les divuit fitxes de dòmino | El dòmino | Molts alumnes no hi han jugat mai | Explicar: una fitxa són dos quadrats amb punts de 0 a 6, i una capsa en té 28 |
 | Comptant els rectangles | El tauler d'escacs | S'entén | Mantenir |
 
+
+## Tanda 4
+
+| Enigma | Què | Per què pot estranyar | Proposta |
+|---|---|---|---|
+| Dues creus d'una | «Swastika» a la solució | Símbol nazi (Dudeney escrivia el 1917) | **Ja canviat** per «forma de molinet» |
+| Els cinc bandolers | «Bandolers espanyols» i un botí d'un assalt | Estereotip nacional; robatori | Mantenir (és el problema clàssic de Tartaglia), o canviar per «cinc pirates» si es prefereix |
+| La mitra | Una mitra de bisbe; mesures en polzades | Objecte poc conegut | Mantenir (la figura ho aclareix; polzades amb nota) |
+| Les prunes | El fruiter, les cistelles i els nens | S'entén | Mantenir |
