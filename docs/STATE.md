@@ -9,8 +9,8 @@ proceeds in batches of 6–8 puzzles; each batch ends with a delivery (see §1) 
 
 ## 0. Cold start (do this first)
 
-1. Clone `step-quiz/dudeney` and check that this file lists batch 3 as delivered and that
-   `node tests/motors.test.js` reports 140 checks, 0 errors (~15 s). If not, the batch 3 pull request has not been
+1. **Batch 5 (the last one): read `docs/TANDA5.md` first — it has the exact plan.** Clone `step-quiz/dudeney` and check that this file lists batch 4 as merged and that
+   `node tests/motors.test.js` reports 174 checks, 0 errors (~15 s). If not, the batch 4 pull request has not been
    merged yet: ask the user to merge it (or to upload the ZIP, see §1). If the designated branch's previous PR is
    already merged, restart the branch from `origin/main` before working.
 2. Get the source books (public domain; never commit them, `src/` is git-ignored). Download the **EPUB with
@@ -192,8 +192,8 @@ proceeds in batches of 6–8 puzzles; each batch ends with a delivery (see §1) 
 | Batch 1 | am-216 `granotes-gots`, am-362 `bol`, am-297 `alfils`, am-298 `alfils-protegits`, am-317 `peons`, am-247 `mina` | delivered (awaiting review) |
 | Batch 2 | am-217 `twickenham`, am-219 `lletres`, am-341 `quatre-granotes`, am-375 `entrenadors` (jealous husbands → football coaches and their stars), am-377 `tresor`, am-249 `mariner`, am-320 `torre` | merged (PR #1) |
 | Batch 3 | am-146 `trapezi`, am-147 `cinc-triangles`, am-151 `fuster`, am-221 `locomotores`, am-245 `octaedre`, am-406 `domino`, am-347 `rectangles`, cp-38 `amulet` | merged (PR #2) |
-| Batch 4 | am-143 `creus`, am-150 `mitra`, am-90 `cent`, am-83 `multiplicacio`, am-133 `bandolers`, am-409 `prunes`, am-411 `compostos`, cp-102 `reversible` (peces board gained `fixes`/`encaix:'solucio'`; new `xifres` and `bandolers` boards; magic board generalised to n = 4, free constant and `condicio`) | delivered as a PR (awaiting review) |
-| Batch 5 | proposal: am-227, am-401, am-316, am-114, am-129, am-136, cp-114 | am-143 (two crosses from one), am-150 (mitre), am-90 (century, 11 ways), am-83 (digital multiplication), am-133 (five brigands), am-409 (plums, primes), am-411 (composites), cp-102 (reversible magic square) | next — confirm the list with the user first |
+| Batch 4 | am-143 `creus`, am-150 `mitra`, am-90 `cent`, am-83 `multiplicacio`, am-133 `bandolers`, am-409 `prunes`, am-411 `compostos`, cp-102 `reversible` (peces board gained `fixes`/`encaix:'solucio'`; new `xifres` and `bandolers` boards; magic board generalised to n = 4, free constant and `condicio`) | merged (PR #3) |
+| Batch 5 | proposal: am-227, am-401, am-316, am-114, am-129, am-136, cp-114 — plan in `docs/TANDA5.md` | next — confirm the list with the user first |
 | Remaining | see `docs/SELECCIO.md` | pending |
 
 Known open points: `tests/motors.test.js` takes ~15 s (exhaustive bishop searches); the count of 16-move rook tours
