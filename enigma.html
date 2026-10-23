@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Un enigma de Henry E. Dudeney per resoldre a la pantalla: arrossega, toca o fes servir el teclat. Amb pistes, la solució de Dudeney i una nota del matemàtic.">
+    <title>Els enigmes de Dudeney</title>
+    <link rel="icon" href="icon.png">
+    <link rel="stylesheet" href="css/fonts.css?v=4b616bd3">
+    <link rel="stylesheet" href="css/tokens.css?v=8a20f823">
+    <link rel="stylesheet" href="css/dudeney.css?v=924696cb">
+    <link rel="stylesheet" href="css/taulers.css?v=a36d3f84">
+</head>
+<body class="pag-enigma">
+    <header class="capcalera">
+        <a class="tornar" href="index.html"><span class="icona-enllac" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M19 12H5.5M11.5 5.5L5 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Tots els enigmes</a>
+        <div class="title-row">
+            <a href="https://step-quiz.net/" class="home-icon-link" title="Tornar a l'inici" aria-label="Tornar a l'inici">
+                <img src="icon.png" alt="Inici">
+            </a>
+            <p class="nom-lloc"><a href="index.html">Els enigmes de Dudeney</a></p>
+        </div>
+        <a class="per-imprimir" href="imprimir/enigmes.html"><span class="icona-enllac" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 9V3h10v6M7 17H4.5A1.5 1.5 0 0 1 3 15.5v-5A1.5 1.5 0 0 1 4.5 9h15a1.5 1.5 0 0 1 1.5 1.5v5a1.5 1.5 0 0 1-1.5 1.5H17M7 13h10v8H7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>Fitxes per imprimir</a>
+    </header>
+
+    <!-- ══════════ COM ES JUGA (plegat) ══════════ -->
+    <details class="instruccions" id="instruccions">
+        <summary>Com es juga?</summary>
+        <div class="instr-cos" id="com-es-juga"></div>
+    </details>
+
+    <!-- ══════════ ENIGMA ══════════ -->
+    <main class="panel" id="panel">
+        <div class="header-info">
+            <div class="tipus-enigma"><span class="emblema" id="emblema"></span><span id="nom-tipus"></span><span class="dificultat" id="dificultat"></span></div>
+            <div class="level-text"><span id="titol-problema">Enigma</span><span class="ja-resolt" id="ja-resolt" hidden>✓ resolt</span></div>
+            <div class="score-text" id="comptador"></div>
+            <nav class="nav-problemes" aria-label="Enigmes">
+                <button type="button" class="btn-nav" id="btn-anterior" aria-label="Enigma anterior"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4l-8 8 8 8" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+                <button type="button" class="btn-nav" id="btn-tria">Escull…</button>
+                <button type="button" class="btn-nav" id="btn-seguent" aria-label="Enigma següent"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4l8 8-8 8" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            </nav>
+        </div>
+
+        <div class="enigma">
+            <article class="enunciat">
+                <h1 id="titol"></h1>
+                <p class="original" id="original"></p>
+                <div class="text" id="text-enunciat"></div>
+            </article>
+
+            <section class="joc" aria-label="Tauler de joc">
+                <p class="regla" id="regla"></p>
+                <div class="tauler-wrap" id="tauler-wrap"></div>
+                <p class="estat-joc" id="estat-joc" aria-live="polite"></p>
+                <div class="missatge" id="missatge" aria-live="polite"></div>
+                <div class="accions">
+                    <button type="button" class="btn-sec" id="btn-desfes">↶ Desfés</button>
+                    <button type="button" class="btn-sec" id="btn-reinicia">↺ Torna a començar</button>
+                </div>
+            </section>
+        </div>
+
+        <div class="ajuda">
+            <section class="pistes" aria-labelledby="titol-pistes">
+                <div class="pistes-cap">
+                    <h2 id="titol-pistes">Pistes</h2>
+                    <button type="button" class="btn-sec" id="btn-pista">Vull una pista</button>
+                </div>
+                <ol id="llista-pistes"></ol>
+            </section>
+            <details class="desplegable solucio" id="solucio">
+                <summary>La solució de Dudeney <span class="avis">(mira-la quan l’hagis resolt, o si et rendeixes)</span></summary>
+                <div class="cos" id="text-solucio"></div>
+            </details>
+            <details class="desplegable nota" id="nota">
+                <summary>Nota del matemàtic</summary>
+                <div class="cos"><div class="text" id="text-nota"></div></div>
+            </details>
+        </div>
+    </main>
+
+    <footer class="peu-llicencia">
+        <p>
+            Problemes de Henry E. Dudeney (1857–1930), d’obres de domini públic: <cite>The Canterbury Puzzles</cite> (1907) i
+            <cite>Amusements in Mathematics</cite> (1917). Traducció, adaptació, figures i versió interactiva: David Arso Civil,
+            Departament de Matemàtiques de l’INS Miquel Tarradell (CC BY-NC-SA 4.0; el codi, llicència MIT).
+        </p>
+    </footer>
+
+    <!-- ══════════ TRIA D'ENIGMA ══════════ -->
+    <dialog class="dialeg-tria" id="dialeg-tria" aria-labelledby="tria-titol">
+        <h2 id="tria-titol">Escull un enigma</h2>
+        <p>Els que ja has resolt tenen un ✓.</p>
+        <div class="tria-grups" id="tria-grups"></div>
+        <div class="dialeg-peu">
+            <button type="button" class="btn-text" id="btn-esborra-progres">Esborra els ✓</button>
+            <button type="button" class="btn-sec" id="btn-tanca-tria">Tanca</button>
+        </div>
+    </dialog>
+
+    <script src="js/comu/comu.js?v=ad0e0a2b" defer></script>
+    <script src="js/comu/registre.js?v=2ab01f93" defer></script>
+    <script src="js/comu/cerca.js?v=667de718" defer></script>
+    <script src="js/comu/fraccio.js?v=8e60dce4" defer></script>
+    <script src="js/disseccio/motor.js?v=200cb69a" defer></script>
+    <script src="js/fitxes/motor.js?v=6ac05856" defer></script>
+    <script src="js/mesures/motor.js?v=00381ed2" defer></script>
+    <script src="js/escacs/motor.js?v=8f2335d8" defer></script>
+    <script src="js/camins/motor.js?v=4bffaa9f" defer></script>
+    <script src="js/quadrats/motor.js?v=240d9b1c" defer></script>
+    <script src="js/aritmetica/motor.js?v=be9170a6" defer></script>
+    <script src="js/disseccio/problemes.js?v=cd286f31" defer></script>
+    <script src="js/fitxes/problemes.js?v=51d2da56" defer></script>
+    <script src="js/mesures/problemes.js?v=ce093397" defer></script>
+    <script src="js/escacs/problemes.js?v=d3d8882f" defer></script>
+    <script src="js/camins/problemes.js?v=60efb8e3" defer></script>
+    <script src="js/quadrats/problemes.js?v=ddc264b9" defer></script>
+    <script src="js/aritmetica/problemes.js?v=6590eac6" defer></script>
+    <script src="js/disseccio/tauler.js?v=71f94063" defer></script>
+    <script src="js/fitxes/tauler.js?v=deb78f12" defer></script>
+    <script src="js/mesures/tauler.js?v=e3fcabd6" defer></script>
+    <script src="js/escacs/tauler.js?v=5f1dfe73" defer></script>
+    <script src="js/camins/tauler.js?v=7b11f6ba" defer></script>
+    <script src="js/quadrats/tauler.js?v=61bbab9a" defer></script>
+    <script src="js/aritmetica/tauler.js?v=9fa76042" defer></script>
+    <script src="js/enigma.js?v=2e2cdff7" defer></script>
+</body>
+</html>

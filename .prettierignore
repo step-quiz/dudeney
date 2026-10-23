@@ -1,0 +1,9 @@
+# Només el codi: els HTML, els Markdown i les dades generades queden com estan
+*.html
+*.md
+*.svg
+*.pdf
+_headers
+_uploads/
+src/
+fonts/

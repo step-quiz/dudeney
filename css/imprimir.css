@@ -1,0 +1,417 @@
+/*
+============================================================================
+PROJECTE: dudeney (Step Quiz, vanilla JS)
+FITXER: css/imprimir.css
+ROL: Les fitxes per imprimir (imprimir/enigmes.html i imprimir/solucions.html):
+     fulls A4 en blanc i negre. Els enunciats: un full per enigma, amb la figura
+     i espai per pensar-hi. Les solucions: un enigma rere l'altre, cadascun
+     començant en un full nou.
+ARQUITECTURA: Es carrega després de tokens.css i taulers.css i torna tots els
+     colors en negre, blanc i grisos (cap color: la impressora és en blanc i
+     negre). Les figures són les dels mateixos taulers del web.
+DEPENDÈNCIES: css/fonts.css, css/tokens.css, css/taulers.css
+============================================================================
+*/
+@page {
+    size: A4;
+    margin: 13mm 14mm 12mm 14mm;
+}
+:root,
+[data-tipus] {
+    color-scheme: light;
+    --tinta: #000;
+    --tinta-suau: #333;
+    --paper: #fff;
+    --panell: #fff;
+    --panell-2: #fff;
+    --linia: #777;
+    --linia-forta: #444;
+    --tema: #000;
+    --tema-clar: #fff;
+    --tema-mig: #ddd;
+    --tema-fort: #000;
+    --ok: #000;
+    --error: #000;
+    --fusta: #fff;
+    --fusta-vora: #000;
+    --formatge: #fff;
+    --formatge-clar: #fff;
+    --formatge-vora: #000;
+    --formatge-text: #000;
+    --granota: #fff;
+    --granota-vora: #000;
+    --vi: #555;
+    --vi-clar: #555;
+    --aigua: #fff;
+    --vidre: #fff;
+    --vermell-carta: #000;
+    --c-disseccio: #000;
+    --c-fitxes: #000;
+    --c-mesures: #000;
+    --c-escacs: #000;
+    --c-camins: #000;
+    --c-quadrats: #000;
+    --c-aritmetica: #000;
+}
+* {
+    box-sizing: border-box;
+}
+html,
+body {
+    margin: 0;
+    background: #fff;
+    color: #000;
+    font-family: var(--serif);
+    font-size: 10.6pt;
+    line-height: 1.45;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+@media screen {
+    html {
+        background: #d4d4d4;
+    }
+    body {
+        background: #d4d4d4;
+        padding: 0 0 20mm 0;
+    }
+    .full,
+    .solucio-full {
+        width: 210mm;
+        margin: 0 auto 8mm auto;
+        padding: 13mm 14mm 12mm 14mm;
+        background: #fff;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+    .full {
+        height: 297mm;
+    }
+}
+
+/* ---- Barra de dalt (només a la pantalla) ---- */
+.barra {
+    width: 210mm;
+    margin: 0 auto;
+    padding: 14px 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 14px;
+    align-items: center;
+    font: 15px var(--sans);
+}
+.barra a,
+.barra button {
+    padding: 8px 14px;
+    border: 2px solid #000;
+    border-radius: 8px;
+    background: #fff;
+    color: #000;
+    font: inherit;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+}
+.barra button {
+    background: #000;
+    color: #fff;
+}
+@media print {
+    .barra {
+        display: none;
+    }
+}
+
+/* ---- Un full d'enigma ---- */
+.full {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    break-after: page;
+}
+@media print {
+    .full {
+        height: 271mm;
+    }
+}
+.full:last-child,
+.solucio-full:last-child {
+    break-after: auto;
+}
+.cap-full {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 6mm;
+    padding-bottom: 2mm;
+    border-bottom: 0.5mm solid #000;
+    font: 600 9pt var(--sans);
+}
+.cap-full .tipus {
+    font-weight: 700;
+}
+.full h1,
+.solucio-full h1 {
+    margin: 4mm 0 0 0;
+    font-size: 21pt;
+    font-weight: 600;
+    line-height: 1.1;
+}
+.original {
+    margin: 1mm 0 3mm 0;
+    color: #333;
+    font-size: 9.5pt;
+}
+.text-full p {
+    margin: 0 0 2mm 0;
+    text-align: justify;
+    hyphens: auto;
+}
+.notes-unitats {
+    margin: 0 0 2mm 0;
+    font: 8.5pt var(--sans);
+    color: #333;
+}
+.figura-full {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 2mm 0;
+}
+.figura-full > svg,
+.figura-full > div {
+    max-width: 150mm;
+    max-height: 78mm;
+}
+.figura-full > svg {
+    width: 100%;
+    height: auto;
+}
+.figura-full.dues {
+    gap: 8mm;
+}
+.figura-full.dues > svg {
+    width: 70mm;
+    max-height: 70mm;
+}
+.full .regla-full {
+    margin: 1mm 0 2mm 0;
+    padding: 2mm 3mm;
+    border: 0.4mm solid #000;
+    border-radius: 2mm;
+    font: 600 9.5pt var(--sans);
+}
+.espai {
+    flex: 1;
+    min-height: 20mm;
+    border: 0.35mm dashed #444;
+    border-radius: 2mm;
+    position: relative;
+}
+.espai::before {
+    content: attr(data-text);
+    position: absolute;
+    top: 1.5mm;
+    left: 3mm;
+    font: 8pt var(--sans);
+    color: #333;
+}
+.taula-buida {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1mm 0 2mm 0;
+    font: 9pt var(--sans);
+}
+.taula-buida th,
+.taula-buida td {
+    border: 0.3mm solid #444;
+    height: 6.3mm;
+    padding: 0 2mm;
+    text-align: center;
+}
+.peu-full {
+    margin-top: 2mm;
+    font: 7.5pt var(--sans);
+    color: #333;
+    text-align: center;
+}
+
+/* ---- Portada ---- */
+.portada-full h1 {
+    font-size: 34pt;
+    margin-top: 30mm;
+}
+.portada-full .entrada {
+    font-size: 13pt;
+    max-width: 150mm;
+}
+.index-enigmes {
+    margin: 8mm 0;
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 11pt;
+}
+.index-enigmes td {
+    padding: 1.6mm 2mm;
+    border-bottom: 0.25mm solid #777;
+}
+.index-enigmes td:first-child {
+    width: 10mm;
+    font-weight: 700;
+}
+.index-enigmes td:last-child {
+    font: 9pt var(--sans);
+    color: #333;
+    text-align: right;
+}
+
+/* ---- Solucions ---- */
+.solucio-full {
+    break-after: page;
+}
+.solucio-full h2 {
+    font-size: 12.5pt;
+    margin: 4mm 0 1.5mm 0;
+}
+.solucio-full .text p {
+    margin: 0 0 2mm 0;
+    text-align: justify;
+    hyphens: auto;
+}
+.solucio-full figure {
+    margin: 3mm 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    break-inside: avoid;
+}
+.solucio-full figure svg {
+    max-height: 70mm;
+    max-width: 150mm;
+}
+.solucio-full figcaption {
+    font: 8.5pt var(--sans);
+    color: #333;
+    text-align: center;
+}
+.solucio-full .frontisses .fila-frontisses,
+.solucio-full .frontisses .eines-tauler {
+    display: none;
+}
+.taula-dudeney {
+    border-collapse: collapse;
+    margin: 2mm 0 3mm 0;
+    font-size: 9.5pt;
+}
+.taula-dudeney th,
+.taula-dudeney td {
+    border: 0.25mm solid #444;
+    padding: 0.6mm 2mm;
+    text-align: center;
+}
+
+/* ---- Figures en blanc i negre ---- */
+.peca-tela .cos-peca,
+.roba-sencera,
+.triangle-construccio,
+.lloc-quadrat,
+.peca-brocat .quadret,
+.escacs-svg .clara,
+.punt .marca {
+    fill: #fff !important;
+}
+.peca-tela .cos-peca,
+.roba-sencera {
+    stroke: #000;
+}
+.peca-tela.p4 .num-peca {
+    fill: #000;
+}
+.fil,
+.fil-portada {
+    stroke: #bbb;
+}
+.petal {
+    fill: #fff;
+    stroke: #000;
+    stroke-width: 1;
+}
+.cor-flor,
+.fulla {
+    fill: #000;
+}
+.tija {
+    stroke: #000;
+}
+.lletra-peca {
+    stroke: #fff;
+}
+.num-granota {
+    fill: #000;
+}
+.granota .cos {
+    stroke-width: 2.4;
+}
+.escacs-svg .fons-fosc {
+    fill: #fff;
+}
+.escacs-svg .ratlla {
+    stroke: #555;
+}
+.recipient .quantitat {
+    fill: #fff;
+    stroke: #000;
+}
+.barca-svg .riba {
+    fill: #fff;
+    stroke: #000;
+}
+.barca-svg .ona {
+    stroke: #555;
+}
+.passatger .figura .cap,
+.passatger .figura .cos,
+.passatger .figura.adulta .cos,
+.passatger .figura.adulta .cap,
+.passatger .figura.nen .cos,
+.passatger .figura.nen .cap {
+    fill: #fff;
+    stroke: #000;
+}
+.passatger .pes {
+    fill: #000;
+}
+.carta,
+.carta.vermella {
+    color: #000;
+    border-color: #000;
+    box-shadow: none;
+}
+.quadrat-cartes {
+    background: #fff;
+}
+.cara-3d.usada,
+.xarxa-svg .cara .fons-cara {
+    fill: #fff !important;
+}
+.quadrat-magic .cel.fixa {
+    background: #fff;
+}
+.etiqueta-svg .paper {
+    fill: #fff;
+}
+.etiqueta-svg .digit,
+.granota .nina,
+.peca .ull-cavall {
+    fill: #000;
+}
+.frontissa {
+    fill: #fff;
+    stroke: #000;
+}
+.full .quadrat-cartes.estatic .slot {
+    border: 0.3mm solid #000;
+}
+.full .quadrat-cartes.estatic {
+    --carta-w: 24mm;
+    --carta-h: 32mm;
+}

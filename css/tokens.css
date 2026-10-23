@@ -1,0 +1,133 @@
+/*
+============================================================================
+PROJECTE: dudeney (Step Quiz, vanilla JS)
+FITXER: css/tokens.css
+ROL: Els colors, les lletres i les mides de tot el web, en mode clar i fosc.
+     Cada tipus d'enigma té un color propi (--c-<tipus>); la pàgina posa el del
+     seu enigma a --tema amb l'atribut data-tipus (del <body> o d'una placa).
+     El color no és mai l'única pista: el que és correcte o incorrecte també es
+     diu amb text, amb ✓ / ✗ o amb un traç diferent.
+DEPENDÈNCIES: cap. Es carrega abans de css/dudeney.css i css/taulers.css.
+============================================================================
+*/
+:root {
+    color-scheme: light dark;
+
+    /* Tinta i paper */
+    --tinta: #1d232c;
+    --tinta-suau: #5b6472;
+    --paper: #f4f6f7;
+    --panell: #ffffff;
+    --panell-2: #f8fafb;
+    --linia: #d9dee3;
+    --linia-forta: #aab3bc;
+
+    /* Estats */
+    --ok: #1f7a4a;
+    --ok-fons: #e5f4eb;
+    --ok-vora: #a9d8bc;
+    --error: #b42318;
+    --error-fons: #fdeceb;
+    --error-vora: #f3b8b2;
+    --info: #2a4a6b;
+    --info-fons: #edf2f7;
+    --info-vora: #c5d3e2;
+
+    /* Un color per a cada tipus d'enigma */
+    --c-disseccio: #a61e4d;
+    --c-fitxes: #2b8a3e;
+    --c-mesures: #1864ab;
+    --c-escacs: #3b4048;
+    --c-camins: #b35c00;
+    --c-quadrats: #0b7285;
+    --c-aritmetica: #5f3dc4;
+
+    /* El color de l'enigma de la pàgina (el canvia data-tipus) */
+    --tema: #3b4048;
+
+    /* Lletres */
+    --serif: 'Source Serif 4', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+    --sans: system-ui, -apple-system, 'Segoe UI', Roboto, Ubuntu, 'Helvetica Neue', Arial, sans-serif;
+
+    /* Escala (1,25) */
+    --t-0: 0.8rem;
+    --t-1: 1rem;
+    --t-2: 1.25rem;
+    --t-3: 1.563rem;
+    --t-4: 1.953rem;
+    --t-5: 2.441rem;
+    --t-6: 3.052rem;
+
+    --radi: 10px;
+    --radi-petit: 6px;
+    --ombra: 0 1px 2px rgba(29, 35, 44, 0.06), 0 4px 14px rgba(29, 35, 44, 0.05);
+    --ombra-aixecada: 0 6px 18px rgba(29, 35, 44, 0.22);
+}
+
+[data-tipus='disseccio'] {
+    --tema: var(--c-disseccio);
+}
+[data-tipus='fitxes'] {
+    --tema: var(--c-fitxes);
+}
+[data-tipus='mesures'] {
+    --tema: var(--c-mesures);
+}
+[data-tipus='escacs'] {
+    --tema: var(--c-escacs);
+}
+[data-tipus='camins'] {
+    --tema: var(--c-camins);
+}
+[data-tipus='quadrats'] {
+    --tema: var(--c-quadrats);
+}
+[data-tipus='aritmetica'] {
+    --tema: var(--c-aritmetica);
+}
+
+/* Tints del color del tema, barrejats amb el color del panell (així també van bé en mode fosc).
+   Es tornen a calcular a cada element que canvia el tema (les plaques de la portada en porten un). */
+:root,
+[data-tipus] {
+    --tema-clar: color-mix(in srgb, var(--tema) 11%, var(--panell));
+    --tema-mig: color-mix(in srgb, var(--tema) 32%, var(--panell));
+    --tema-fort: color-mix(in srgb, var(--tema) 78%, var(--tinta));
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --tinta: #e6e9ed;
+        --tinta-suau: #a3acb7;
+        --paper: #12161b;
+        --panell: #1b2128;
+        --panell-2: #20272f;
+        --linia: #313a44;
+        --linia-forta: #4b5663;
+
+        --ok: #7fd3a2;
+        --ok-fons: #15301f;
+        --ok-vora: #2a5a3c;
+        --error: #ff9b8f;
+        --error-fons: #3a1714;
+        --error-vora: #6b2a24;
+        --info: #b8cde3;
+        --info-fons: #1c2836;
+        --info-vora: #34485e;
+
+        --c-disseccio: #f0739b;
+        --c-fitxes: #69c97f;
+        --c-mesures: #74b0ec;
+        --c-escacs: #b8c0ca;
+        --c-camins: #f0a04b;
+        --c-quadrats: #4fc3d4;
+        --c-aritmetica: #a991f5;
+
+        --ombra: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 14px rgba(0, 0, 0, 0.3);
+        --ombra-aixecada: 0 8px 22px rgba(0, 0, 0, 0.55);
+    }
+    :root,
+    [data-tipus] {
+        --tema-fort: color-mix(in srgb, var(--tema) 85%, var(--tinta));
+    }
+}

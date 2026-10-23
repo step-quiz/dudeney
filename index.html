@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Els enigmes de Henry E. Dudeney (1857–1930), traduïts al català i fets interactius: dissecció, fitxes, mesures, escacs, camins, quadrats màgics i aritmètica. Per jugar a la pantalla o en paper.">
+    <title>Els enigmes de Dudeney</title>
+    <link rel="icon" href="icon.png">
+    <link rel="stylesheet" href="css/fonts.css?v=4b616bd3">
+    <link rel="stylesheet" href="css/tokens.css?v=8a20f823">
+    <link rel="stylesheet" href="css/dudeney.css?v=924696cb">
+    <link rel="stylesheet" href="css/taulers.css?v=a36d3f84">
+</head>
+<body class="pag-portada" data-tipus="disseccio">
+    <header class="barra-portada">
+        <a href="https://step-quiz.net/" class="home-icon-link" title="Tornar a step-quiz.net" aria-label="Tornar a step-quiz.net">
+            <img src="icon.png" alt="Inici">
+        </a>
+        <a class="per-imprimir" href="imprimir/enigmes.html"><span class="icona-enllac" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 9V3h10v6M7 17H4.5A1.5 1.5 0 0 1 3 15.5v-5A1.5 1.5 0 0 1 4.5 9h15a1.5 1.5 0 0 1 1.5 1.5v5a1.5 1.5 0 0 1-1.5 1.5H17M7 13h10v8H7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>Fitxes per imprimir</a>
+    </header>
+
+    <main class="portada">
+        <section class="presentacio" aria-labelledby="titol-portada">
+            <div>
+                <h1 id="titol-portada">Els enigmes de Dudeney</h1>
+                <p class="entrada">Trencaclosques de Henry E. Dudeney (1857–1930), el gran inventor d’enigmes anglès, traduïts al català per resoldre’ls a la pantalla o en paper.</p>
+                <p class="mostra" id="resum-progres">Una primera mostra: dos enigmes de cada tipus.</p>
+            </div>
+            <figure class="repte">
+                <svg viewBox="0 0 520 290" role="img" aria-labelledby="repte-text">
+                    <defs>
+                        <pattern id="teixit-portada" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(35)">
+                            <line class="fil-portada" x1="0" y1="0" x2="0" y2="6"/>
+                        </pattern>
+                    </defs>
+                    <polygon class="tela-portada" points="30,258 250,258 140,67.5"/>
+                    <polygon class="teixit-portada" points="30,258 250,258 140,67.5" fill="url(#teixit-portada)"/>
+                    <path class="tisores" d="M262 150 l20 -9 M262 150 l20 9 M287 139 a6 6 0 1 0 0.1 0 M287 161 a6 6 0 1 0 0.1 0"/>
+                    <path class="fletxa-portada" d="M300 150 Q318 140 334 150"/>
+                    <rect class="quadrat-portada" x="342" y="88" width="145" height="145" rx="2"/>
+                    <text class="interrogant" x="414.5" y="162">?</text>
+                    <text class="peu-dibuix" x="140" y="282">un triangle equilàter</text>
+                    <text class="peu-dibuix" x="414.5" y="262">un quadrat de la mateixa àrea</text>
+                </svg>
+                <figcaption id="repte-text">
+                    <strong>El repte més famós de Dudeney:</strong> talla un triangle equilàter en quatre peces que, ajuntades, formin un quadrat.
+                    <em>Durant més de cent anys, ningú no va saber si es podia fer amb tres.</em>
+                    <br><a class="btn-principal" href="enigma.html?p=mercer">Prova-ho</a>
+                </figcaption>
+            </figure>
+        </section>
+
+        <section class="filtres" aria-label="Filtres">
+            <div class="filtre" id="filtre-tipus" role="group" aria-label="Tipus d’enigma"><span class="filtre-nom">Tipus</span></div>
+            <div class="filtre" id="filtre-dificultat" role="group" aria-label="Dificultat"><span class="filtre-nom">Dificultat</span></div>
+            <p class="resum-filtre" id="resum-filtre" aria-live="polite"></p>
+        </section>
+
+        <div class="capitols" id="capitols"></div>
+
+        <div class="sobre">
+            <section aria-labelledby="sobre-dudeney">
+                <h2 id="sobre-dudeney">Sobre Henry E. Dudeney</h2>
+                <p>Henry Ernest Dudeney va néixer el 1857 a Mayfield, al sud d’Anglaterra, i va començar a treballar d’escrivent a l’administració als tretze anys. No va anar mai a la universitat, però va ser un dels millors inventors de trencaclosques matemàtics de la història. Durant més de trenta anys en va publicar cada mes a la revista <cite>The Strand</cite>, i també en diaris i setmanaris.</p>
+                <p>Es va escriure molt amb l’americà Sam Loyd, l’altre gran autor d’enigmes de l’època, fins que es va enfadar perquè Loyd publicava com a seus alguns dels enigmes que ell li enviava. Els enigmes d’aquest web surten dels seus dos primers llibres: <cite>The Canterbury Puzzles</cite> (1907), on els proposen els pelegrins dels <cite>Contes de Canterbury</cite> de Chaucer, i <cite>Amusements in Mathematics</cite> (1917). Va morir el 1930.</p>
+                <p class="nota-font">Tots dos llibres són de domini públic. Hem consultat el text original a Project Gutenberg; la traducció, les figures i la versió interactiva són nostres.</p>
+            </section>
+            <section aria-labelledby="titol-fitxes">
+                <h2 id="titol-fitxes">Fitxes per imprimir</h2>
+                <p>Cada enigma en un full A4, en blanc i negre, amb espai per pensar-hi. Les solucions van a part.</p>
+                <ul class="fitxes">
+                    <li><a href="imprimir/enigmes.html">Els enigmes</a> (<a href="imprimir/enigmes.pdf">PDF</a>)</li>
+                    <li><a href="imprimir/solucions.html">Les solucions</a> (<a href="imprimir/solucions.pdf">PDF</a>)</li>
+                </ul>
+            </section>
+        </div>
+    </main>
+
+    <footer class="peu-llicencia">
+        <p>
+            Problemes de Henry E. Dudeney (1857–1930), d’obres de domini públic: <cite>The Canterbury Puzzles</cite> (1907) i
+            <cite>Amusements in Mathematics</cite> (1917). Traducció, adaptació, figures i versió interactiva: David Arso Civil,
+            Departament de Matemàtiques de l’INS Miquel Tarradell (CC BY-NC-SA 4.0; el codi, llicència MIT).
+        </p>
+    </footer>
+
+    <script src="js/comu/comu.js?v=ad0e0a2b" defer></script>
+    <script src="js/comu/registre.js?v=2ab01f93" defer></script>
+    <script src="js/comu/cerca.js?v=667de718" defer></script>
+    <script src="js/comu/fraccio.js?v=8e60dce4" defer></script>
+    <script src="js/disseccio/motor.js?v=200cb69a" defer></script>
+    <script src="js/fitxes/motor.js?v=6ac05856" defer></script>
+    <script src="js/mesures/motor.js?v=00381ed2" defer></script>
+    <script src="js/escacs/motor.js?v=8f2335d8" defer></script>
+    <script src="js/camins/motor.js?v=4bffaa9f" defer></script>
+    <script src="js/quadrats/motor.js?v=240d9b1c" defer></script>
+    <script src="js/aritmetica/motor.js?v=be9170a6" defer></script>
+    <script src="js/disseccio/problemes.js?v=cd286f31" defer></script>
+    <script src="js/fitxes/problemes.js?v=51d2da56" defer></script>
+    <script src="js/mesures/problemes.js?v=ce093397" defer></script>
+    <script src="js/escacs/problemes.js?v=d3d8882f" defer></script>
+    <script src="js/camins/problemes.js?v=60efb8e3" defer></script>
+    <script src="js/quadrats/problemes.js?v=ddc264b9" defer></script>
+    <script src="js/aritmetica/problemes.js?v=6590eac6" defer></script>
+    <script src="js/disseccio/tauler.js?v=71f94063" defer></script>
+    <script src="js/fitxes/tauler.js?v=deb78f12" defer></script>
+    <script src="js/mesures/tauler.js?v=e3fcabd6" defer></script>
+    <script src="js/escacs/tauler.js?v=5f1dfe73" defer></script>
+    <script src="js/camins/tauler.js?v=7b11f6ba" defer></script>
+    <script src="js/quadrats/tauler.js?v=61bbab9a" defer></script>
+    <script src="js/aritmetica/tauler.js?v=9fa76042" defer></script>
+    <script src="js/portada.js?v=d95af83b" defer></script>
+</body>
+</html>

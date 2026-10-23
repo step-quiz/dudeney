@@ -1,0 +1,1619 @@
+/*
+============================================================================
+PROJECTE: dudeney (Step Quiz, vanilla JS)
+FITXER: css/taulers.css
+ROL: L'aspecte dels taulers de joc (SVG i HTML) de cada tipus d'enigma, i de
+     les figures de l'enunciat i de la solució, que en són la versió quieta.
+ARQUITECTURA: Una secció per tauler, en l'ordre dels tipus. Els colors surten
+     de css/tokens.css (--tema és el color del tipus); els objectes (formatges,
+     granotes, vi, cartes…) tenen colors propis definits aquí, per als dos modes.
+     La versió per imprimir (css/imprimir.css) ho torna tot blanc i negre.
+DEPENDÈNCIES: css/tokens.css
+============================================================================
+*/
+:root {
+    --fusta: #e3c49d;
+    --fusta-vora: #8a6440;
+    --formatge: #f4c95d;
+    --formatge-clar: #fbe6a8;
+    --formatge-vora: #ad7a1b;
+    --formatge-text: #6b4a10;
+    --granota: #5ba862;
+    --granota-vora: #22542a;
+    --vi: #8c1c3d;
+    --vi-clar: #c2416a;
+    --aigua: #8ec5e8;
+    --vidre: #f3f7fa;
+    --vermell-carta: #c62f3b;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --fusta: #6e5438;
+        --fusta-vora: #c09a6e;
+        --formatge: #e9bb4c;
+        --formatge-clar: #f6d98a;
+        --formatge-vora: #8f6214;
+        --formatge-text: #4d340a;
+        --granota: #4f9c57;
+        --granota-vora: #183c1d;
+        --vi: #d0466f;
+        --vi-clar: #ec7ea0;
+        --aigua: #3c7fae;
+        --vidre: #25303a;
+        --vermell-carta: #ff7b84;
+    }
+}
+
+/* ══════════════════════════════════════════════
+   COMÚ A TOTS ELS TAULERS
+══════════════════════════════════════════════ */
+.tauler {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+.tauler-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+.tauler-svg text {
+    pointer-events: none;
+}
+.tauler [tabindex]:focus {
+    outline: none;
+}
+.boto-extra {
+    margin: 12px 0 0 8px;
+}
+.eines-tauler {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+}
+.figura-estatica {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: 520px;
+}
+@keyframes batec {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.45;
+    }
+}
+@keyframes encaixa {
+    0% {
+        transform: scale(1);
+    }
+    40% {
+        transform: scale(1.04);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* ══════════════════════════════════════════════
+   FITXES: formatges i tamborets
+══════════════════════════════════════════════ */
+.piles-svg {
+    max-width: 680px;
+    touch-action: none;
+}
+.tamboret {
+    cursor: pointer;
+}
+.tamboret .zona {
+    fill: transparent;
+}
+.tamboret .seient {
+    fill: var(--fusta);
+    stroke: var(--fusta-vora);
+    stroke-width: 2;
+    transition: stroke 0.15s;
+}
+.tamboret .potes {
+    fill: none;
+    stroke: var(--fusta-vora);
+    stroke-width: 6;
+    stroke-linecap: round;
+}
+.tamboret .ombra-terra {
+    fill: var(--linia);
+}
+.num-tamboret {
+    font: 700 15px var(--sans);
+    fill: var(--fusta-vora);
+    text-anchor: middle;
+}
+.tamboret:focus-visible .seient {
+    stroke: var(--tema);
+    stroke-width: 5;
+}
+.amb-seleccio .tamboret.desti-possible .seient {
+    stroke: var(--tema);
+    stroke-width: 3;
+    animation: batec 1.1s ease-in-out infinite;
+}
+.formatge {
+    pointer-events: none;
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.formatge.arrossegat {
+    transition: none;
+}
+.formatge .cos {
+    fill: var(--formatge);
+    stroke: var(--formatge-vora);
+    stroke-width: 1.6;
+}
+.formatge .brillo {
+    fill: none;
+    stroke: var(--formatge-clar);
+    stroke-width: 2.6;
+    stroke-linecap: round;
+}
+.num-formatge {
+    font: 700 12px var(--serif);
+    fill: var(--formatge-text);
+    text-anchor: middle;
+    dominant-baseline: central;
+}
+.formatge.agafat .cos,
+.formatge.arrossegat .cos {
+    stroke: var(--tema);
+    stroke-width: 3;
+}
+.formatge.agafat,
+.formatge.arrossegat {
+    filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.22));
+}
+
+/* ══════════════════════════════════════════════
+   FITXES: les granotes
+══════════════════════════════════════════════ */
+.salts-svg {
+    max-width: 740px;
+    touch-action: none;
+}
+.casella .fons {
+    fill: var(--panell-2);
+    stroke: var(--linia-forta);
+    stroke-width: 1.5;
+}
+.casella .fons.fosc {
+    fill: var(--tema-clar);
+}
+.granota {
+    cursor: pointer;
+    transition: transform 0.4s cubic-bezier(0.3, 0.7, 0.3, 1);
+}
+.granota.arrossegada {
+    transition: none;
+    filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.25));
+}
+.granota:not(.pot) {
+    cursor: default;
+}
+.granota .cos {
+    fill: var(--granota);
+    stroke: var(--granota-vora);
+    stroke-width: 2;
+}
+.granota .potes {
+    fill: none;
+    stroke: var(--granota-vora);
+    stroke-width: 5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.granota .ull {
+    fill: #fff;
+    stroke: var(--granota-vora);
+    stroke-width: 2;
+}
+.granota .nina {
+    fill: #1d232c;
+}
+.num-granota {
+    font: 700 21px var(--serif);
+    fill: #fff;
+    text-anchor: middle;
+    dominant-baseline: central;
+}
+.granota:focus-visible .cos {
+    stroke: var(--tema);
+    stroke-width: 4;
+}
+.salt.saltant {
+    animation: saltant 0.4s ease-out;
+}
+.salt.passant {
+    animation: passant 0.32s ease-out;
+}
+.salt.sacseja {
+    animation: sacseja 0.3s ease 2;
+}
+@keyframes saltant {
+    0% {
+        transform: none;
+    }
+    45% {
+        transform: translateY(-34px) scale(1.08);
+    }
+    100% {
+        transform: none;
+    }
+}
+@keyframes passant {
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+/* ══════════════════════════════════════════════
+   MESURES: gerres i mesures
+══════════════════════════════════════════════ */
+.gerres-svg {
+    max-width: 620px;
+    touch-action: none;
+}
+.recipient {
+    cursor: pointer;
+}
+.recipient .zona {
+    fill: transparent;
+}
+.recipient .mou {
+    transition: transform 0.2s ease;
+}
+.recipient.arrossegat .mou {
+    transition: none;
+}
+.recipient .vidre {
+    fill: var(--vidre);
+}
+.recipient .vi {
+    fill: var(--vi);
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    transition: transform 0.55s ease-in-out;
+}
+.recipient .contorn {
+    fill: none;
+    stroke: var(--tinta);
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.recipient .quantitat {
+    font: 700 30px var(--serif);
+    fill: #fff;
+    text-anchor: middle;
+    dominant-baseline: central;
+    paint-order: stroke;
+    stroke: var(--vi);
+    stroke-width: 4px;
+}
+.recipient .quantitat.buit {
+    fill: var(--tinta-suau);
+    stroke: none;
+}
+.nom-recipient {
+    font: 600 15px var(--sans);
+    fill: var(--tinta);
+    text-anchor: middle;
+}
+.num-recipient {
+    font: 700 13px var(--sans);
+    fill: var(--tinta-suau);
+    text-anchor: middle;
+}
+.recipient.triat .mou {
+    transform: translateY(-10px);
+}
+.recipient.triat .contorn,
+.recipient.arrossegat .contorn {
+    stroke: var(--tema);
+    stroke-width: 4;
+}
+.recipient:focus-visible .contorn {
+    stroke: var(--tema);
+    stroke-width: 5;
+}
+.amb-seleccio .recipient.desti-possible .contorn {
+    stroke: var(--tema);
+    animation: batec 1.1s ease-in-out infinite;
+}
+.raig {
+    fill: none;
+    stroke: var(--vi-clar);
+    stroke-width: 5;
+    stroke-linecap: round;
+    opacity: 0;
+    stroke-dasharray: 8 7;
+}
+.raig.vessant {
+    animation: raig 0.6s ease-out;
+}
+@keyframes raig {
+    0% {
+        opacity: 0.95;
+        stroke-dashoffset: 60;
+    }
+    80% {
+        opacity: 0.9;
+    }
+    100% {
+        opacity: 0;
+        stroke-dashoffset: 0;
+    }
+}
+.quadern {
+    width: 100%;
+    max-width: 520px;
+    max-height: 210px;
+    overflow: auto;
+    border: 1px solid var(--linia);
+    border-radius: var(--radi-petit);
+    background: var(--panell-2);
+}
+.quadern-titol {
+    position: sticky;
+    top: 0;
+    margin: 0;
+    padding: 5px 10px;
+    font-family: var(--serif);
+    font-weight: 600;
+    background: var(--panell-2);
+    border-bottom: 1px solid var(--linia);
+}
+.quadern table {
+    width: 100%;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+}
+.quadern th,
+.quadern td {
+    padding: 3px 8px;
+    text-align: center;
+    border-bottom: 1px solid var(--linia);
+}
+.quadern thead th {
+    font-size: 0.8rem;
+    color: var(--tinta-suau);
+}
+.quadern tbody th {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--tinta-suau);
+    width: 3.5em;
+}
+.quadern td {
+    font-family: var(--serif);
+    font-size: 1.05rem;
+}
+.quadern td.canvia {
+    color: var(--vi);
+    font-weight: 700;
+}
+
+/* ══════════════════════════════════════════════
+   MESURES: la barca
+══════════════════════════════════════════════ */
+.barca-svg {
+    max-width: 760px;
+    touch-action: none;
+}
+.barca-svg .aigua {
+    fill: color-mix(in srgb, var(--aigua) 45%, var(--panell));
+}
+.barca-svg .ona {
+    fill: none;
+    stroke: color-mix(in srgb, var(--aigua) 80%, var(--tinta));
+    stroke-width: 1.6;
+    opacity: 0.55;
+}
+.barca-svg .riba {
+    fill: color-mix(in srgb, var(--c-fitxes) 18%, var(--panell));
+    stroke: color-mix(in srgb, var(--c-fitxes) 45%, var(--panell));
+    stroke-width: 2;
+}
+.nom-riba {
+    font: 600 13px var(--sans);
+    fill: var(--tinta-suau);
+    text-anchor: middle;
+}
+.barca {
+    transition: transform 0.6s ease-in-out;
+}
+.barca .casc {
+    fill: var(--fusta);
+    stroke: var(--fusta-vora);
+    stroke-width: 2.5;
+    stroke-linejoin: round;
+}
+.barca .rem {
+    stroke: var(--fusta-vora);
+    stroke-width: 4;
+    stroke-linecap: round;
+}
+.barca .carrega {
+    font: 700 14px var(--sans);
+    fill: var(--tinta);
+    text-anchor: middle;
+}
+.passatger {
+    cursor: pointer;
+    transition: transform 0.6s ease-in-out;
+}
+.passatger.arrossegat {
+    transition: none;
+}
+.passatger .zona {
+    fill: transparent;
+}
+.passatger .figura .cap,
+.passatger .figura .cos {
+    fill: var(--tema);
+    stroke: var(--tema-fort);
+    stroke-width: 1.5;
+}
+.passatger .figura.adulta .cos,
+.passatger .figura.adulta .cap {
+    fill: color-mix(in srgb, var(--tema) 70%, var(--c-disseccio));
+}
+.passatger .figura.nen .cos,
+.passatger .figura.nen .cap {
+    fill: color-mix(in srgb, var(--tema) 55%, var(--panell));
+}
+.passatger .figura.gos .cos {
+    fill: var(--fusta);
+    stroke: var(--fusta-vora);
+    stroke-width: 2;
+    stroke-linejoin: round;
+}
+.passatger .figura.gos .ull {
+    fill: var(--tinta);
+}
+.passatger .pes {
+    font: 700 12px var(--sans);
+    fill: #fff;
+    text-anchor: middle;
+}
+.passatger .figura.gos ~ .pes {
+    fill: var(--tinta);
+}
+.nom-passatger {
+    font: 600 13px var(--sans);
+    fill: var(--tinta);
+    text-anchor: middle;
+}
+.passatger.a-bord .nom-passatger {
+    display: none;
+}
+.passatger.lluny {
+    opacity: 0.55;
+}
+.passatger:focus-visible .figura {
+    filter: drop-shadow(0 0 3px var(--tema));
+}
+.passatger:focus-visible .nom-passatger {
+    text-decoration: underline;
+}
+.eines-tauler .pes-barca {
+    margin: 0;
+    align-self: center;
+}
+.boto-travessa {
+    min-width: 230px;
+}
+
+/* ══════════════════════════════════════════════
+   ESCACS: el tauler, les reines i els cavalls
+══════════════════════════════════════════════ */
+.escacs-svg {
+    max-width: 520px;
+    touch-action: none;
+}
+.escacs-svg .clara {
+    fill: var(--panell);
+}
+.escacs-svg .fons-fosc {
+    fill: color-mix(in srgb, var(--tinta) 9%, var(--panell));
+}
+.escacs-svg .ratlla {
+    stroke: color-mix(in srgb, var(--tinta) 30%, var(--panell));
+    stroke-width: 1.6;
+}
+.vora-tauler {
+    fill: none;
+    stroke: var(--tinta);
+    stroke-width: 3;
+}
+.escacs-svg .coord {
+    font: 600 12px var(--sans);
+    fill: var(--tinta-suau);
+    text-anchor: middle;
+}
+.casella-escacs {
+    cursor: pointer;
+}
+.escacs-svg .cursor {
+    fill: none;
+    stroke: var(--tema);
+    stroke-width: 4;
+    opacity: 0;
+    pointer-events: none;
+}
+.escacs-svg.amb-cursor .cursor {
+    opacity: 1;
+}
+.peca {
+    pointer-events: none;
+    transition: transform 0.2s ease;
+}
+.peca.arrossegada {
+    transition: none;
+    filter: drop-shadow(0 5px 4px rgba(0, 0, 0, 0.3));
+}
+.peca .silueta {
+    fill: var(--panell);
+    stroke: var(--tinta);
+    stroke-width: 2.2;
+    stroke-linejoin: round;
+}
+.peca .ull-cavall {
+    fill: var(--tinta);
+}
+.peca .crinera {
+    fill: none;
+    stroke: var(--tinta);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+}
+.peca.triada .silueta {
+    fill: var(--tema-mig);
+    stroke: var(--tema);
+    stroke-width: 3;
+}
+.linies line {
+    pointer-events: none;
+    stroke-linecap: round;
+}
+.linies .atac {
+    stroke: var(--error);
+    stroke-width: 3.5;
+    opacity: 0.75;
+}
+.linies .trio {
+    stroke: var(--tinta);
+    stroke-width: 3;
+    stroke-dasharray: 2 7;
+}
+.marques .atacada {
+    fill: var(--tema);
+    opacity: 0.55;
+    pointer-events: none;
+}
+.marques .sense-proteccio {
+    fill: none;
+    stroke: var(--error);
+    stroke-width: 3;
+    stroke-dasharray: 5 5;
+    pointer-events: none;
+}
+.marques .protegit {
+    fill: none;
+    stroke: var(--tinta);
+    stroke-width: 2.5;
+    pointer-events: none;
+}
+.figura-estatica.escacs-svg {
+    max-width: 380px;
+}
+
+/* ══════════════════════════════════════════════
+   CAMINS: el plànol del metro i el mapa de les ciutats
+══════════════════════════════════════════════ */
+.mapa-svg {
+    touch-action: none;
+}
+.mapa-svg.metro {
+    max-width: 380px;
+}
+.mapa-svg.ciutats {
+    max-width: 680px;
+}
+.mapa-svg .cartell {
+    fill: var(--panell-2);
+    stroke: var(--linia-forta);
+    stroke-width: 2;
+}
+.carretera {
+    stroke: color-mix(in srgb, var(--tinta) 32%, var(--panell));
+    stroke-width: 2.4;
+    stroke-linecap: round;
+}
+.metro .carretera {
+    stroke-width: 7;
+}
+.tram {
+    stroke: var(--tema);
+    stroke-width: 5;
+    stroke-linecap: round;
+    pointer-events: none;
+}
+.metro .tram {
+    stroke-width: 7;
+}
+.metro .tram.repetit {
+    stroke-width: 5;
+}
+.punt {
+    cursor: pointer;
+}
+.punt .zona {
+    fill: transparent;
+}
+.punt .marca {
+    fill: var(--panell);
+    stroke: var(--tinta);
+    stroke-width: 2.5;
+    transition:
+        fill 0.15s,
+        stroke 0.15s;
+}
+.nom-punt {
+    font: 700 19px var(--serif);
+    fill: var(--tinta);
+    text-anchor: middle;
+    dominant-baseline: central;
+}
+.metro .nom-punt {
+    font: 700 19px var(--sans);
+}
+.punt.visitat .marca {
+    fill: var(--tema);
+    stroke: var(--tema-fort);
+}
+.punt.visitat .nom-punt {
+    fill: #fff;
+}
+.punt.actual .marca {
+    stroke: var(--tinta);
+    stroke-width: 4;
+}
+.punt.actual .zona {
+    fill: color-mix(in srgb, var(--tema) 22%, transparent);
+}
+.punt.inici .marca {
+    stroke-dasharray: none;
+}
+.punt:focus-visible .marca {
+    stroke: var(--tema);
+    stroke-width: 5;
+}
+.text-ruta {
+    margin: 0;
+    max-width: 560px;
+    text-align: center;
+    font-family: var(--serif);
+    font-size: 1.05rem;
+    color: var(--tinta);
+    word-spacing: 0.08em;
+}
+
+/* ══════════════════════════════════════════════
+   QUADRATS: el quadrat màgic
+══════════════════════════════════════════════ */
+.quadrat-magic {
+    display: grid;
+    grid-template-columns: 54px repeat(3, minmax(0, 96px)) 54px;
+    grid-template-rows: repeat(3, 96px) 46px;
+    gap: 0;
+    justify-content: center;
+}
+.quadrat-magic .cel {
+    display: grid;
+    place-items: center;
+    margin: 0;
+    padding: 0;
+    border: 2px solid var(--tinta);
+    margin: -1px 0 0 -1px;
+    background: var(--panell);
+    color: var(--tinta);
+    font: 600 2.4rem var(--serif);
+    cursor: pointer;
+    position: relative;
+}
+.quadrat-magic .cel.fixa {
+    background: var(--tema-clar);
+    cursor: default;
+}
+.quadrat-magic .cel.actual {
+    background: var(--tema-clar);
+    box-shadow: inset 0 0 0 3px var(--tema);
+    z-index: 1;
+}
+.quadrat-magic .cel.error {
+    box-shadow: inset 0 0 0 3px var(--error);
+    background: var(--error-fons);
+}
+.quadrat-magic .cel:focus-visible {
+    outline: 3px solid var(--tema);
+    outline-offset: -6px;
+}
+.quadrat-magic .escrit {
+    font: 600 1.6rem var(--sans);
+    white-space: pre;
+}
+.cursor-text {
+    display: inline-block;
+    width: 2px;
+    height: 1.6rem;
+    margin-left: 2px;
+    background: var(--tema);
+    animation: batec 1s steps(2) infinite;
+    vertical-align: middle;
+}
+.quadrat-magic .cel .escrit + .cursor-text {
+    position: absolute;
+    left: calc(50% + 0.35em);
+}
+.quadrat-magic .cel:has(.escrit:empty) .cursor-text {
+    position: static;
+}
+.nombre-bonic {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.04em;
+    line-height: 1;
+    font-variant-numeric: lining-nums;
+}
+.nombre-bonic .frac {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 0.46em;
+    line-height: 1.05;
+    margin-left: 0.06em;
+}
+.nombre-bonic .num {
+    border-bottom: 0.09em solid currentColor;
+    padding: 0 0.12em;
+}
+.quadrat-magic .suma {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    font: 600 1.2rem var(--serif);
+    color: var(--tinta-suau);
+}
+.quadrat-magic .suma.be {
+    color: var(--ok);
+}
+.quadrat-magic .suma.malament {
+    color: var(--error);
+}
+.quadrat-magic .suma .marca-be {
+    font: 700 0.85rem var(--sans);
+}
+.quadrat-magic .suma.diagonal-1:not(:empty)::before,
+.quadrat-magic .suma.diagonal-2:not(:empty)::before {
+    content: '';
+    width: 14px;
+    height: 14px;
+    border-top: 2px solid currentColor;
+    margin-right: 2px;
+    opacity: 0.7;
+}
+.quadrat-magic .suma.diagonal-1::before {
+    transform: rotate(45deg) translate(-3px, -1px);
+}
+.quadrat-magic .suma.diagonal-2::before {
+    transform: rotate(-45deg) translate(3px, -1px);
+    order: 2;
+}
+.quadrat-magic.estatic {
+    grid-template-columns: repeat(3, 84px);
+    grid-template-rows: repeat(3, 84px);
+}
+.quadrat-magic.estatic .cel {
+    grid-column: auto !important;
+    grid-row: auto !important;
+    cursor: default;
+    font-size: 2.1rem;
+}
+.teclat-numeric {
+    display: grid;
+    grid-template-columns: repeat(4, 58px);
+    gap: 7px;
+    justify-content: center;
+}
+.tecla {
+    min-height: 50px;
+    border-radius: 9px;
+    border: 1.5px solid var(--linia-forta);
+    background: var(--panell);
+    color: var(--tinta);
+    font: 600 1.3rem var(--serif);
+    cursor: pointer;
+}
+.tecla.accepta {
+    background: var(--tema);
+    border-color: var(--tema);
+    color: var(--panell);
+    font-family: var(--sans);
+}
+.tecla.esborra {
+    font-family: var(--sans);
+}
+@media (hover: hover) {
+    .tecla:hover {
+        border-color: var(--tema);
+        background: var(--tema-clar);
+    }
+    .tecla.accepta:hover {
+        background: var(--tema);
+        filter: brightness(1.08);
+    }
+}
+@media (min-width: 1180px) {
+    .tauler.magic {
+        flex-direction: row;
+        justify-content: center;
+        align-items: flex-start;
+        gap: 28px;
+    }
+}
+@media (max-width: 420px) {
+    .quadrat-magic {
+        grid-template-columns: 40px repeat(3, minmax(0, 80px)) 44px;
+        grid-template-rows: repeat(3, 80px) 40px;
+    }
+    .quadrat-magic .cel {
+        font-size: 2rem;
+    }
+    .quadrat-magic .suma {
+        font-size: 1rem;
+    }
+}
+
+/* ══════════════════════════════════════════════
+   QUADRATS: les cartes de Bachet
+══════════════════════════════════════════════ */
+.tauler.cartes {
+    --carta-w: min(64px, 15vw);
+    --carta-h: calc(var(--carta-w) * 1.38);
+}
+.quadrat-cartes {
+    display: grid;
+    grid-template-columns: repeat(4, calc(var(--carta-w) + 10px));
+    gap: 6px;
+    justify-content: center;
+    padding: 8px;
+    border: 2px solid var(--tinta);
+    border-radius: var(--radi);
+    background: color-mix(in srgb, var(--tema) 8%, var(--panell));
+}
+.quadrat-cartes .slot {
+    display: grid;
+    place-items: center;
+    width: calc(var(--carta-w) + 10px);
+    height: calc(var(--carta-h) + 10px);
+    padding: 0;
+    border: 1.5px dashed var(--linia-forta);
+    border-radius: 9px;
+    background: transparent;
+    cursor: pointer;
+}
+.quadrat-cartes .slot.xoca {
+    border: 3px solid var(--error);
+    background: var(--error-fons);
+}
+.amb-seleccio .quadrat-cartes .slot:empty {
+    border-color: var(--tema);
+    animation: batec 1.1s ease-in-out infinite;
+}
+.pila-cartes {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    max-width: calc(8 * (var(--carta-w) + 6px));
+    min-height: calc(var(--carta-h) + 8px);
+    padding: 4px;
+}
+.carta {
+    position: relative;
+    width: var(--carta-w, 60px);
+    height: var(--carta-h, 84px);
+    border-radius: 7px;
+    border: 1.5px solid var(--linia-forta);
+    background: #fff;
+    color: #1d232c;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.carta.vermella {
+    color: #c62f3b;
+}
+.carta .cantonada {
+    position: absolute;
+    top: 4px;
+    left: 5px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+}
+.carta .valor {
+    font: 700 1.05rem var(--serif);
+}
+.carta .centre {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding-top: 10px;
+}
+.carta .simbol-pal path {
+    fill: currentColor;
+}
+.carta.triada {
+    outline: 3px solid var(--tema);
+    outline-offset: 2px;
+    transform: translateY(-4px);
+}
+.carta.origen {
+    opacity: 0.35;
+}
+.carta.fantasma {
+    position: fixed;
+    z-index: 60;
+    pointer-events: none;
+    box-shadow: var(--ombra-aixecada);
+    transform: rotate(-3deg);
+}
+.carta:focus-visible {
+    outline: 3px solid var(--tema);
+    outline-offset: 2px;
+}
+.quadrat-cartes.estatic {
+    --carta-w: 46px;
+    --carta-h: 64px;
+    gap: 3px;
+    padding: 5px;
+}
+.quadrat-cartes.estatic .slot {
+    border: none;
+    cursor: default;
+}
+.quadrat-cartes.estatic .carta {
+    cursor: default;
+}
+.quadrat-cartes.estatic .carta .valor {
+    font-size: 0.8rem;
+}
+.quadrat-lletres {
+    display: grid;
+    grid-template-columns: repeat(4, 34px);
+    grid-auto-rows: 34px;
+    border: 2px solid var(--tinta);
+}
+.quadrat-lletres span {
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--linia-forta);
+    font: 600 1.2rem var(--serif);
+}
+.quadrat-lletres span.vermella {
+    color: var(--vermell-carta);
+}
+.fila-diagrames {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 18px;
+}
+.num-diagrama {
+    margin: 0 0 4px 0;
+    text-align: center;
+    font: 600 1rem var(--serif);
+}
+.taula-dudeney {
+    border-collapse: collapse;
+    margin: 6px 0 14px 0;
+    font-family: var(--serif);
+    font-variant-numeric: tabular-nums lining-nums;
+}
+.taula-dudeney th,
+.taula-dudeney td {
+    padding: 3px 9px;
+    border: 1px solid var(--linia);
+    text-align: center;
+}
+.taula-dudeney thead th {
+    font-family: var(--sans);
+    font-size: 0.82rem;
+    color: var(--tinta-suau);
+    background: var(--panell-2);
+}
+.taula-dudeney tbody th {
+    font-family: var(--sans);
+    font-size: 0.85rem;
+    background: var(--panell-2);
+}
+.taula-familia td {
+    min-width: 5.5em;
+    padding: 8px 10px;
+    font-size: 1.05rem;
+}
+.desplegable .cos .taula-dudeney {
+    max-width: 100%;
+    overflow-x: auto;
+    display: block;
+}
+
+/* ══════════════════════════════════════════════
+   ARITMÈTICA: l'etiqueta estripada
+══════════════════════════════════════════════ */
+.etiqueta-svg {
+    max-width: 440px;
+}
+.etiqueta-svg .paper {
+    fill: #fffdf7;
+    stroke: var(--tinta);
+    stroke-width: 2.4;
+    stroke-linejoin: round;
+}
+@media (prefers-color-scheme: dark) {
+    .etiqueta-svg .paper {
+        fill: #f3efe4;
+    }
+}
+.etiqueta-svg .meitat.esquerra {
+    transform: rotate(-1.2deg) translate(-4px, 2px);
+    transform-origin: 100px 80px;
+}
+.etiqueta-svg .meitat.dreta {
+    transform: rotate(1.4deg) translate(5px, -1px);
+    transform-origin: 320px 80px;
+}
+.etiqueta-svg .digit {
+    font: 700 96px var(--serif);
+    fill: #1d232c;
+    text-anchor: middle;
+    dominant-baseline: central;
+}
+.etiqueta-svg .zona {
+    fill: transparent;
+}
+.etiqueta-svg .subratllat {
+    fill: transparent;
+}
+.etiqueta-svg .xifra {
+    cursor: pointer;
+}
+.tauler.estripat .etiqueta-svg .xifra.actual .subratllat {
+    fill: var(--tema);
+}
+.tauler.estripat .etiqueta-svg .xifra.actual .digit {
+    fill: var(--tema);
+}
+.etiqueta-svg .xifra:focus-visible .zona {
+    stroke: var(--tema);
+    stroke-width: 3;
+}
+.compte {
+    font-family: var(--serif);
+    font-size: 1.4rem;
+    text-align: center;
+    font-variant-numeric: lining-nums tabular-nums;
+}
+.compte p {
+    margin: 0;
+}
+.meitat-compte {
+    display: inline-block;
+    padding: 0 6px;
+    border: 1.5px solid var(--linia-forta);
+    border-radius: 6px;
+    background: #fffdf7;
+    color: #1d232c;
+}
+.compte .veredicte {
+    font-family: var(--sans);
+    font-size: 1rem;
+    font-weight: 700;
+}
+.compte .veredicte.be {
+    color: var(--ok);
+}
+.compte .veredicte.malament {
+    color: var(--tinta-suau);
+}
+.teclat-xifres {
+    display: grid;
+    grid-template-columns: repeat(5, 54px);
+    gap: 7px;
+    justify-content: center;
+}
+
+/* ══════════════════════════════════════════════
+   ARITMÈTICA: la sala (l'aranya i la mosca)
+══════════════════════════════════════════════ */
+.tauler.capsa {
+    --c-sostre: #d8e7f5;
+    --c-terra: #ead9c3;
+    --c-porta: #d9eedc;
+    --c-finestra: #f6ebc4;
+    --c-paret: #e6e3ee;
+}
+@media (prefers-color-scheme: dark) {
+    .tauler.capsa {
+        --c-sostre: #26394d;
+        --c-terra: #45362a;
+        --c-porta: #23402a;
+        --c-finestra: #4a4020;
+        --c-paret: #35324a;
+    }
+}
+.vista-sala {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+.sala-svg {
+    max-width: 340px;
+}
+.cara-3d {
+    fill: transparent;
+    stroke: none;
+}
+.cara-3d.usada.cara-sostre {
+    fill: var(--c-sostre);
+}
+.cara-3d.usada.cara-terra {
+    fill: var(--c-terra);
+}
+.cara-3d.usada.cara-porta {
+    fill: var(--c-porta);
+    opacity: 0.75;
+}
+.cara-3d.usada.cara-finestra {
+    fill: var(--c-finestra);
+}
+.cara-3d.usada.cara-A,
+.cara-3d.usada.cara-B {
+    fill: var(--c-paret);
+}
+.aresta-3d {
+    stroke: var(--tinta);
+    stroke-width: 0.35;
+}
+.aresta-3d.amagada {
+    stroke-dasharray: 0.9 0.7;
+    opacity: 0.6;
+}
+.detalls-3d .detall,
+.xarxa-svg .detall {
+    fill: none;
+    stroke: color-mix(in srgb, var(--tinta) 45%, transparent);
+    stroke-width: 0.25;
+}
+.cami-3d {
+    fill: none;
+    stroke: var(--tema);
+    stroke-width: 0.7;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+}
+.lletra-3d {
+    font: 700 3px var(--sans);
+    fill: var(--tinta);
+}
+.aranya .potes-aranya {
+    fill: none;
+    stroke: var(--tinta);
+    stroke-width: 0.45;
+    stroke-linecap: round;
+}
+.aranya .cos-aranya {
+    fill: var(--tinta);
+}
+.mosca .ala {
+    fill: color-mix(in srgb, var(--panell) 70%, transparent);
+    stroke: var(--tinta);
+    stroke-width: 0.25;
+}
+.mosca .cos-mosca {
+    fill: var(--tinta);
+}
+.lloc-xarxa {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+.xarxa-svg {
+    max-width: 560px;
+    max-height: 62vh;
+}
+.xarxa-svg .cara .fons-cara {
+    stroke: var(--tinta);
+    stroke-width: 0.3;
+    stroke-linejoin: round;
+}
+.xarxa-svg .cara-sostre .fons-cara {
+    fill: var(--c-sostre);
+}
+.xarxa-svg .cara-terra .fons-cara {
+    fill: var(--c-terra);
+}
+.xarxa-svg .cara-porta .fons-cara {
+    fill: var(--c-porta);
+}
+.xarxa-svg .cara-finestra .fons-cara {
+    fill: var(--c-finestra);
+}
+.xarxa-svg .cara-A .fons-cara,
+.xarxa-svg .cara-B .fons-cara {
+    fill: var(--c-paret);
+}
+.xarxa-svg .cara.fantasma {
+    cursor: pointer;
+}
+.xarxa-svg .cara.fantasma .fons-cara {
+    fill-opacity: 0.35;
+    stroke-dasharray: 0.8 0.6;
+    stroke: var(--tema);
+    stroke-width: 0.35;
+}
+.xarxa-svg .cara.fantasma .detall {
+    opacity: 0.4;
+}
+@media (hover: hover) {
+    .xarxa-svg .cara.fantasma:hover .fons-cara {
+        fill-opacity: 0.75;
+        stroke-width: 0.6;
+    }
+}
+.xarxa-svg .cara.fantasma:focus-visible .fons-cara {
+    stroke-width: 0.8;
+    fill-opacity: 0.75;
+}
+.nom-cara {
+    font: 600 2px var(--sans);
+    fill: var(--tinta);
+    text-anchor: middle;
+    pointer-events: none;
+}
+.cara.fantasma .nom-cara {
+    fill: var(--tema-fort);
+    font-weight: 700;
+}
+.cami-pla {
+    stroke-width: 0.55;
+    stroke-linecap: round;
+}
+.cami-pla.valid {
+    stroke: var(--tema);
+}
+.cami-pla.fora {
+    stroke: var(--error);
+    stroke-dasharray: 1 0.8;
+}
+.longitud {
+    font: 700 2.3px var(--sans);
+    text-anchor: middle;
+    paint-order: stroke;
+    stroke: var(--panell);
+    stroke-width: 0.7px;
+}
+.longitud.valid {
+    fill: var(--tema-fort);
+}
+.longitud.fora {
+    fill: var(--error);
+}
+.botons-cares .boto-cara {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.mostra-cara {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    border: 1.5px solid var(--tinta);
+    background: var(--c-paret);
+}
+.boto-cara.cara-sostre .mostra-cara {
+    background: var(--c-sostre);
+}
+.boto-cara.cara-terra .mostra-cara {
+    background: var(--c-terra);
+}
+.boto-cara.cara-porta .mostra-cara {
+    background: var(--c-porta);
+}
+.boto-cara.cara-finestra .mostra-cara {
+    background: var(--c-finestra);
+}
+.xarxes-dudeney .xarxa-dudeney {
+    width: min(240px, 44%);
+}
+.xarxa-petita {
+    max-height: 210px;
+}
+
+/* ══════════════════════════════════════════════
+   DISSECCIÓ: el triangle del mercer
+══════════════════════════════════════════════ */
+.mercer-svg {
+    max-width: 640px;
+    touch-action: none;
+}
+.mercer-svg.figura {
+    max-width: 300px;
+}
+.lloc-triangle {
+    fill: none;
+    stroke: var(--linia-forta);
+    stroke-width: 0.03;
+    stroke-dasharray: 0.12 0.1;
+}
+.lloc-quadrat {
+    fill: color-mix(in srgb, var(--tema) 6%, var(--panell));
+    stroke: var(--tema);
+    stroke-width: 0.045;
+    stroke-dasharray: 0.16 0.1;
+}
+.etiqueta-lloc {
+    font: 600 0.34px var(--sans);
+    fill: var(--tema);
+    opacity: 0.55;
+    text-anchor: middle;
+    dominant-baseline: central;
+    pointer-events: none;
+}
+.brocat-svg .etiqueta-lloc {
+    font-size: 26px;
+    opacity: 0.35;
+}
+.fil {
+    stroke: rgba(0, 0, 0, 0.09);
+    stroke-width: 0.03;
+}
+.roba-sencera {
+    fill: var(--tema-mig);
+    stroke: var(--tinta);
+    stroke-width: 0.05;
+    stroke-linejoin: round;
+}
+.peca-tela {
+    cursor: grab;
+}
+.peca-tela .cos-peca {
+    stroke: var(--tinta);
+    stroke-width: 0.045;
+    stroke-linejoin: round;
+}
+.peca-tela.p1 .cos-peca {
+    fill: color-mix(in srgb, var(--tema) 55%, var(--panell));
+}
+.peca-tela.p2 .cos-peca {
+    fill: color-mix(in srgb, var(--tema) 34%, var(--panell));
+}
+.peca-tela.p3 .cos-peca {
+    fill: color-mix(in srgb, var(--tema) 22%, #f3d6a4);
+}
+.peca-tela.p4 .cos-peca {
+    fill: color-mix(in srgb, var(--tema) 78%, var(--tinta));
+}
+.teixit-peca {
+    pointer-events: none;
+}
+.num-peca {
+    font: 700 0.62px var(--serif);
+    fill: var(--tinta);
+    text-anchor: middle;
+    dominant-baseline: central;
+    pointer-events: none;
+}
+.peca-tela.p4 .num-peca {
+    fill: #fff;
+}
+.num-peca.petit {
+    font-size: 0.5px;
+}
+.peca-tela.triada .cos-peca {
+    stroke: var(--tinta);
+    stroke-width: 0.09;
+}
+.peca-tela.arrossegada {
+    cursor: grabbing;
+    filter: drop-shadow(0 0.12px 0.1px rgba(0, 0, 0, 0.35));
+}
+.peca-tela.encaixada .cos-peca {
+    stroke-width: 0.03;
+}
+.peca-tela:focus-visible .cos-peca {
+    stroke: var(--tema);
+    stroke-width: 0.1;
+}
+.construccio-svg {
+    max-width: 330px;
+}
+.triangle-construccio {
+    fill: color-mix(in srgb, var(--tema) 10%, var(--panell));
+    stroke: var(--tinta);
+    stroke-width: 0.05;
+}
+.arc-construccio,
+.linia-construccio {
+    fill: none;
+    stroke: var(--tinta-suau);
+    stroke-width: 0.025;
+}
+.tall {
+    stroke: var(--tema);
+    stroke-width: 0.07;
+    stroke-linecap: round;
+}
+.punt-construccio {
+    fill: var(--tinta);
+}
+.lletra-construccio {
+    font: 600 0.34px var(--serif);
+    fill: var(--tinta);
+    text-anchor: middle;
+}
+.frontisses {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+.frontisses-svg {
+    max-width: 330px;
+}
+.frontissa {
+    fill: #c9a227;
+    stroke: var(--tinta);
+    stroke-width: 0.03;
+}
+.fila-frontisses {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    color: var(--tinta-suau);
+}
+.fila-frontisses input {
+    width: min(220px, 48vw);
+    accent-color: var(--tema);
+}
+
+/* ══════════════════════════════════════════════
+   DISSECCIÓ: el brocat
+══════════════════════════════════════════════ */
+.brocat-svg {
+    max-width: 640px;
+    touch-action: none;
+}
+.brocat-svg.figura {
+    max-width: 420px;
+}
+.lloc-original {
+    fill: none;
+    stroke: var(--linia-forta);
+    stroke-width: 2;
+    stroke-dasharray: 6 5;
+}
+.lloc-objectiu {
+    fill: none;
+    stroke: var(--tema);
+    stroke-width: 3;
+    stroke-dasharray: 9 6;
+}
+.graella-objectiu line {
+    stroke: var(--linia);
+    stroke-width: 1;
+}
+.peca-brocat {
+    cursor: grab;
+    transition: transform 0.16s ease-out;
+}
+.peca-brocat.arrossegada {
+    transition: none;
+    cursor: grabbing;
+    filter: drop-shadow(0 5px 4px rgba(0, 0, 0, 0.3));
+}
+.peca-brocat .quadret {
+    stroke: color-mix(in srgb, var(--tema) 30%, transparent);
+    stroke-width: 0.8;
+}
+.peca-brocat.b1 .quadret {
+    fill: #f6e3c8;
+}
+.peca-brocat.b2 .quadret {
+    fill: #f3dcc0;
+}
+.peca-brocat.b3 .quadret {
+    fill: #f6e3c8;
+}
+.peca-brocat.b4 .quadret {
+    fill: #f3dcc0;
+}
+.petal {
+    fill: color-mix(in srgb, var(--tema) 75%, #fff);
+}
+.cor-flor {
+    fill: #c9a227;
+}
+.tija {
+    fill: none;
+    stroke: #4d7c3a;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+}
+.fulla {
+    fill: #6a9a4f;
+}
+.contorn-peca {
+    fill: none;
+    stroke: var(--tinta);
+    stroke-width: 2.6;
+    stroke-linecap: square;
+}
+.sense-talls .contorn-peca {
+    stroke: none;
+}
+.vora-quadrat {
+    fill: none;
+    stroke: var(--tinta);
+    stroke-width: 2.6;
+}
+.lletra-peca {
+    font: 700 22px var(--serif);
+    fill: var(--tinta);
+    text-anchor: middle;
+    dominant-baseline: central;
+    paint-order: stroke;
+    stroke: #f6e3c8;
+    stroke-width: 5px;
+    pointer-events: none;
+}
+.peca-brocat.triada .contorn-peca {
+    stroke: var(--tema);
+    stroke-width: 4;
+}
+.peca-brocat:focus-visible .contorn-peca {
+    stroke: var(--tema);
+    stroke-width: 5;
+}
+.fila-diagrames .diagrama {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: min(330px, 100%);
+}

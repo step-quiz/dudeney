@@ -1,0 +1,8 @@
+# Els llibres originals (EPUB de Project Gutenberg): només en local, no es publiquen
+src/
+node_modules/
+__pycache__/
+.DS_Store
+tmp/
+# Els ZIP es descomprimeixen a l’arrel; el .zip no es publica
+*.zip
